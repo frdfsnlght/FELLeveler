@@ -6,6 +6,7 @@
 #include <ESPAsyncWebServer.h>
 
 #include "config.h"
+#include "sensor.h"
 #include "network.h"
 #include "ota.h"
 #include "webserver.h"
@@ -23,19 +24,20 @@ void setup() {
         Serial.println("No configuration found, using defaults");
     }
 
+    setupSensor();
     setupNetwork();
     setupOTA();
     setupWebserver();
 
     // TODO: setup bluetooth
-    // TODO: setup accelerometer
     // TODO: setup touch input
-    // TODO: setup i2c display
+    // TODO: setup display
 
     Serial.println("Ready");
 }
 
 void loop() {
+    loopSensor();
     loopNetwork();
     loopOTA();
     loopWebserver();
