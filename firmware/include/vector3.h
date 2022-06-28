@@ -12,15 +12,8 @@ struct Vector3 {
     static constexpr float EpsilonNormalSqrt = 1e-15f;
     static constexpr float Rad2Deg = 180.0f / PI;
 
-    Vector3() {
-        x = y = z = 0;
-    }
-
-    Vector3(float a, float b, float c) {
-        x = a;
-        y = b;
-        z = c;
-    }
+    Vector3() : x(0), y(0), z(0) {}
+    Vector3(float x, float y, float z) : x(x), y(y), z(z) {}
 
     float Magnitude() {
         return sqrt((x * x) + (y * y) + (z * z));

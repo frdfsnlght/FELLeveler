@@ -2,6 +2,7 @@
 #include <SPIFFS.h>
 #include <ArduinoJson.h>
 #include <WiFi.h>
+#include <SPI.h>
 #include <ArduinoOTA.h>
 #include <ESPAsyncWebServer.h>
 
@@ -10,6 +11,13 @@
 #include "network.h"
 #include "ota.h"
 #include "webserver.h"
+#include "ui.h"
+
+#include "boot_screen.h"
+#include "main_screen.h"
+
+BootScreen bootScreen = BootScreen();
+MainScreen mainScreen = MainScreen();
 
 void setup() {
     Serial.begin(115200);
@@ -29,6 +37,8 @@ void setup() {
     setupOTA();
     setupWebserver();
 
+    UI::getInstance()->setup(&bootScreen);
+
     // TODO: setup bluetooth
     // TODO: setup touch input
     // TODO: setup display
@@ -41,5 +51,6 @@ void loop() {
     loopNetwork();
     loopOTA();
     loopWebserver();
+    UI::getInstance()->loop();
 
 }

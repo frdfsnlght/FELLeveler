@@ -7,6 +7,7 @@
 
 #include "filter_ewma.h"
 #include "vector3.h"
+#include "callback_list.h"
 
 // ADXL345 uses right hand axis orientation
 
@@ -15,6 +16,8 @@ const unsigned long SENSOR_REPORT_INTERVAL = 100;
 Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(1);
 Vector3 accelRaw;
 Vector3 accelFiltered;
+CallbackList<Vector3*> accelRawListeners = CallbackList<Vector3*>();
+CallbackList<Vector3*> accelFilteredListeners = CallbackList<Vector3*>();
 FilterEWMA accelX, accelY, accelZ;
 bool _sensorSetup = false;
 unsigned long sensorLastReportTime = 0;
@@ -87,6 +90,7 @@ void loopSensor() {
     accelX.filter(accelRaw.x);
     accelY.filter(accelRaw.y);
     accelZ.filter(accelRaw.z);
+    accelRawListeners.call(&accelRaw);
 
     if ((millis() - sensorLastReportTime) > SENSOR_REPORT_INTERVAL) {
         sensorLastReportTime = millis();
@@ -102,6 +106,8 @@ void loopSensor() {
         Serial.print(accelFiltered.x); Serial.print(',');
         Serial.print(accelFiltered.y); Serial.print(',');
         Serial.println(accelFiltered.z);
+
+        accelFilteredListeners.call(&accelFiltered);
     }
 }
 
