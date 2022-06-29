@@ -1,0 +1,66 @@
+#ifndef DISPLAY_H
+#define DISPLAY_H
+
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1351.h>
+
+#define SPI_PORT 3
+
+// SPI2 port
+// MOSI - 13
+// MISO - 12
+// SCLK - 14
+// CS - 15
+
+// SPI3 port
+// MOSI - 23
+// MISO - 19
+// SCLK - 18
+// CS - 5
+
+#define	BLACK           0x0000
+#define	BLUE            0x001F
+#define	RED             0xF800
+#define	GREEN           0x07E0
+#define CYAN            0x07FF
+#define MAGENTA         0xF81F
+#define YELLOW          0xFFE0  
+#define WHITE           0xFFFF
+
+class Display : public Adafruit_SSD1351 {
+
+    public:
+
+    static constexpr int Width = 128;
+    static constexpr int Height = 128;
+
+    static Display* getInstance();
+
+    void setup();
+    void printLeft(const char* str, int x, int y);
+    void printCentered(const char* str, int x, int y);
+    void printRight(const char* str, int x, int y);
+
+    private:
+
+#if SPI_PORT == 2
+    static constexpr int CSPin = 15;
+    static constexpr int DCPin = 13;    // TODO: pick a pin
+    static constexpr int MOSIPin = 13;
+    static constexpr int SCLKPin = 14;
+#elif SPI_PORT == 3
+    static constexpr int CSPin = 5;
+    static constexpr int DCPin = 13;    // TODO: pick a pin
+    static constexpr int MOSIPin = 23;
+    static constexpr int SCLKPin = 18;
+#else
+    #warning "Invalid or no SPI port selected for display!"
+#endif
+
+    static Display* instance;
+
+    Display() : Adafruit_SSD1351(Width, Height, CSPin, DCPin, MOSIPin, SCLKPin) {}
+
+};
+
+#endif

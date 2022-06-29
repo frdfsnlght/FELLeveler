@@ -12,11 +12,14 @@
 #include "ota.h"
 #include "webserver.h"
 #include "ui.h"
+#include "display.h"
 
 #include "boot_screen.h"
+#include "status_screen.h"
 #include "main_screen.h"
 
 BootScreen bootScreen = BootScreen();
+StatusScreen statusScreen = StatusScreen();
 MainScreen mainScreen = MainScreen();
 
 void setup() {
@@ -37,12 +40,12 @@ void setup() {
     setupOTA();
     setupWebserver();
 
+    Display::getInstance()->setup();
     UI::getInstance()->setup(&bootScreen);
 
     // TODO: setup bluetooth
-    // TODO: setup touch input
-    // TODO: setup display
-
+    // TODO: setup LED
+    
     Serial.println("Ready");
 }
 

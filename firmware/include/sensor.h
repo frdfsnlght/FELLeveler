@@ -10,6 +10,8 @@
 #include "callback_list.h"
 
 // ADXL345 uses right hand axis orientation
+// GPIO 21 (SDA)
+// GPIO 22 (SCL)
 
 const unsigned long SENSOR_REPORT_INTERVAL = 100;
 
