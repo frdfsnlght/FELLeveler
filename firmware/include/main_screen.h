@@ -7,9 +7,15 @@ class MainScreen : public Screen {
 
     public:
 
-    MainScreen();
+    static MainScreen* getInstance();
 
     void paint();
+
+    private:
+
+    static MainScreen* instance;
+
+    MainScreen();
 
 };
 

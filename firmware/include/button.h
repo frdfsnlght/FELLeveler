@@ -27,7 +27,7 @@ class Button {
         longPressTime(longPressTime)
         {}
 
-    void begin() {
+    void setup() {
         switch (bias) {
             case None:
                 pinMode(pin, INPUT);
@@ -41,7 +41,7 @@ class Button {
         }
     }
 
-    void update() {
+    void loop() {
         int state = digitalRead(pin);
         if (invert) state = !state;
         if (state == HIGH) {

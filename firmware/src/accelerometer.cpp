@@ -1,7 +1,6 @@
-#ifndef SENSOR_H
-#define SENSOR_H
+#include "accelerometer.h"
 
-#include <Wire.h>
+//#include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_ADXL345_U.h>
 
@@ -9,23 +8,14 @@
 #include "vector3.h"
 #include "callback_list.h"
 
-// ADXL345 uses right hand axis orientation
-// GPIO 21 (SDA)
-// GPIO 22 (SCL)
+Accelerometer* Accelerometer::instance = nullptr;
 
-const unsigned long SENSOR_REPORT_INTERVAL = 100;
+Accelerometer* Accelerometer::getInstance() {
+    if (instance == nullptr) instance = new Accelerometer();
+    return instance;
+}
 
-Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(1);
-Vector3 accelRaw;
-Vector3 accelFiltered;
-CallbackList<Vector3*> accelRawListeners = CallbackList<Vector3*>();
-CallbackList<Vector3*> accelFilteredListeners = CallbackList<Vector3*>();
-FilterEWMA accelX, accelY, accelZ;
-bool _sensorSetup = false;
-unsigned long sensorLastReportTime = 0;
-
-
-float getSensorDataRate() {
+float Accelerometer::getSensorDataRate() {
     switch (accel.getDataRate()) {
         case ADXL345_DATARATE_3200_HZ: return 3200;
         case ADXL345_DATARATE_1600_HZ: return 1600;
@@ -47,7 +37,7 @@ float getSensorDataRate() {
     }
 }
 
-int getSensorRange() {
+int Accelerometer::getSensorRange() {
     switch (accel.getRange()) {
         case ADXL345_RANGE_16_G: return 16;
         case ADXL345_RANGE_8_G: return 8;
@@ -57,8 +47,8 @@ int getSensorRange() {
     }
 }
 
-void displaySensorDetails() {
-    if (! _sensorSetup) return;
+void Accelerometer::displaySensorDetails() {
+    if (! setupComplete) return;
     sensor_t sensor;
     accel.getSensor(&sensor);
     Serial.println("------------------------------------");
@@ -73,44 +63,54 @@ void displaySensorDetails() {
     Serial.println("------------------------------------");
 }
 
-void setupSensor() {
+void Accelerometer::setup() {
     if (! accel.begin()) {
         Serial.println("ADXL343 not detected!");
         return;
     }
     accel.setRange(ADXL345_RANGE_2_G);
-    _sensorSetup = true;
+    setupComplete = true;
     displaySensorDetails();
 }
 
-void loopSensor() {
+void Accelerometer::loop() {
+    if ((millis() - lastUpdate) < UpdateInterval) return;
+    lastUpdate = millis();
+
     sensors_event_t event;
     accel.getEvent(&event);
-    accelRaw.x = event.acceleration.x;
-    accelRaw.y = event.acceleration.y;
-    accelRaw.z = event.acceleration.z;
-    accelX.filter(accelRaw.x);
-    accelY.filter(accelRaw.y);
-    accelZ.filter(accelRaw.z);
-    accelRawListeners.call(&accelRaw);
+    raw.x = event.acceleration.x;
+    raw.y = event.acceleration.y;
+    raw.z = event.acceleration.z;
+    filterX.filter(raw.x);
+    filterY.filter(raw.y);
+    filterZ.filter(raw.z);
 
-    if ((millis() - sensorLastReportTime) > SENSOR_REPORT_INTERVAL) {
-        sensorLastReportTime = millis();
+    bool changed = false;
+    if (filtered.x != filterX.value) {
+        filtered.x = filterX.value;
+        changed = true;
+    }
+    if (filtered.y != filterY.value) {
+        filtered.y = filterY.value;
+        changed = true;
+    }
+    if (filtered.z != filterZ.value) {
+        filtered.z = filterZ.value;
+        changed = true;
+    }
 
-        accelFiltered.x = accelX.value;
-        accelFiltered.y = accelY.value;
-        accelFiltered.z = accelZ.value;
+    if (changed) {
+        accelerometerListeners.call(this);
 
         Serial.print("ACCEL: ");
-        Serial.print(accelRaw.x); Serial.print(',');
-        Serial.print(accelRaw.y); Serial.print(',');
-        Serial.print(accelRaw.z); Serial.print(',');
-        Serial.print(accelFiltered.x); Serial.print(',');
-        Serial.print(accelFiltered.y); Serial.print(',');
-        Serial.println(accelFiltered.z);
-
-        accelFilteredListeners.call(&accelFiltered);
+        Serial.print(raw.x); Serial.print(',');
+        Serial.print(raw.y); Serial.print(',');
+        Serial.print(raw.z); Serial.print(',');
+        Serial.print(filtered.x); Serial.print(',');
+        Serial.print(filtered.y); Serial.print(',');
+        Serial.println(filtered.z);
     }
 }
 
-#endif
+

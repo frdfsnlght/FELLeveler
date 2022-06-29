@@ -1,8 +1,14 @@
 #include "boot_screen.h"
 #include "display.h"
 
-extern Screen mainScreen;
-extern Screen statusScreen;
+#include "status_screen.h"
+
+BootScreen* BootScreen::instance = nullptr;
+
+BootScreen* BootScreen::getInstance() {
+    if (instance == nullptr) instance = new BootScreen();
+    return instance;
+}
 
 void BootScreen::onShow() {
     time = millis();
@@ -10,7 +16,7 @@ void BootScreen::onShow() {
 
 void BootScreen::loop() {
     if ((millis() - time) > ShowTime) {
-        UI::getInstance()->showScreen(&statusScreen);
+        UI::getInstance()->showScreen(StatusScreen::getInstance());
     }
 }
 

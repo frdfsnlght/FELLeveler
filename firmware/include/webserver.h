@@ -1,28 +1,25 @@
-#ifndef WEBSERVER_H
-#define WEBSERVER_H
+#ifndef XWEBSERVER_H
+#define XWEBSERVER_H
 
-AsyncWebServer server(80);
+#include <ESPAsyncWebServer.h>
 
-void setupWebserver() {
-    server.on("/", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/index.html", String(), false);
-    });
-    server.on("/style.css", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/style.css", "text/css");
-    });
-    server.on("/on", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/index.html", String(), false);
-    });
-    server.on("/off", HTTP_GET, [](AsyncWebServerRequest *request){
-        request->send(SPIFFS, "/index.html", String(), false);
-    });
-    server.begin();
-    Serial.println("Webserver setup complete");
+class WebServer {
 
-}
+    public:
 
-void loopWebserver() {
+    static WebServer* getInstance();
 
-}
+    AsyncWebServer server = AsyncWebServer(80);
+    AsyncEventSource events = AsyncEventSource("/events");
+
+    void setup();
+
+    private:
+
+    static WebServer* instance;
+
+    WebServer() {}
+    
+};
 
 #endif

@@ -1,66 +1,44 @@
 #ifndef NETWORK_H
 #define NETWORK_H
 
+#include <Arduino.h>
 #include "callback_list.h"
 
-enum WifiState {
-    AP,
-    Unconnected,
-    Connecting,
-    Connected
+class Network {
+
+    public:
+
+    static Network* getInstance();
+
+    enum NetworkState {
+        AP,
+        Unconnected,
+        Connecting,
+        Connected
+    };
+
+    CallbackList<Network*> networkListeners = CallbackList<Network*>();
+    NetworkState state;
+    IPAddress ipAddress;
+    int32_t rssi;
+
+    void setup();
+    void loop();
+
+    private:
+
+    static Network* instance;
+
+    static const char* APSSID;
+    static const char* APPassword;
+    static const int OTAPort;
+    static const char* OTAHostname;
+
+    int otaUpdateType;
+
+    Network() {}
+
 };
 
-const char* AP_SSID = "FELLoader";
-const char* AP_PASSWORD = "1234";
-
-WifiState wifiState = AP;
-CallbackList<WifiState> wifiStateListeners = CallbackList<WifiState>();
-
-void setupNetwork() {
-    if (strcmp(config.wifiSSID, "") == 0) {
-        wifiState = Unconnected;
-        WiFi.mode(WIFI_STA);
-    } else {
-        wifiState = AP;
-        Serial.print("Network starting AP ");
-        Serial.print(AP_SSID);
-        Serial.print(" with password ");
-        Serial.println(AP_PASSWORD);
-        WiFi.softAP(AP_SSID, AP_PASSWORD);
-        Serial.print("Network IP Address: ");
-        Serial.println(WiFi.softAPIP());
-    }
-    Serial.println("Network setup complete");
-}
-
-void loopNetwork() {
-    if (wifiState == Unconnected) {
-        Serial.print("Network connecting to ");
-        Serial.print(config.wifiSSID);
-        Serial.print(" with password ");
-        Serial.println(config.wifiPassword);
-        WiFi.begin(config.wifiSSID, config.wifiPassword);
-        wifiState = Connecting;
-        wifiStateListeners.call(wifiState);
-    } else if (wifiState == Connecting) {
-        if (WiFi.status() == WL_CONNECTED) {
-            wifiState = Connected;
-            Serial.println("Network connected");
-            Serial.print("Network IP Address: ");
-            Serial.println(WiFi.localIP());
-            wifiStateListeners.call(wifiState);
-        } else if (WiFi.status() == WL_CONNECT_FAILED) {
-            wifiState = Unconnected;
-            Serial.println("Network connection failed");
-            wifiStateListeners.call(wifiState);
-        }
-    } else if (wifiState == Connected) {
-        if (WiFi.status() == WL_CONNECTION_LOST) {
-            wifiState = Unconnected;
-            Serial.println("Network connection lost");
-            wifiStateListeners.call(wifiState);
-        }
-    }
-}
 
 #endif

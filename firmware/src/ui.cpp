@@ -16,7 +16,7 @@ void UI::showScreen(Screen* newScreen) {
 }
 
 void UI::setup(Screen* startScreen) {
-    button.begin();
+    button.setup();
     button.onPressListeners.add(handleButtonPress);
     button.onReleaseListeners.add(handleButtonRelease);
     button.onLongPressListeners.add(handleButtonLongPress);
@@ -27,7 +27,7 @@ void UI::setup(Screen* startScreen) {
 }
 
 void UI::loop() {
-    button.update();
+    button.loop();
     if (screen == nullptr) return;
     screen->loop();
     if (screen->dirty)  {
