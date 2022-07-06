@@ -2,6 +2,9 @@
 	"folders": [
 		{
 			"path": "firmware"
+		},
+		{
+			"path": "webapp"
 		}
 	],
 	"settings": {}
