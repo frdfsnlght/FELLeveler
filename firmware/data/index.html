@@ -1,15 +1,44 @@
 <!DOCTYPE HTML><html>
 <head>
-  <title>ESP Web Server</title>
+  <title>FELLeveler</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" href="data:,">
   <link rel="stylesheet" type="text/css" href="style.css">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="fa-6.1.1-all.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/107/three.min.js"></script>
 </head>
+<!--
+
+Mode
+Name
+Roll (tractor)
+Pitch
+Accel readings?
+Calibration state
+Connected to implement (tractor)
+Connected to tractor (implement)
+BT signal strength
+Wifi mode
+Wifi connected (station mode)
+Wifi signal strength
+Config dirty
+
+Rename
+Wifi credentials
+Calibrate
+    Cancel
+    Take level reading
+    Take tipped reading
+Pair implement (from tractor)
+Unpair implement (from tractor)
+Start pairing (from implement)
+Save config
+Reboot
+
+-->
 <body>
   <div class="topnav">
-    <h1><i class="far fa-compass"></i> ADXL345 <i class="far fa-compass"></i></h1>
+    <h1><i class="fa-solid fa-tractor"></i> FELLeveler <i class="fa-solid fa-tractor"></i></h1>
   </div>
   <div class="content">
     <div class="cards">
@@ -31,6 +60,6 @@
       <div id="3Dcube"></div>
     </div>
   </div>
-<script src="script.js"></script>
+  <script src="script.js"></script>
 </body>
 </html>

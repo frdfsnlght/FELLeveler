@@ -9,6 +9,9 @@ class UI {
     public:
 
     static UI* getInstance();
+
+    Button button = Button(12, None, false, 0, 1000);
+    
     void showScreen(Screen* newScreen);
     void setup(Screen* startScreen);
     void loop();
@@ -16,8 +19,7 @@ class UI {
     private:
 
     static UI* instance;
-    Button button = Button(13, Pullup, false, 0, 1000);
-    Screen* screen;
+    Screen* screen = nullptr;
 
     UI() {}
 

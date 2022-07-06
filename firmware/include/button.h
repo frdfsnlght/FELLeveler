@@ -39,6 +39,8 @@ class Button {
                 pinMode(pin, INPUT_PULLDOWN);
                 break;
         }
+        Serial.print("Button setup complete on pin ");
+        Serial.println(pin);
     }
 
     void loop() {
@@ -52,12 +54,15 @@ class Button {
                 lastState = HIGH;
                 if (debounceTime > 0) return;
                 pressed = true;
+                //Serial.println("Button pressed");
                 onPressListeners.call(this);
             } else {
                 if (pressed) {
                     if ((longPressTime > 0) && ((millis() - longPressedTime) >= longPressTime)) {
                         longPressedCount++;
                         longPressedTime = millis();
+                        //Serial.print("Button long pressed ");
+                        Serial.println(longPressedCount);
                         onLongPressListeners.call(this);
                     }
                 } else {
@@ -66,6 +71,7 @@ class Button {
                         longPressedTime = pressedTime;
                         pressed = true;
                         onPressListeners.call(this);
+                        //Serial.println("Button pressed");
                     }
                 }
             }
@@ -73,10 +79,13 @@ class Button {
         } else {
             if (pressed) {
                 pressed = false;
-                if (longPressedCount > 0)
+                if (longPressedCount > 0) {
                     onLongReleaseListeners.call(this);
-                else
+                    //Serial.println("Button long released");
+                } else {
                     onReleaseListeners.call(this);
+                    //Serial.println("Button released");
+                }
             }
             lastState = LOW;
         }

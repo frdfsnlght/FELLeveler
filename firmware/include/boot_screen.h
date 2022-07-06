@@ -10,6 +10,7 @@ class BootScreen : public Screen {
 
     static BootScreen* getInstance();
 
+    String getName() { return "Boot"; }
     void onShow();
     void loop();
     void paint();
@@ -19,7 +20,7 @@ class BootScreen : public Screen {
     static BootScreen* instance;
 
     const unsigned long ShowTime = 3000;
-    unsigned long time;
+    unsigned long time = 0;
 
     BootScreen() {}
 

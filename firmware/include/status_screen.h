@@ -2,8 +2,6 @@
 #define STATUS_SCREEN_H
 
 #include "screen.h"
-#include "network.h"
-#include "accelerometer.h"
 
 class StatusScreen : public Screen {
 
@@ -11,15 +9,14 @@ class StatusScreen : public Screen {
 
     static StatusScreen* getInstance();
 
+    String getName() { return "Status"; }
     void paint();
 
     private:
 
     static StatusScreen* instance;
 
-    static void networkUpdated(Network* network);
-    //static void bluetoothUpdated(Bluetooth* bt);
-    static void accelerometerUpdated(Accelerometer* accel);
+    static void statusUpdated(int);
 
     StatusScreen();
 

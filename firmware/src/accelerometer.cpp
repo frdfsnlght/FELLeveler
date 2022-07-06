@@ -7,6 +7,7 @@
 #include "filter_ewma.h"
 #include "vector3.h"
 #include "callback_list.h"
+#include "debug.h"
 
 Accelerometer* Accelerometer::instance = nullptr;
 
@@ -101,8 +102,9 @@ void Accelerometer::loop() {
     }
 
     if (changed) {
-        accelerometerListeners.call(this);
+        listeners.call(0);
 
+#ifdef DEBUG_ACCELEROMETER
         Serial.print("ACCEL: ");
         Serial.print(raw.x); Serial.print(',');
         Serial.print(raw.y); Serial.print(',');
@@ -110,6 +112,8 @@ void Accelerometer::loop() {
         Serial.print(filtered.x); Serial.print(',');
         Serial.print(filtered.y); Serial.print(',');
         Serial.println(filtered.z);
+#endif
+
     }
 }
 

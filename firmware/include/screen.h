@@ -21,6 +21,7 @@ class Screen {
         onHide();
     }
 
+    virtual String getName();
     virtual void onShow() {}
     virtual void onHide() {}
     virtual void handleButtonPress(Button* button) {}

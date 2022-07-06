@@ -1,7 +1,7 @@
 #ifndef CALLBACK_LIST_H
 #define CALLBACK_LIST_H
 
-template <class T>
+template <typename T>
 class CallbackList {
 
     public:
@@ -43,7 +43,7 @@ class CallbackList {
             node = node->next;
         }
     }
-    
+
     private:
 
     struct CallbackListNode {

@@ -9,10 +9,17 @@ UI* UI::getInstance() {
 
 void UI::showScreen(Screen* newScreen) {
     if (newScreen == screen) return;
-    if (screen != nullptr)
+    if (screen != nullptr) {
+        Serial.print("Hide screen: ");
+        Serial.println(screen->getName());
         screen->hide();
+    }
     screen = newScreen;
-    screen->show(); 
+    if (screen != nullptr) {
+        Serial.print("Show screen: ");
+        Serial.println(screen->getName());
+        screen->show(); 
+    }
 }
 
 void UI::setup(Screen* startScreen) {

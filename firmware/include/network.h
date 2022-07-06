@@ -17,7 +17,7 @@ class Network {
         Connected
     };
 
-    CallbackList<Network*> networkListeners = CallbackList<Network*>();
+    CallbackList<int> listeners = CallbackList<int>();
     NetworkState state;
     IPAddress ipAddress;
     int32_t rssi;
@@ -29,10 +29,11 @@ class Network {
 
     static Network* instance;
 
+    static const char* Hostname;
     static const char* APSSID;
     static const char* APPassword;
     static const int OTAPort;
-    static const char* OTAHostname;
+    //static const char* OTAHostname;
 
     int otaUpdateType;
 

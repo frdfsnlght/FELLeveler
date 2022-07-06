@@ -12,7 +12,7 @@ Config* Config::getInstance() {
 }
 
 bool Config::read() {
-    File file = SPIFFS.open("config.json", FILE_READ);
+    File file = SPIFFS.open("/config.json", FILE_READ);
     if (! file) {
         Serial.println("Unable to read config.json");
         return false;
@@ -45,7 +45,7 @@ bool Config::read() {
 }
 
 bool Config::write() {
-    File file = SPIFFS.open("config.json", FILE_WRITE);
+    File file = SPIFFS.open("/config.json", FILE_WRITE);
     if (! file) {
         Serial.println("Unable to write to config.json");
         return false;

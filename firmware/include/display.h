@@ -3,6 +3,7 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1351.h>
+#include <SPI.h>
 
 #define SPI_PORT 3
 
@@ -45,21 +46,33 @@ class Display : public Adafruit_SSD1351 {
 
 #if SPI_PORT == 2
     static constexpr int CSPin = 15;
-    static constexpr int DCPin = 13;    // TODO: pick a pin
     static constexpr int MOSIPin = 13;
+    static constexpr int MISOPin = 12;
     static constexpr int SCLKPin = 14;
+    static constexpr int DCPin = 17;    // pick a pin
+    static constexpr int RSTPin = 16;   // pick a pin, or don't use
 #elif SPI_PORT == 3
     static constexpr int CSPin = 5;
-    static constexpr int DCPin = 13;    // TODO: pick a pin
     static constexpr int MOSIPin = 23;
+    static constexpr int MISOPin = 19;
     static constexpr int SCLKPin = 18;
+    static constexpr int DCPin = 17;    // pick a pin
+    static constexpr int RSTPin = 16;   // pick a pin, or don't use
 #else
     #warning "Invalid or no SPI port selected for display!"
 #endif
 
     static Display* instance;
 
-    Display() : Adafruit_SSD1351(Width, Height, CSPin, DCPin, MOSIPin, SCLKPin) {}
+    // Software SPI
+    //Display() : Adafruit_SSD1351(Width, Height, CSPin, DCPin, MOSIPin, SCLKPin) {}
+
+    //Hardware SPI
+#if SPI_PORT == 2
+    Display() : Adafruit_SSD1351(Width, Height, new SPIClass(HSPI), CSPin, DCPin) {}
+#elif SPI_PORT == 3
+    Display() : Adafruit_SSD1351(Width, Height, new SPIClass(VSPI), CSPin, DCPin) {}
+#endif
 
 };
 

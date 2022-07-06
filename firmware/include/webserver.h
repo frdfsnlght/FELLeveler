@@ -2,6 +2,7 @@
 #define XWEBSERVER_H
 
 #include <ESPAsyncWebServer.h>
+#include <ArduinoJson.h>
 
 class WebServer {
 
@@ -17,9 +18,15 @@ class WebServer {
     private:
 
     static WebServer* instance;
+    static DynamicJsonDocument json;
+    static String jsonString;
+
+    static void sendAccelerometer(int);
+    static void sendLeveler(int);
 
     WebServer() {}
-    
+
+
 };
 
 #endif

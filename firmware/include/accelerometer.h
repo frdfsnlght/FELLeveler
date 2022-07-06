@@ -21,7 +21,7 @@ class Accelerometer {
 
     Vector3 raw;
     Vector3 filtered;
-    CallbackList<Accelerometer*> accelerometerListeners = CallbackList<Accelerometer*>();
+    CallbackList<int> listeners = CallbackList<int>();
 
     void setup();
     void loop();
@@ -31,7 +31,7 @@ class Accelerometer {
     static Accelerometer* instance;
     static const unsigned long UpdateInterval = 100;
 
-    Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified(0);
+    Adafruit_ADXL345_Unified accel = Adafruit_ADXL345_Unified();
     FilterEWMA filterX, filterY, filterZ;
     bool setupComplete = false;
     unsigned long lastUpdate = 0;

@@ -24,7 +24,7 @@ void BootScreen::paint() {
     Display* d = Display::getInstance();
     d->fillScreen(BLACK);
     d->setTextColor(WHITE);
-    d->setTextSize(13);
+    d->setTextSize(2);
     d->printCentered("FELLeveler", d->Width / 2, d->Height / 2);
 }
 

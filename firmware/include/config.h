@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "vector3.h"
+#include "secrets.h"
 
 class Config {
 
@@ -35,8 +36,8 @@ class Config {
     Config() {
         mode = Tractor;
         strcpy(name, "Unknown");
-        strcpy(wifiSSID, "");
-        strcpy(wifiPassword, "");
+        strcpy(wifiSSID, DEFAULT_WIFI_SSID);
+        strcpy(wifiPassword, DEFAULT_WIFI_PASSWORD);
         calibrated = false;
         downLevel.set(0, 0, 0);
         downTipped.set(0, 0, 0);
