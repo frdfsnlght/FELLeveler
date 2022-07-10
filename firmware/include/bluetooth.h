@@ -1,7 +1,9 @@
 #ifndef BLUETOOTH_H
 #define BLUETOOTH_H
 
+#include <BluetoothSerial.h>
 #include "callback_list.h"
+#include "led.h"
 
 class Bluetooth {
 
@@ -18,8 +20,23 @@ class Bluetooth {
 
     static Bluetooth* instance;
 
-    Bluetooth() {}
+    static const String BTBaseName;
 
+    static void btCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+
+    LED led = LED(2, false);
+    BluetoothSerial bt = BluetoothSerial();
+    bool master;
+    bool connected;
+
+    // Master stuff
+    String implementName;
+    //BTAddress implementAddress;
+
+    Bluetooth() {}
+    void handleCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+    void receiveData();
+    
 };
 
 #endif

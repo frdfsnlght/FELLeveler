@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>Reboot</h2>
+<mat-dialog-content>
+    <div *ngIf="!model.configDirty.value">
+        Are you sure you want to reboot the device?
+    </div>
+    <div *ngIf="model.configDirty.value">
+        <p>The device configuration has not been saved. You will lose your configuration changes if you reboot now.</p>
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button
+        mat-raised-button
+        [color]="model.configDirty.value ? 'warn' : 'primary'"
+        (click)="reboot()">Reboot</button>
+    <button
+        mat-raised-button
+        (click)="cancel()">Cancel</button>
+</mat-dialog-actions>

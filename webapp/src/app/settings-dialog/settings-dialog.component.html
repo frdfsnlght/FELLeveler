@@ -1,0 +1,62 @@
+<h2 mat-dialog-title>Settings</h2>
+<mat-dialog-content>
+    <form [formGroup]="form" (ngSubmit)="ok()">
+        <mat-form-field hideRequiredMarker>
+            <mat-label>Mode</mat-label>
+            <mat-select
+                required
+                formControlName="mode">
+                <mat-option value="Tractor">Tractor</mat-option>
+                <mat-option value="Implement">Implement</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field hideRequiredMarker>
+            <mat-label>Name</mat-label>
+            <input
+                type="text"
+                matInput
+                required
+                maxlength="31"
+                autocomplete="nickname"
+                formControlName="name">
+            <mat-hint>Maximum 31 characters</mat-hint>
+            <mat-error *ngIf="form.controls['name'].hasError('required')">
+                Name is <strong>required</strong>
+            </mat-error>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>WiFi SSID</mat-label>
+            <input
+                type="text"
+                matInput
+                maxlength="31"
+                autocomplete="ssid"
+                formControlName="wifiSSID">
+            <mat-hint>Maximum 31 characters, leave empty for AP mode only</mat-hint>
+        </mat-form-field>
+        <mat-form-field hideRequiredMarker>
+            <mat-label>WiFi Password</mat-label>
+            <input
+                [type]="showPassword ? 'text' : 'password'"
+                matInput
+                minlength="8"
+                maxlength="31"
+                autocomplete="wifipassword"
+                [required]="form.controls['wifiSSID'].value!.length > 0"
+                formControlName="wifiPassword">
+            <mat-icon matSuffix (click)="showPassword=!showPassword">{{showPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+            <mat-hint>Minimum 8 characters, maximum 31 characters</mat-hint>
+        </mat-form-field>
+    </form>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button
+        type="submit"
+        mat-raised-button
+        color="primary"
+        (click)="ok()"
+        [disabled]="!form.valid">OK</button>
+    <button
+        mat-raised-button
+        (click)="cancel()">Cancel</button>
+</mat-dialog-actions>

@@ -1,0 +1,18 @@
+<h2 mat-dialog-title>Calibrate</h2>
+<mat-dialog-content>
+    <div *ngIf="calibrateLevel">
+        <p>Make sure the device is in it's "level" position.</p>
+    </div>
+    <div *ngIf="calibrateTipped">
+        <p>Make sure the device is in a "tipped" position.</p>
+    </div>
+</mat-dialog-content>
+<mat-dialog-actions align="end">
+    <button
+        mat-raised-button
+        color="primary"
+        (click)="calibrate()">Calibrate</button>
+    <button
+        mat-raised-button
+        (click)="cancel()">Cancel</button>
+</mat-dialog-actions>

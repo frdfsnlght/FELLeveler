@@ -20,9 +20,9 @@ void WebServer::setup() {
 #ifdef DEBUG_WEBSERVER
         Serial.println("HTTP GET /");
 #endif
-        request->send(SPIFFS, "/index.html", String(), false);
+        request->send(SPIFFS, "/webapp/index.html", String(), false);
     });
-    server.serveStatic("/", SPIFFS, "/");
+    server.serveStatic("/", SPIFFS, "/webapp");
 
     server.on("/api/reboot", HTTP_GET, [](AsyncWebServerRequest *request) {
 #ifdef DEBUG_WEBSERVER
@@ -32,35 +32,6 @@ void WebServer::setup() {
         ESP.restart();
     });
 
-/*
-    server.on("/reset", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG_WEBSERVER
-        Serial.println("reset pressed");
-#endif
-        request->send(200, "text/plain", "OK");
-    });
-
-    server.on("/resetX", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG_WEBSERVER
-        Serial.println("resetX pressed");
-#endif
-        request->send(200, "text/plain", "OK");
-    });
-
-    server.on("/resetY", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG_WEBSERVER
-        Serial.println("resetY pressed");
-#endif
-        request->send(200, "text/plain", "OK");
-    });
-
-    server.on("/resetZ", HTTP_GET, [](AsyncWebServerRequest *request) {
-#ifdef DEBUG_WEBSERVER
-        Serial.println("resetZ pressed");
-#endif
-        request->send(200, "text/plain", "OK");
-    });
-*/
 
     // Handle web server events
     events.onConnect([](AsyncEventSourceClient *client) {
