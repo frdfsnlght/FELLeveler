@@ -8,7 +8,7 @@ import { BtDevice } from './bt-device';
 })
 export class ModelService {
 
-  private apiUrl = 'api/';
+  private apiUrl = '/api/';
 
   private eventSource: EventSource;
 

@@ -2,6 +2,7 @@
 
 #include <Arduino.h>
 #include <WiFi.h>
+#include <DNSServer.h>
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
 #include "config.h"
@@ -12,6 +13,10 @@ const char* Network::APSSID = DEFAULT_AP_SSID;
 const char* Network::APPassword = DEFAULT_AP_PASSWORD;
 const int Network::OTAPort = 3232;
 const char* Network::Hostname = "felleveler";
+const int Network::MaxConnectionAttempts = 6;
+const int Network::ConnectionAttemptInterval = 10000;
+const IPAddress Network::APAddress(8, 8, 8, 8);
+const IPAddress Network::APNetmask(255, 255, 255, 0);
 
 Network* Network::getInstance() {
     if (instance == nullptr) instance = new Network();
@@ -23,17 +28,9 @@ void Network::setup() {
     if (strcmp(config->wifiSSID, "") != 0) {
         state = Unconnected;
         WiFi.mode(WIFI_STA);
+        connectionAttempts = 0;
     } else {
-        state = AP;
-        Serial.print("Network starting AP \"");
-        Serial.print(APSSID);
-        Serial.print("\" with password \"");
-        Serial.print(APPassword);
-        Serial.println("\"");
-        WiFi.softAP(APSSID, APPassword);
-        ipAddress = WiFi.softAPIP();
-        Serial.print("Network IP Address: ");
-        Serial.println(WiFi.softAPIP());
+        setupAP();
     }
 
     // OTA
@@ -85,6 +82,7 @@ void Network::loop() {
         WiFi.setHostname(Hostname);
         WiFi.begin(config->wifiSSID, config->wifiPassword);
         state = Connecting;
+        connectionAttempts++;
         listeners.call(0);
     } else if (state == Connecting) {
         if (WiFi.status() == WL_CONNECTED) {
@@ -95,14 +93,26 @@ void Network::loop() {
             Serial.println(WiFi.localIP());
             listeners.call(0);
         } else if (WiFi.status() == WL_CONNECT_FAILED) {
-            state = Unconnected;
             Serial.println("Network connection failed");
-            ipAddress = (uint32_t)0;
+            if (connectionAttempts >= MaxConnectionAttempts) {
+                Serial.println("Too many failures, setting AP mode");
+                setupAP();
+            } else {
+                Serial.println("Waiting for the next attempt");
+                state = Waiting;
+                lastConnectionAttemptTime = millis();
+            }
             listeners.call(0);
+        }
+    } else if (state == Waiting) {
+        if ((millis() - lastConnectionAttemptTime) > ConnectionAttemptInterval) {
+            state = Unconnected;
         }
     } else if (state == Connected) {
         if (WiFi.status() == WL_CONNECTION_LOST) {
             state = Unconnected;
+            connectionAttempts = 0;
+            lastConnectionAttemptTime = 0;
             Serial.println("Network connection lost");
             ipAddress = (uint32_t)0;
             listeners.call(0);
@@ -112,6 +122,27 @@ void Network::loop() {
                 listeners.call(0);
             }
         }
+    } else if (state == AP) {
+        dnsServer.processNextRequest();
     }
     ArduinoOTA.handle();
+}
+
+bool Network::hasNetwork() {
+    return (state == AP) || (state == Connected);
+}
+
+void Network::setupAP() {
+    state = AP;
+    Serial.print("Network starting AP \"");
+    Serial.print(APSSID);
+    Serial.print("\" with password \"");
+    Serial.print(APPassword);
+    Serial.println("\"");
+    WiFi.softAPConfig(APAddress, APAddress, APNetmask);
+    WiFi.softAP(APSSID, APPassword);
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError); 
+    dnsServer.start(53, "*", APAddress);
+    Serial.print("Network IP Address: ");
+    Serial.println(WiFi.softAPIP());
 }

@@ -10,22 +10,31 @@ class WebServer {
 
     static WebServer* getInstance();
 
-    AsyncWebServer server = AsyncWebServer(80);
-    AsyncEventSource events = AsyncEventSource("/events");
-
     void setup();
 
     private:
 
     static WebServer* instance;
-    static DynamicJsonDocument json;
-    static String jsonString;
 
-    static void sendAccelerometer(int);
-    static void sendLeveler(int);
+    AsyncWebServer server = AsyncWebServer(80);
+    AsyncEventSource events = AsyncEventSource("/events");
 
     WebServer() {}
 
+    static void emptyHandler(AsyncWebServerRequest *r) {}
+
+    // API
+    void apiConfigure(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t);
+    void apiCalibrateLevel(AsyncWebServerRequest *r);
+    void apiCalibrateTipped(AsyncWebServerRequest *r);
+    void apiScanBTDevices(AsyncWebServerRequest *r);
+    void apiPairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t);
+    void apiUnpairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t);
+    void apiUnpairBT(AsyncWebServerRequest *r);
+    void apiStartPairing(AsyncWebServerRequest *r);
+    void apiStopPairing(AsyncWebServerRequest *r);
+    void apiSaveConfig(AsyncWebServerRequest *r);
+    void apiReboot(AsyncWebServerRequest *r);
 
 };
 

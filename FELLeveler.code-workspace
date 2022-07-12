@@ -7,5 +7,10 @@
 			"path": "webapp"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"xstring": "cpp",
+			"string": "cpp"
+		}
+	}
 }

@@ -3,16 +3,26 @@
 
 #include <Arduino.h>
 #include "vector3.h"
-#include "secrets.h"
 
 class Config {
 
     public:
 
+    static Config* getInstance();
+    static const int MaxBTDevices = 10;
+
     enum MainMode {
         Tractor,
         Implement
     };
+
+    struct BTDevice {
+        bool used;
+        char name[32];
+        byte address[6];
+    };
+
+    bool dirty;
 
     MainMode mode;
     char name[32];
@@ -21,27 +31,30 @@ class Config {
     bool calibrated;
     Vector3 downLevel;
     Vector3 downTipped;
-
-    static Config* getInstance();
+    BTDevice pairedDevices[MaxBTDevices];
+    BTDevice pairedDevice;
 
     bool read();
     bool write();
 
+    void setDirty(bool d);
+    void setMode(const char* modeStr);
+    void setName(const char* newName);
+    void setWifiSSID(const char* ssid);
+    void setWifiPassword(const char* password);
+    void setCalibrated(bool cal);
+    void setDownLevel(Vector3 v);
+    void setDownTipped(Vector3 v);
+    void setPairedDevice(int i, const char* name, const char* address);
+    void setPairedDevice(const char* name, const char* address);
+
     private:
 
-    static const int ConfigSize = 512;
+    static const int ConfigSize = 2048;
 
     static Config* instance;
 
-    Config() {
-        mode = Tractor;
-        strcpy(name, "Unknown");
-        strcpy(wifiSSID, DEFAULT_WIFI_SSID);
-        strcpy(wifiPassword, DEFAULT_WIFI_PASSWORD);
-        calibrated = false;
-        downLevel.set(0, 0, 0);
-        downTipped.set(0, 0, 0);
-    }
+    Config() {}
 
 };
 
