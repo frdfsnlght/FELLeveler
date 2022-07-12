@@ -10,7 +10,7 @@ class UI {
 
     static UI* getInstance();
 
-    Button button = Button(12, None, false, 0, 1000);
+    Button button = Button(12, Button::None, false, 0, 1000);
     
     void showScreen(Screen* newScreen);
     void setup(Screen* startScreen);
@@ -23,10 +23,10 @@ class UI {
 
     UI() {}
 
-    static void handleButtonPress(Button* button);
-    static void handleButtonRelease(Button* button);
-    static void handleButtonLongPress(Button* button);
-    static void handleButtonLongRelease(Button* button);
+    void handleButtonPress(Button* button);
+    void handleButtonRelease(Button* button);
+    void handleButtonLongPress(Button* button);
+    void handleButtonLongRelease(Button* button);
 
 };
 

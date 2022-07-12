@@ -1,6 +1,7 @@
 #include "leveler.h"
 
 #include "accelerometer.h"
+#include "config.h"
 
 Leveler* Leveler::instance = nullptr;
 
@@ -10,13 +11,26 @@ Leveler* Leveler::getInstance() {
 }
 
 void Leveler::setup() {
-    Accelerometer::getInstance()->listeners.add(accelerometerChanged);
-
+    Accelerometer::getInstance()->listeners.add([](void) {
+        instance->update();
+    });
     Serial.println("Leveler setup complete");
 }
 
-void Leveler::accelerometerChanged(int ignore) {
+void Leveler::calibrateLevel() {
+    Vector3 down = Accelerometer::getInstance()->filtered;
+    Config::getInstance()->setDownLevel(down);
+    Config::getInstance()->setCalibrated(false);
+}
+
+void Leveler::calibrateTipped() {
+    Vector3 down = Accelerometer::getInstance()->filtered;
+    Config::getInstance()->setDownTipped(down);
+    Config::getInstance()->setCalibrated(true);
+}
+
+void Leveler::update() {
     // TODO: math
     // TODO: call listeners
-    // TODO: send web events? or have a web handler that listens to this?
 }
+

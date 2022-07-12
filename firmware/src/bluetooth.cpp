@@ -11,10 +11,6 @@ Bluetooth* Bluetooth::getInstance() {
     return instance;
 }
 
-void Bluetooth::btCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param) {
-    getInstance()->handleCallback(event, param);
-}
-
 void Bluetooth::setup() {
     led.blink();
     Config* config = Config::getInstance();
@@ -39,6 +35,38 @@ void Bluetooth::loop() {
         led.blink();
     }
 */
+}
+
+void Bluetooth::scanDevices() {
+    // TODO
+}
+
+bool Bluetooth::canPairDevice() {
+    // TODO
+}
+
+void Bluetooth::pairDevice(const char* address) {
+    // TODO
+}
+
+bool Bluetooth::canUnpairDevice(const char* address) {
+    // TODO
+}
+
+void Bluetooth::unpairDevice(const char* address) {
+    // TODO
+}
+
+void Bluetooth::unpair() {
+    // TODO
+}
+
+void Bluetooth::startPairing() {
+    // TODO
+}
+
+void Bluetooth::stopPairing() {
+    // TODO
 }
 
 void Bluetooth::handleCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param) {

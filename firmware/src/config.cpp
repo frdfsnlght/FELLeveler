@@ -56,8 +56,24 @@ bool Config::read() {
     downTipped.y = doc["downTipped"]["y"];
     downTipped.z = doc["downTipped"]["z"];
 
-    // TODO: read pairedDevices (tractor)
-    // TODO: read pairedDevice (implement)
+    if (mode == Tractor) {
+        JsonArray a = doc["pairedDevices"];
+        for (int i = 0; i < MaxBTDevices; i++) {
+            if (i >= a.size()) {
+                pairedDevices[i].used = false;
+                pairedDevices[i].name[0] = '\0';
+                pairedDevices[i].address[0] = '\0';
+            } else {
+                pairedDevices[i].used = true;
+                strcpy(pairedDevices[i].name, a[i]["name"]);
+                strcpy(pairedDevices[i].address, a[i]["address"]);
+            }
+        }
+    } else if (mode == Implement) {
+        pairedDevice.used = doc["pairedDevice"]["used"];
+        strcpy(pairedDevice.name, doc["pairedDevice"]["name"]);
+        strcpy(pairedDevice.address, doc["pairedDevice"]["address"]);
+    }
 
     Serial.println("Configuration read");
     setDirty(false);
@@ -89,8 +105,23 @@ bool Config::write() {
     v["y"] = downTipped.y;
     v["z"] = downTipped.z;
 
-    // TODO: write pairedDevices (tractor)
-    // TODO: write pairedDevice (implement)
+    JsonObject d;
+    if (mode == Tractor) {
+        JsonArray a = doc.createNestedArray("pairedDevices");
+        for (int i = 0; i < MaxBTDevices; i++) {
+            if (pairedDevices[i].used) {
+                d = a.createNestedObject();
+                d["used"] = pairedDevices[i].used;
+                d["name"] = pairedDevices[i].name;
+                d["address"] = pairedDevices[i].address;
+            }
+        }
+    } else if (mode == Implement) {
+        d = doc.createNestedObject("pairedDevice");
+        d["used"] = pairedDevice.used;
+        d["name"] = pairedDevice.name;
+        d["address"] = pairedDevice.address;
+    }
 
     if (! serializeJson(doc, file)) {
         Serial.println("Error writing configuration");
@@ -107,51 +138,70 @@ bool Config::write() {
 void Config::setDirty(bool d) {
     if (d == dirty) return;
     dirty = d;
-    // TODO: trigger listeners
+    dirtyChangedListeners.call();
 }
 
-void Config::setMode(const char* modeStr) {
-    // TODO: trigger listeners
-    setDirty(true);
-}
-
-void Config::setName(const char* newName) {
-    // TODO: trigger listeners
-    setDirty(true);
-}
-
-void Config::setWifiSSID(const char* ssid) {
-    // TODO: trigger listeners
-    setDirty(true);
-}
-
-void Config::setWifiPassword(const char* password) {
-    // TODO: trigger listeners
+void Config::setSettings(const char* modeStr, const char* newName, const char* ssid, const char* password) {
+    if (strcmp(modeStr, "Tractor") == 0)
+        mode = Tractor;
+    else if (strcmp(modeStr, "Implement") == 0)
+        mode = Implement;
+    strcpy(name, newName);
+    strcpy(wifiSSID, ssid);
+    strcpy(wifiPassword, password);
+    settingsChangedListeners.call();
     setDirty(true);
 }
 
 void Config::setCalibrated(bool cal) {
-    // TODO: trigger listeners
+    if (cal == calibrated) return;
+    calibrated = cal;
+    calibratedChangedListeners.call();
     setDirty(true);
 }
 
-void Config::setDownLevel(Vector3 v) {
-    // TODO: trigger listeners
+void Config::setDownLevel(Vector3 &v) {
+    if (downLevel == v) return;
+    downLevel.set(v);
+    downLevelChangedListeners.call();
     setDirty(true);
 }
 
-void Config::setDownTipped(Vector3 v) {
-    // TODO: trigger listeners
+void Config::setDownTipped(Vector3 &v) {
+    if (downTipped == v) return;
+    downTipped.set(v);
+    downTippedChangedListeners.call();
     setDirty(true);
 }
 
 void Config::setPairedDevice(int i, const char* name, const char* address) {
-    // TODO: trigger listeners
+    if ((i < 0) || (i >= MaxBTDevices)) return;
+    if (strlen(name) == 0) {
+        if (! pairedDevices[i].used) return;
+        pairedDevices[i].used = false;
+        pairedDevices[i].name[0] = '\0';
+        pairedDevices[i].address[0] = '\0';
+    } else {
+        pairedDevices[i].used = true;
+        strcpy(pairedDevices[i].name, name);
+        strcpy(pairedDevices[i].address, address);
+    }
+    pairedDevicesChangedListeners.call();
     setDirty(true);
 }
 
 void Config::setPairedDevice(const char* name, const char* address) {
-    // TODO: trigger listeners
+    if (strlen(name) == 0) {
+        if (! pairedDevice.used) return;
+        pairedDevice.used = false;
+        pairedDevice.name[0] = '\0';
+        pairedDevice.address[0] = '\0';
+    } else {
+        pairedDevice.used = true;
+        strcpy(pairedDevice.name, name);
+        strcpy(pairedDevice.address, address);
+    }
+    pairedDeviceChangedListeners.call();
     setDirty(true);
 }
 

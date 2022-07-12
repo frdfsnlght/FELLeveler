@@ -24,10 +24,18 @@ void UI::showScreen(Screen* newScreen) {
 
 void UI::setup(Screen* startScreen) {
     button.setup();
-    button.onPressListeners.add(handleButtonPress);
-    button.onReleaseListeners.add(handleButtonRelease);
-    button.onLongPressListeners.add(handleButtonLongPress);
-    button.onLongReleaseListeners.add(handleButtonLongRelease);
+    button.onPressListeners.add([](void) {
+        UI::getInstance()->handleButtonPress(&UI::getInstance()->button);
+    });
+    button.onReleaseListeners.add([](void) {
+        UI::getInstance()->handleButtonRelease(&UI::getInstance()->button);
+    });
+    button.onLongPressListeners.add([](void) {
+        UI::getInstance()->handleButtonLongPress(&UI::getInstance()->button);
+    });
+    button.onLongReleaseListeners.add([](void) {
+        UI::getInstance()->handleButtonLongRelease(&UI::getInstance()->button);
+    });
     if (startScreen)
         showScreen(startScreen);
     Serial.println("UI setup complete");
@@ -44,26 +52,22 @@ void UI::loop() {
 }
 
 void UI::handleButtonPress(Button* button) {
-    UI* ui = getInstance();
-    if (ui->screen == nullptr) return;
-    ui->screen->handleButtonPress(button);
+    if (screen == nullptr) return;
+    screen->handleButtonPress(button);
 };
 
 void UI::handleButtonRelease(Button* button) {
-    UI* ui = getInstance();
-    if (ui->screen == nullptr) return;
-    ui->screen->handleButtonRelease(button);
+    if (screen == nullptr) return;
+    screen->handleButtonRelease(button);
 };
 
 void UI::handleButtonLongPress(Button* button) {
-    UI* ui = getInstance();
-    if (ui->screen == nullptr) return;
-    ui->screen->handleButtonLongPress(button);
+    if (screen == nullptr) return;
+    screen->handleButtonLongPress(button);
 };
 
 void UI::handleButtonLongRelease(Button* button) {
-    UI* ui = getInstance();
-    if (ui->screen == nullptr) return;
-    ui->screen->handleButtonLongRelease(button);
+    if (screen == nullptr) return;
+    screen->handleButtonLongRelease(button);
 };
 

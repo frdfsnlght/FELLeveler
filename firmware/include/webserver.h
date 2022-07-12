@@ -36,6 +36,24 @@ class WebServer {
     void apiSaveConfig(AsyncWebServerRequest *r);
     void apiReboot(AsyncWebServerRequest *r);
 
+    bool canSendEvent();
+    void sendEvent(String &msg, const char* event, AsyncEventSourceClient *client = nullptr);
+
+    void emitConfigDirty(AsyncEventSourceClient *c);
+    void emitConfigSettings(AsyncEventSourceClient *c);
+    void emitConfigCalibrated(AsyncEventSourceClient *c);
+    void emitConfigPairedDevices();
+    void emitConfigPairedDevice(AsyncEventSourceClient *c);
+    void emitWifiMode(AsyncEventSourceClient *c);
+    void emitWifiRSSI(AsyncEventSourceClient *c);
+    void emitBTConnected(AsyncEventSourceClient *c);
+    void emitBTScannedDevices();
+    void emitBTConnectedDevice(AsyncEventSourceClient *c);
+    void emitBTPaired(AsyncEventSourceClient *c);
+    void emitLevelerRoll(AsyncEventSourceClient *c);
+    void emitLevelerPitch(AsyncEventSourceClient *c);
+    void emitLevelerImplementAngle(AsyncEventSourceClient *c);
+
 };
 
 #endif

@@ -21,7 +21,7 @@ class Accelerometer {
 
     Vector3 raw;
     Vector3 filtered;
-    CallbackList<int> listeners = CallbackList<int>();
+    CallbackList listeners = CallbackList();
 
     void setup();
     void loop();

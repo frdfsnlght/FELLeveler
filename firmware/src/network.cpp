@@ -83,7 +83,7 @@ void Network::loop() {
         WiFi.begin(config->wifiSSID, config->wifiPassword);
         state = Connecting;
         connectionAttempts++;
-        listeners.call(0);
+        stateChangedListeners.call();
     } else if (state == Connecting) {
         if (WiFi.status() == WL_CONNECTED) {
             state = Connected;
@@ -91,7 +91,7 @@ void Network::loop() {
             Serial.print("Network IP Address: ");
             ipAddress = WiFi.localIP();
             Serial.println(WiFi.localIP());
-            listeners.call(0);
+            stateChangedListeners.call();
         } else if (WiFi.status() == WL_CONNECT_FAILED) {
             Serial.println("Network connection failed");
             if (connectionAttempts >= MaxConnectionAttempts) {
@@ -102,7 +102,7 @@ void Network::loop() {
                 state = Waiting;
                 lastConnectionAttemptTime = millis();
             }
-            listeners.call(0);
+            stateChangedListeners.call();
         }
     } else if (state == Waiting) {
         if ((millis() - lastConnectionAttemptTime) > ConnectionAttemptInterval) {
@@ -115,11 +115,11 @@ void Network::loop() {
             lastConnectionAttemptTime = 0;
             Serial.println("Network connection lost");
             ipAddress = (uint32_t)0;
-            listeners.call(0);
+            stateChangedListeners.call();
         } else {
             if (WiFi.RSSI() != rssi) {
                 rssi = WiFi.RSSI();
-                listeners.call(0);
+                wifiRSSIChangedListeners.call();
             }
         }
     } else if (state == AP) {
@@ -145,4 +145,5 @@ void Network::setupAP() {
     dnsServer.start(53, "*", APAddress);
     Serial.print("Network IP Address: ");
     Serial.println(WiFi.softAPIP());
+    wifiModeChangedListeners.call();
 }

@@ -102,7 +102,7 @@ void Accelerometer::loop() {
     }
 
     if (changed) {
-        listeners.call(0);
+        listeners.call();
 
 #ifdef DEBUG_ACCELEROMETER
         Serial.print("ACCEL: ");

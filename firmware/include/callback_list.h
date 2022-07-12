@@ -1,14 +1,13 @@
 #ifndef CALLBACK_LIST_H
 #define CALLBACK_LIST_H
 
-template <typename T>
 class CallbackList {
 
     public:
 
     CallbackList() : first(nullptr) {}
 
-    void add(void (*cb)(T)) {
+    void add(void (*cb)(void)) {
         if (first == nullptr)
             first = new CallbackListNode(cb);
         else {
@@ -19,7 +18,7 @@ class CallbackList {
         }
     }
 
-    void remove(void (*cb)(T)) {
+    void remove(void (*cb)(void)) {
         CallbackListNode* node = first;
         CallbackListNode* last = nullptr;
         while (node != nullptr) {
@@ -36,10 +35,10 @@ class CallbackList {
         }
     }
 
-    void call(T arg) {
+    void call() {
         CallbackListNode* node = first;
         while (node != nullptr) {
-            node->cb(arg);
+            node->cb();
             node = node->next;
         }
     }
@@ -47,9 +46,9 @@ class CallbackList {
     private:
 
     struct CallbackListNode {
-        void (*cb)(T);
+        void (*cb)(void);
         CallbackListNode* next;
-        CallbackListNode(void (*cb)(T)) : cb(cb), next(nullptr) {}
+        CallbackListNode(void (*cb)(void)) : cb(cb), next(nullptr) {}
     };
 
     CallbackListNode* first;

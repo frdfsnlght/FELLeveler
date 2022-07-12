@@ -2,6 +2,7 @@
 #define NETWORK_H
 
 #include <Arduino.h>
+#include <DNSServer.h>
 #include "callback_list.h"
 
 class Network {
@@ -18,7 +19,10 @@ class Network {
         Connected
     };
 
-    CallbackList<int> listeners = CallbackList<int>();
+    CallbackList stateChangedListeners = CallbackList();
+    CallbackList wifiModeChangedListeners = CallbackList();
+    CallbackList wifiRSSIChangedListeners = CallbackList();
+
     NetworkState state;
     IPAddress ipAddress;    // station only
     int32_t rssi;           // station only

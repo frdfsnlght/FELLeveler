@@ -9,19 +9,26 @@ class Leveler {
 
     static Leveler* getInstance();
 
-    CallbackList<int> listeners = CallbackList<int>();
+    CallbackList rollChangedListeners = CallbackList();
+    CallbackList pitchChangedListeners = CallbackList();
+    CallbackList implementAngleChangedListeners = CallbackList();
+
+    int roll = 0;
+    int pitch = 0;
+    int implementAngle = 0;
 
     void setup();
+    
+    void calibrateLevel();
+    void calibrateTipped();
 
     private:
 
     static Leveler* instance;
 
-    static void accelerometerChanged(int);
-    //static void bluetoothReceived(char* line);
-
     Leveler() {}
     
+    void update();
 };
 
 #endif

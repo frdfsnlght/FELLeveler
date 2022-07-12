@@ -17,7 +17,6 @@ export class ModelService {
   wifiMode = new BehaviorSubject<string>('Station'); // Station or AP
   wifiSSID = new BehaviorSubject<string>('');
   wifiPassword = new BehaviorSubject<string>('');
-  wifiConnected = new BehaviorSubject<boolean>(true);  // station mode only
   wifiRSSI = new BehaviorSubject<number>(0);
   calibrated = new BehaviorSubject<boolean>(true);
   roll = new BehaviorSubject<number>(0);  // tractor only
@@ -38,12 +37,14 @@ export class ModelService {
 
     this.eventSource.addEventListener('open', e => {
       console.log("Events Connected");
+      // TODO: handle connections
     });
 
     this.eventSource.addEventListener('error', e => {
       if (this.eventSource.readyState != EventSource.OPEN) {
         console.log("Events Disconnected");
-      } 
+        // TODO: handle connections
+    } 
     });
 
     this.eventSource.addEventListener('settings', e => {
@@ -56,10 +57,6 @@ export class ModelService {
 
     this.eventSource.addEventListener('wifiMode', e => {
       this.wifiMode.next(e.data.toString());
-    });
-
-    this.eventSource.addEventListener('wifiConnected', e => {
-      this.wifiConnected.next(e.data.toString() == 'true');
     });
 
     this.eventSource.addEventListener('wifiRSSI', e => {

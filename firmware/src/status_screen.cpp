@@ -3,7 +3,7 @@
 
 #include "network.h"
 #include "bluetooth.h"
-#include "accelerometer.h"
+#include "leveler.h"
 
 StatusScreen* StatusScreen::instance = nullptr;
 
@@ -13,10 +13,36 @@ StatusScreen* StatusScreen::getInstance() {
 }
 
 StatusScreen::StatusScreen() : Screen() {
-    // TODO: add listeners for connected impl, pitch, roll, angle changes
-    Network::getInstance()->listeners.add(statusUpdated);
-    Bluetooth::getInstance()->listeners.add(statusUpdated);
-    Accelerometer::getInstance()->listeners.add(statusUpdated);
+    Network::getInstance()->stateChangedListeners.add([](void) {
+        StatusScreen::getInstance()->networkStateChanged();
+    });
+    Network::getInstance()->wifiModeChangedListeners.add([](void) {
+        StatusScreen::getInstance()->networkStateChanged();
+    });
+    Network::getInstance()->wifiRSSIChangedListeners.add([](void) {
+        StatusScreen::getInstance()->networkRSSIChanged();
+    });
+
+    Bluetooth::getInstance()->connectedChangedListeners.add([](void) {
+        StatusScreen::getInstance()->btChanged();
+    });
+    Bluetooth::getInstance()->connectedDeviceChangedListeners.add([](void) {
+        StatusScreen::getInstance()->btChanged();
+    });
+    Bluetooth::getInstance()->pairedChangedListeners.add([](void) {
+        StatusScreen::getInstance()->btChanged();
+    });
+
+    Leveler::getInstance()->rollChangedListeners.add([](void) {
+        StatusScreen::getInstance()->rollChanged();
+    });
+    Leveler::getInstance()->pitchChangedListeners.add([](void) {
+        StatusScreen::getInstance()->pitchChanged();
+    });
+    Leveler::getInstance()->implementAngleChangedListeners.add([](void) {
+        StatusScreen::getInstance()->implementAngleChanged();
+    });
+
 }
 
 // TODO: add button handlers to change screens
@@ -37,15 +63,37 @@ void StatusScreen::paint() {
     //Bluetooth* bt = Bluetooth::getInstance();
     d->printLeft("Bluetooth: ", 0, 20);
 
-    Accelerometer* a = Accelerometer::getInstance();
-    d->printLeft("Accel X: ", 0, 30);
-    d->print(a->filtered.x);
-    d->printLeft("Accel Y: ", 0, 40);
-    d->print(a->filtered.y);
-    d->printLeft("Accel Z: ", 0, 50);
-    d->print(a->filtered.z);
+    //Leveler* leveler = Leveler::getInstance();
+    d->printLeft("Leveler: ", 0, 30);
+
 }
 
-void StatusScreen::statusUpdated(int ignore) {
-    StatusScreen::getInstance()->dirty = true;
+void StatusScreen::networkStateChanged() {
+    // TODO
+    dirty = true;
+}
+
+void StatusScreen::networkRSSIChanged() {
+    // TODO
+    dirty = true;
+}
+
+void StatusScreen::btChanged() {
+    // TODO
+    dirty = true;
+}
+
+void StatusScreen::rollChanged() {
+    // TODO
+    dirty = true;
+}
+
+void StatusScreen::pitchChanged() {
+    // TODO
+    dirty = true;
+}
+
+void StatusScreen::implementAngleChanged() {
+    // TODO
+    dirty = true;
 }

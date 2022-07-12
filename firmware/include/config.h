@@ -3,6 +3,7 @@
 
 #include <Arduino.h>
 #include "vector3.h"
+#include "callback_list.h"
 
 class Config {
 
@@ -19,7 +20,7 @@ class Config {
     struct BTDevice {
         bool used;
         char name[32];
-        byte address[6];
+        char address[18];
     };
 
     bool dirty;
@@ -34,17 +35,22 @@ class Config {
     BTDevice pairedDevices[MaxBTDevices];
     BTDevice pairedDevice;
 
+    CallbackList dirtyChangedListeners = CallbackList();
+    CallbackList settingsChangedListeners = CallbackList();
+    CallbackList calibratedChangedListeners = CallbackList();
+    CallbackList downLevelChangedListeners = CallbackList();
+    CallbackList downTippedChangedListeners = CallbackList();
+    CallbackList pairedDevicesChangedListeners = CallbackList();
+    CallbackList pairedDeviceChangedListeners = CallbackList();
+
     bool read();
     bool write();
 
     void setDirty(bool d);
-    void setMode(const char* modeStr);
-    void setName(const char* newName);
-    void setWifiSSID(const char* ssid);
-    void setWifiPassword(const char* password);
+    void setSettings(const char* modeStr, const char* newName, const char* ssid, const char* password);
     void setCalibrated(bool cal);
-    void setDownLevel(Vector3 v);
-    void setDownTipped(Vector3 v);
+    void setDownLevel(Vector3 &v);
+    void setDownTipped(Vector3 &v);
     void setPairedDevice(int i, const char* name, const char* address);
     void setPairedDevice(const char* name, const char* address);
 
@@ -54,7 +60,7 @@ class Config {
 
     static Config* instance;
 
-    Config() {}
+    Config();
 
 };
 

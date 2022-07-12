@@ -39,8 +39,7 @@
     <mat-card-title><mat-icon>wifi</mat-icon> WiFi</mat-card-title>
     <mat-card-content>
         <p><strong>Mode:</strong> {{model.wifiMode.value}}</p>
-        <p *ngIf="model.wifiMode.value=='Station'"><strong>Connected:</strong> {{model.wifiConnected.value ? 'Yes' : 'No'}}</p>
-        <p *ngIf="model.wifiConnected.value && model.wifiMode.value=='Station'"><strong>RSSI:</strong> {{model.wifiRSSI.value}} dB</p>
+        <p *ngIf="model.wifiMode.value=='Station'"><strong>RSSI:</strong> {{model.wifiRSSI.value}} dB</p>
     </mat-card-content>
 </mat-card>
 

@@ -47,6 +47,12 @@ void Vector3::set(float sx, float sy, float sz) {
     z = sz;
 }
 
+void Vector3::set(Vector3 &v) {
+    x = v.x;
+    y = v.y;
+    z = v.z;
+}
+
 float Vector3::magnitude() {
     return sqrt((x * x) + (y * y) + (z * z));
 }

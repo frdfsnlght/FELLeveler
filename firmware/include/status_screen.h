@@ -20,6 +20,12 @@ class StatusScreen : public Screen {
 
     StatusScreen();
 
+    void networkStateChanged();
+    void networkRSSIChanged();
+    void btChanged();
+    void rollChanged();
+    void pitchChanged();
+    void implementAngleChanged();
 
 };
 
