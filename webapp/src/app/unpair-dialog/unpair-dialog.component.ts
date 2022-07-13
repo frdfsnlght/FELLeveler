@@ -31,16 +31,6 @@ export class UnpairDialogComponent implements OnInit, OnDestroy {
     });
   }
 
-  unpair(): void {
-    this.model.unpairBT().subscribe({
-      next: (res: string) => {
-        console.info('unpairBT: ' + res);
-        if (res == 'OK')
-          this.dialogRef.close(true);
-      }
-    });
-  }
-
   cancel(): void {
     this.dialogRef.close(false);
   }

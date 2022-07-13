@@ -11,11 +11,13 @@ class Leveler {
 
     CallbackList rollChangedListeners = CallbackList();
     CallbackList pitchChangedListeners = CallbackList();
-    CallbackList implementAngleChangedListeners = CallbackList();
+    CallbackList implementRollChangedListeners = CallbackList();
+    CallbackList implementPitchChangedListeners = CallbackList();
 
     int roll = 0;
     int pitch = 0;
-    int implementAngle = 0;
+    int implementRoll = 0;
+    int implementPitch = 0;
 
     void setup();
     

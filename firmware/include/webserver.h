@@ -30,9 +30,6 @@ class WebServer {
     void apiScanBTDevices(AsyncWebServerRequest *r);
     void apiPairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t);
     void apiUnpairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t);
-    void apiUnpairBT(AsyncWebServerRequest *r);
-    void apiStartPairing(AsyncWebServerRequest *r);
-    void apiStopPairing(AsyncWebServerRequest *r);
     void apiSaveConfig(AsyncWebServerRequest *r);
     void apiReboot(AsyncWebServerRequest *r);
 
@@ -43,16 +40,15 @@ class WebServer {
     void emitConfigSettings(AsyncEventSourceClient *c);
     void emitConfigCalibrated(AsyncEventSourceClient *c);
     void emitConfigPairedDevices();
-    void emitConfigPairedDevice(AsyncEventSourceClient *c);
     void emitWifiMode(AsyncEventSourceClient *c);
     void emitWifiRSSI(AsyncEventSourceClient *c);
     void emitBTConnected(AsyncEventSourceClient *c);
     void emitBTScannedDevices();
     void emitBTConnectedDevice(AsyncEventSourceClient *c);
-    void emitBTPaired(AsyncEventSourceClient *c);
     void emitLevelerRoll(AsyncEventSourceClient *c);
     void emitLevelerPitch(AsyncEventSourceClient *c);
-    void emitLevelerImplementAngle(AsyncEventSourceClient *c);
+    void emitLevelerImplementRoll(AsyncEventSourceClient *c);
+    void emitLevelerImplementPitch(AsyncEventSourceClient *c);
 
 };
 

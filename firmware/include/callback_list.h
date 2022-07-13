@@ -5,7 +5,7 @@ class CallbackList {
 
     public:
 
-    CallbackList() : first(nullptr) {}
+    CallbackList() : first(nullptr), callDeferred(false) {}
 
     void add(void (*cb)(void)) {
         if (first == nullptr)
@@ -43,6 +43,17 @@ class CallbackList {
         }
     }
 
+    void callLater() {
+        callDeferred = true;
+    }
+
+    void callNow() {
+        if (callDeferred) {
+            callDeferred = false;
+            call();
+        }
+    }
+
     private:
 
     struct CallbackListNode {
@@ -52,6 +63,7 @@ class CallbackList {
     };
 
     CallbackListNode* first;
+    bool callDeferred;
 
 };
 

@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
 import { ModelService } from '../model.service';
@@ -8,7 +8,7 @@ import { ModelService } from '../model.service';
   templateUrl: './pair-dialog.component.html',
   styleUrls: ['./pair-dialog.component.css']
 })
-export class PairDialogComponent implements OnInit, OnDestroy {
+export class PairDialogComponent implements OnInit {
 
   mode: string = '';
   btPairedSubscription!: Subscription;
@@ -21,26 +21,7 @@ export class PairDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    if (this.mode == 'Tractor') {
-      this.scan();
-    }
-    if (this.mode == 'Implement') {
-      this.model.startPairing().subscribe({
-        next: (res: string) => {
-          console.info('startPairing: ' + res);
-        }
-      });
-      this.btPairedSubscription = this.model.btPaired.asObservable().subscribe(b => {
-        if (b)
-          this.dialogRef.close(true);
-      });
-    }
-  }
-
-  ngOnDestroy() {
-    if (this.mode == 'Implement') {
-      this.btPairedSubscription.unsubscribe();
-    }
+    this.scan();
   }
 
   scan(): void {
@@ -66,17 +47,7 @@ export class PairDialogComponent implements OnInit, OnDestroy {
   }
 
   cancel(): void {
-    if (this.mode == 'Tractor') {
-      this.dialogRef.close(false);
-    }
-    if (this.mode == 'Implement') {
-      this.model.stopPairing().subscribe({
-        next: (res: string) => {
-          console.info('stopPairing: ' + res);
-          this.dialogRef.close(false);
-        }
-      });
-    }
+    this.dialogRef.close(false);
   }
 
 }

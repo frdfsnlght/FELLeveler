@@ -25,7 +25,8 @@ class StatusScreen : public Screen {
     void btChanged();
     void rollChanged();
     void pitchChanged();
-    void implementAngleChanged();
+    void implementRollChanged();
+    void implementPitchChanged();
 
 };
 

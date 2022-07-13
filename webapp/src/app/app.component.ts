@@ -17,13 +17,9 @@ import { UnpairDialogComponent } from './unpair-dialog/unpair-dialog.component';
 export class AppComponent {
 
   title: string = '';
-  //mode: string = '';
-  //name: string = '';
-  //configDirty: boolean = false;
 
   private modeSubscription!: Subscription;
   private nameSubscription!: Subscription;
-  //private configDirtySubscription!: Subscription;
 
   constructor(
     private titleService: Title,
@@ -33,20 +29,12 @@ export class AppComponent {
 
   ngOnInit(): void {
     this.modeSubscription = this.model.mode.asObservable().subscribe(s => {this.setTitle()});
-    /*
-    this.modeSubscription = this.modelService.mode$.subscribe(s => {
-      this.mode = s;
-      this.setTitle();
-    });
-    */
     this.nameSubscription = this.model.name.asObservable().subscribe(s => {this.setTitle()});
-    //this.configDirtySubscription = this.modelService.configDirty$.subscribe(b => this.configDirty = b)
   }
 
   ngOnDestroy() {
     this.modeSubscription.unsubscribe();
     this.nameSubscription.unsubscribe();
-    //this.configDirtySubscription.unsubscribe();
   }
 
   setTitle(): void {

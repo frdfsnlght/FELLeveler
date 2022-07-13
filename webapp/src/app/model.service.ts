@@ -18,15 +18,17 @@ export class ModelService {
   wifiSSID = new BehaviorSubject<string>('');
   wifiPassword = new BehaviorSubject<string>('');
   wifiRSSI = new BehaviorSubject<number>(0);
-  calibrated = new BehaviorSubject<boolean>(true);
-  roll = new BehaviorSubject<number>(0);  // tractor only
-  pitch = new BehaviorSubject<number>(0);
-  implementAngle = new BehaviorSubject<number>(0);  // tractor only
   btScannedDevices = new BehaviorSubject<Array<BtDevice>>([]);  // tractor only
   btPairedDevices = new BehaviorSubject<Array<BtDevice>>([]); // tractor only
-  btPaired = new BehaviorSubject<boolean>(false); // implement only
   btConnected = new BehaviorSubject<boolean>(false);
-  btConnectedDevice = new BehaviorSubject<BtDevice | null>(null); // tractor only
+  btConnectedDevice = new BehaviorSubject<BtDevice | null>(null);
+
+  calibrated = new BehaviorSubject<boolean>(true);
+  roll = new BehaviorSubject<number>(0);
+  pitch = new BehaviorSubject<number>(0);
+  implementRoll = new BehaviorSubject<number>(0);  // tractor only
+  implementPitch = new BehaviorSubject<number>(0);  // tractor only
+
 
   configDirty = new BehaviorSubject<boolean>(false);
 
@@ -63,22 +65,6 @@ export class ModelService {
       this.wifiRSSI.next(parseInt(e.data.toString()));
     });
 
-    this.eventSource.addEventListener('calibrated', e => {
-      this.calibrated.next(e.data.toString() == 'true');
-    });
-
-    this.eventSource.addEventListener('roll', e => {
-      this.roll.next(parseInt(e.data.toString()));
-    });
-
-    this.eventSource.addEventListener('pitch', e => {
-      this.pitch.next(parseInt(e.data.toString()));
-    });
-
-    this.eventSource.addEventListener('implementAngle', e => {
-      this.implementAngle.next(parseInt(e.data.toString()));
-    });
-
     this.eventSource.addEventListener('btScannedDevices', e => {
       var a = JSON.parse(e.data.toString());
       var devs:Array<BtDevice> = [];
@@ -97,10 +83,6 @@ export class ModelService {
       this.btPairedDevices.next(devs);
     });
 
-    this.eventSource.addEventListener('btPaired', e => {
-      this.btPaired.next(e.data.toString() == 'true');
-    });
-
     this.eventSource.addEventListener('btConnected', e => {
       this.btConnected.next(e.data.toString() == 'true');
       if (! this.btConnected.value)
@@ -110,6 +92,26 @@ export class ModelService {
     this.eventSource.addEventListener('btConnectedDevice', e => {
       var o = JSON.parse(e.data.toString());
       this.btConnectedDevice.next(new BtDevice(o.name, o.address));
+    });
+
+    this.eventSource.addEventListener('calibrated', e => {
+      this.calibrated.next(e.data.toString() == 'true');
+    });
+
+    this.eventSource.addEventListener('roll', e => {
+      this.roll.next(parseInt(e.data.toString()));
+    });
+
+    this.eventSource.addEventListener('pitch', e => {
+      this.pitch.next(parseInt(e.data.toString()));
+    });
+
+    this.eventSource.addEventListener('implementRoll', e => {
+      this.implementRoll.next(parseInt(e.data.toString()));
+    });
+
+    this.eventSource.addEventListener('implementPitch', e => {
+      this.implementPitch.next(parseInt(e.data.toString()));
     });
 
     this.eventSource.addEventListener('configDirty', e => {
@@ -141,19 +143,6 @@ export class ModelService {
 
   unpairBTDevice(address: string): Observable<string> {
     return this.http.post(this.apiUrl + 'unpairBTDevice', {address: address}, {responseType: 'text'});
-  }
-
-  unpairBT(): Observable<string> {
-    return this.http.get(this.apiUrl + 'unpairBT', {responseType: 'text'});
-  }
-
-  startPairing(): Observable<string> {
-    this.btPaired.next(false);
-    return this.http.get(this.apiUrl + 'startPairing', {responseType: 'text'});
-  }
-
-  stopPairing(): Observable<string> {
-    return this.http.get(this.apiUrl + 'stopPairing', {responseType: 'text'});
   }
 
   saveConfig(): Observable<string> {

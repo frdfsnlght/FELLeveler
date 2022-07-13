@@ -4,23 +4,23 @@
 #include <Arduino.h>
 #include "vector3.h"
 #include "callback_list.h"
+#include "BTDevice.h"
 
 class Config {
 
     public:
 
     static Config* getInstance();
-    static const int MaxBTDevices = 10;
+    static const int MaxPairedDevices = 10;
 
     enum MainMode {
         Tractor,
         Implement
     };
 
-    struct BTDevice {
+    struct PairedDevice {
         bool used;
-        char name[32];
-        char address[18];
+        BTDevice device;
     };
 
     bool dirty;
@@ -32,8 +32,7 @@ class Config {
     bool calibrated;
     Vector3 downLevel;
     Vector3 downTipped;
-    BTDevice pairedDevices[MaxBTDevices];
-    BTDevice pairedDevice;
+    PairedDevice pairedDevices[MaxPairedDevices];
 
     CallbackList dirtyChangedListeners = CallbackList();
     CallbackList settingsChangedListeners = CallbackList();
@@ -41,7 +40,6 @@ class Config {
     CallbackList downLevelChangedListeners = CallbackList();
     CallbackList downTippedChangedListeners = CallbackList();
     CallbackList pairedDevicesChangedListeners = CallbackList();
-    CallbackList pairedDeviceChangedListeners = CallbackList();
 
     bool read();
     bool write();
@@ -51,8 +49,9 @@ class Config {
     void setCalibrated(bool cal);
     void setDownLevel(Vector3 &v);
     void setDownTipped(Vector3 &v);
-    void setPairedDevice(int i, const char* name, const char* address);
-    void setPairedDevice(const char* name, const char* address);
+    bool hasEmptyPairedDevice();
+    bool addPairedDevice(const char* name, const char* address);
+    bool removePairedDevice(const char* address);
 
     private:
 

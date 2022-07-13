@@ -2,8 +2,11 @@
 #define BLUETOOTH_H
 
 #include <BluetoothSerial.h>
+#include <ArduinoJson.h>
 #include "callback_list.h"
 #include "led.h"
+#include "config.h"
+#include "BTDevice.h"
 
 class Bluetooth {
 
@@ -12,51 +15,78 @@ class Bluetooth {
     static Bluetooth* getInstance();
     static const int MaxScannedDevices = 10;
 
-    struct BTDevice {
+    enum State {
+        Stopped,
+        Connected,
+        WaitingForMaster,
+        ScanForSlave,
+        ScanningForSlave,
+        ConnectingToSlave,
+        ScanningDevices,
+        ScanningComplete
+    };
+
+    struct ScannedDevice {
         bool used;
-        char name[32];
-        char address[18];
+        BTDevice device;
+    };
+
+    struct Measurements {
+        int roll;
+        int pitch;
     };
 
     CallbackList connectedChangedListeners = CallbackList();
-    CallbackList scannedDevicesChangedListeners = CallbackList();
     CallbackList connectedDeviceChangedListeners = CallbackList();
-    CallbackList pairedChangedListeners = CallbackList();
+    CallbackList scannedDevicesChangedListeners = CallbackList();
+    CallbackList measurementsChangedListeners = CallbackList();
 
-    bool connected;
-
-    // Master
+    State state;
     BTDevice connectedDevice;
-    BTDevice scannedDevices[MaxScannedDevices];
-
-    // Slave
-    bool paired;
+    ScannedDevice scannedDevices[MaxScannedDevices];
+    Measurements measurements;
 
     void setup();
     void loop();
+
     void scanDevices();
-    bool canPairDevice();
-    void pairDevice(const char* address);
-    bool canUnpairDevice(const char* address);
-    void unpairDevice(const char* address);
-    void unpair();
-    void startPairing();
-    void stopPairing();
+    bool pairDevice(const char* address);
 
     private:
 
     static Bluetooth* instance;
 
-    static const String BTBaseName;
+    static const char BTBaseName[];
 
     LED led = LED(2, false);
     BluetoothSerial bt = BluetoothSerial();
-    bool master;
-    
+    Config::MainMode mode;
+    char deviceName[64];
+    char receiveBuffer[256];
+    int receiveBufferPos;
+    bool justConnected;
+    bool justDisconnected;
+    BTAddress slaveAddress;
+
     Bluetooth() {}
-    void handleCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
-    void receiveData();
-    
+    void btCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
+    void start();
+    void stop();
+    void doConnect();
+    void doDisconnect();
+    void scanForSlave();
+    void checkFoundDevice(BTAdvertisedDevice* device);
+    void connectToSlave();
+    void completeDeviceScan();
+
+    void resetReceiveBuffer();
+    void processReceiveBuffer();
+    void setConnectedDevice(const JsonDocument& doc);
+    void setMeasurements(const JsonDocument& doc);
+    void sendString(String str);
+    void sendDeviceInfo();
+    void sendMeasurements();
+
 };
 
 #endif

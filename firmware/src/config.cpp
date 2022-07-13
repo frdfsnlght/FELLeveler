@@ -15,16 +15,17 @@ Config* Config::getInstance() {
 
 Config::Config() {
     dirty = false;
-    mode = Tractor;
+    // TODO: reset default
+//    mode = Tractor;
+    mode = Implement;
     strcpy(name, "Unknown");
     strcpy(wifiSSID, DEFAULT_WIFI_SSID);
     strcpy(wifiPassword, DEFAULT_WIFI_PASSWORD);
     calibrated = false;
     downLevel.set(0, 0, 0);
     downTipped.set(0, 0, 0);
-    for (int i = 0; i < MaxBTDevices; i++)
+    for (int i = 0; i < MaxPairedDevices; i++)
         pairedDevices[i].used = false;
-    pairedDevice.used = false;
 }
 
 bool Config::read() {
@@ -58,21 +59,17 @@ bool Config::read() {
 
     if (mode == Tractor) {
         JsonArray a = doc["pairedDevices"];
-        for (int i = 0; i < MaxBTDevices; i++) {
+        for (int i = 0; i < MaxPairedDevices; i++) {
             if (i >= a.size()) {
                 pairedDevices[i].used = false;
-                pairedDevices[i].name[0] = '\0';
-                pairedDevices[i].address[0] = '\0';
+                pairedDevices[i].device.name[0] = '\0';
+                pairedDevices[i].device.address[0] = '\0';
             } else {
                 pairedDevices[i].used = true;
-                strcpy(pairedDevices[i].name, a[i]["name"]);
-                strcpy(pairedDevices[i].address, a[i]["address"]);
+                strcpy(pairedDevices[i].device.name, a[i]["name"]);
+                strcpy(pairedDevices[i].device.address, a[i]["address"]);
             }
         }
-    } else if (mode == Implement) {
-        pairedDevice.used = doc["pairedDevice"]["used"];
-        strcpy(pairedDevice.name, doc["pairedDevice"]["name"]);
-        strcpy(pairedDevice.address, doc["pairedDevice"]["address"]);
     }
 
     Serial.println("Configuration read");
@@ -108,19 +105,14 @@ bool Config::write() {
     JsonObject d;
     if (mode == Tractor) {
         JsonArray a = doc.createNestedArray("pairedDevices");
-        for (int i = 0; i < MaxBTDevices; i++) {
+        for (int i = 0; i < MaxPairedDevices; i++) {
             if (pairedDevices[i].used) {
                 d = a.createNestedObject();
                 d["used"] = pairedDevices[i].used;
-                d["name"] = pairedDevices[i].name;
-                d["address"] = pairedDevices[i].address;
+                d["name"] = pairedDevices[i].device.name;
+                d["address"] = pairedDevices[i].device.address;
             }
         }
-    } else if (mode == Implement) {
-        d = doc.createNestedObject("pairedDevice");
-        d["used"] = pairedDevice.used;
-        d["name"] = pairedDevice.name;
-        d["address"] = pairedDevice.address;
     }
 
     if (! serializeJson(doc, file)) {
@@ -174,34 +166,29 @@ void Config::setDownTipped(Vector3 &v) {
     setDirty(true);
 }
 
-void Config::setPairedDevice(int i, const char* name, const char* address) {
-    if ((i < 0) || (i >= MaxBTDevices)) return;
-    if (strlen(name) == 0) {
-        if (! pairedDevices[i].used) return;
-        pairedDevices[i].used = false;
-        pairedDevices[i].name[0] = '\0';
-        pairedDevices[i].address[0] = '\0';
-    } else {
-        pairedDevices[i].used = true;
-        strcpy(pairedDevices[i].name, name);
-        strcpy(pairedDevices[i].address, address);
+bool Config::addPairedDevice(const char* name, const char* address) {
+    for (int i = 0; i < MaxPairedDevices; i++) {
+        if (! pairedDevices[i].used) {
+            pairedDevices[i].used = true;
+            strcpy(pairedDevices[i].device.name, name);
+            strcpy(pairedDevices[i].device.address, address);
+            pairedDevicesChangedListeners.call();
+            setDirty(true);
+            return true;
+        }
     }
-    pairedDevicesChangedListeners.call();
-    setDirty(true);
+    return false;
 }
 
-void Config::setPairedDevice(const char* name, const char* address) {
-    if (strlen(name) == 0) {
-        if (! pairedDevice.used) return;
-        pairedDevice.used = false;
-        pairedDevice.name[0] = '\0';
-        pairedDevice.address[0] = '\0';
-    } else {
-        pairedDevice.used = true;
-        strcpy(pairedDevice.name, name);
-        strcpy(pairedDevice.address, address);
+bool Config::removePairedDevice(const char* address) {
+    for (int i = 0; i < MaxPairedDevices; i++) {
+        if (pairedDevices[i].used &&
+            (strcmp(pairedDevices[i].device.address, address) == 0)) {
+            pairedDevices[i].used = false;
+            pairedDevicesChangedListeners.call();
+            setDirty(true);
+            return true;
+        }
     }
-    pairedDeviceChangedListeners.call();
-    setDirty(true);
+    return false;
 }
-

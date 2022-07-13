@@ -1,25 +1,18 @@
 <h2 mat-dialog-title>Pair</h2>
 <mat-dialog-content>
-    <div *ngIf="mode == 'Tractor'">
-        <mat-action-list>
-            <mat-list-item *ngFor="let dev of model.btScannedDevices.value; index as i; first as isFirst" (click)="pair(dev.address)">
-                <mat-icon matListIcon>build</mat-icon>
-                <h3 matLine>{{dev.name}}</h3>
-                <p matLine>{{dev.address}}</p>
-            </mat-list-item>
-        </mat-action-list>
-        <mat-spinner *ngIf="scanning"></mat-spinner>
-    </div>
-    <div *ngIf="mode == 'Implement'">
-        <p>Waiting to pair with tractor...</p>
-        <mat-spinner></mat-spinner>
-    </div>
+    <mat-action-list>
+        <mat-list-item *ngFor="let dev of model.btScannedDevices.value; index as i; first as isFirst" (click)="pair(dev.address)">
+            <mat-icon matListIcon>build</mat-icon>
+            <h3 matLine>{{dev.name}}</h3>
+            <p matLine>{{dev.address}}</p>
+        </mat-list-item>
+    </mat-action-list>
+    <mat-spinner align="middle" *ngIf="scanning"></mat-spinner>
 </mat-dialog-content>
 
 <mat-dialog-actions align="end">
     <button
         mat-raised-button
-        *ngIf="mode == 'Tractor'"
         [disabled]="scanning"
         (click)="scan()">Scan</button>
     <button

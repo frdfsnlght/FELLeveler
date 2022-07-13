@@ -5,7 +5,6 @@
 #include "config.h"
 #include "network.h"
 #include "bluetooth.h"
-//#include "accelerometer.h"
 #include "leveler.h"
 #include "debug.h"
 
@@ -37,9 +36,6 @@ void WebServer::setup() {
     server.on("/api/scanBTDevices", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiScanBTDevices(r); });
     server.on("/api/pairBTDevice", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiPairBTDevice(r, d, l, i, t); });
     server.on("/api/unpairBTDevice", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiUnpairBTDevice(r, d, l, i, t); });
-    server.on("/api/unpairBT", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiUnpairBT(r); });
-    server.on("/api/startPairing", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiStartPairing(r); });
-    server.on("/api/stopPairing", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiStopPairing(r); });
     server.on("/api/saveConfig", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiSaveConfig(r); });
     server.on("/api/reboot", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiReboot(r); });
 
@@ -59,14 +55,12 @@ void WebServer::setup() {
         instance->emitConfigCalibrated(client);
         instance->emitWifiMode(client);
         instance->emitBTConnected(client);
+        instance->emitBTConnectedDevice(client);
         instance->emitLevelerPitch(client);
         if (Config::getInstance()->mode == Config::Tractor) {
-            instance->emitBTConnectedDevice(client);
             instance->emitLevelerRoll(client);
-            instance->emitLevelerImplementAngle(client);
-        } else if (Config::getInstance()->mode == Config::Implement) {
-            instance->emitBTPaired(client);
-            instance->emitConfigPairedDevice(client);
+            instance->emitLevelerImplementRoll(client);
+            instance->emitLevelerImplementPitch(client);
         }
         if (Network::getInstance()->state != Network::AP) {
             instance->emitWifiRSSI(client);
@@ -87,9 +81,6 @@ void WebServer::setup() {
     config->pairedDevicesChangedListeners.add([](void) {
         WebServer::instance->emitConfigPairedDevices();
     });
-    config->pairedDeviceChangedListeners.add([](void) {
-        WebServer::instance->emitConfigPairedDevice(nullptr);
-    });
 
     network->wifiModeChangedListeners.add([](void) {
         WebServer::instance->emitWifiMode(nullptr);
@@ -107,15 +98,15 @@ void WebServer::setup() {
     bt->connectedDeviceChangedListeners.add([](void) {
         WebServer::instance->emitBTConnectedDevice(nullptr);
     });
-    bt->pairedChangedListeners.add([](void) {
-        WebServer::instance->emitBTPaired(nullptr);
-    });
 
     leveler->rollChangedListeners.add([](void) {
         WebServer::instance->emitLevelerRoll(nullptr);
     });
-    leveler->implementAngleChangedListeners.add([](void) {
-        WebServer::instance->emitLevelerImplementAngle(nullptr);
+    leveler->implementRollChangedListeners.add([](void) {
+        WebServer::instance->emitLevelerImplementRoll(nullptr);
+    });
+    leveler->implementPitchChangedListeners.add([](void) {
+        WebServer::instance->emitLevelerImplementPitch(nullptr);
     });
     leveler->pitchChangedListeners.add([](void) {
         WebServer::instance->emitLevelerPitch(nullptr);
@@ -178,11 +169,10 @@ void WebServer::apiPairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, 
         return;
     }
     Bluetooth* bt = Bluetooth::getInstance();
-    if (! bt->canPairDevice()) {
-        r->send(400, "text/plain", "No room for implement");
+    if (! bt->pairDevice(doc["address"])) {
+        r->send(400, "text/plain", "Unknown device or out of room");
         return;
     }
-    bt->pairDevice(doc["address"]);
     r->send(200, "text/plain", "OK");
 }
 
@@ -199,45 +189,11 @@ void WebServer::apiUnpairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l
         r->send(400, "text/plain", err.c_str());
         return;
     }
-    Bluetooth* bt = Bluetooth::getInstance();
-    if (! bt->canUnpairDevice(doc["address"])) {
+    Config* config = Config::getInstance();
+    if (! config->removePairedDevice(doc["address"])) {
         r->send(400, "text/plain", "Device not paired");
         return;
     }
-    bt->unpairDevice(doc["address"]);
-    r->send(200, "text/plain", "OK");
-}
-
-void WebServer::apiUnpairBT(AsyncWebServerRequest *r) {
-    DEBUG("HTTP unpairBT");
-    if (Config::getInstance()->mode != Config::Implement) {
-        r->send(400, "text/plain", "Implement only");
-        return;
-    }
-    Bluetooth* bt = Bluetooth::getInstance();
-    bt->unpair();
-    r->send(200, "text/plain", "OK");
-}
-
-void WebServer::apiStartPairing(AsyncWebServerRequest *r) {
-    DEBUG("HTTP startPairing");
-    if (Config::getInstance()->mode != Config::Implement) {
-        r->send(400, "text/plain", "Implement only");
-        return;
-    }
-    Bluetooth* bt = Bluetooth::getInstance();
-    bt->startPairing();
-    r->send(200, "text/plain", "OK");
-}
-
-void WebServer::apiStopPairing(AsyncWebServerRequest *r) {
-    DEBUG("HTTP stopPairing");
-    if (Config::getInstance()->mode != Config::Implement) {
-        r->send(400, "text/plain", "Implement only");
-        return;
-    }
-    Bluetooth* bt = Bluetooth::getInstance();
-    bt->stopPairing();
     r->send(200, "text/plain", "OK");
 }
 
@@ -301,26 +257,14 @@ void WebServer::emitConfigPairedDevices() {
     String json = "";
     StaticJsonDocument<1536> doc;
     Config* config = Config::getInstance();
-    for (int i = 0; i < Config::MaxBTDevices; i++) {
+    for (int i = 0; i < Config::MaxPairedDevices; i++) {
         if (! config->pairedDevices[i].used) continue;
         JsonObject d = doc.createNestedObject();
-        d["used"] = true;
-        d["name"] = config->pairedDevices[i].name;
-        d["address"] = config->pairedDevices[i].address;
+        d["name"] = config->pairedDevices[i].device.name;
+        d["address"] = config->pairedDevices[i].device.address;
     }
     serializeJson(doc, json);
     sendEvent(json, "btPairedDevices");
-}
-
-void WebServer::emitConfigPairedDevice(AsyncEventSourceClient *c) {
-    String json = "";
-    StaticJsonDocument<128> doc;
-    Config* config = Config::getInstance();
-    doc["used"] = config->pairedDevice.used;
-    doc["name"] = config->pairedDevice.name;
-    doc["address"] = config->pairedDevice.address;
-    serializeJson(doc, json);
-    sendEvent(json, "btPairedDevice");
 }
 
 void WebServer::emitWifiMode(AsyncEventSourceClient *c) {
@@ -337,7 +281,7 @@ void WebServer::emitWifiRSSI(AsyncEventSourceClient *c) {
 }
 
 void WebServer::emitBTConnected(AsyncEventSourceClient *c) {
-    String str = Bluetooth::getInstance()->connected ? "true" : "false";
+    String str = (Bluetooth::getInstance()->state == Bluetooth::Connected) ? "true" : "false";
     sendEvent(str, "btConnected", c);
 }
 
@@ -348,8 +292,8 @@ void WebServer::emitBTScannedDevices() {
     for (int i = 0; i < Bluetooth::MaxScannedDevices; i++) {
         if (! bt->scannedDevices[i].used) continue;
         JsonObject d = doc.createNestedObject();
-        d["name"] = bt->scannedDevices[i].name;
-        d["address"] = bt->scannedDevices[i].address;
+        d["name"] = bt->scannedDevices[i].device.name;
+        d["address"] = bt->scannedDevices[i].device.address;
     }
     serializeJson(doc, json);
     sendEvent(json, "btScannedDevices");
@@ -364,11 +308,6 @@ void WebServer::emitBTConnectedDevice(AsyncEventSourceClient *c) {
     serializeJson(doc, json);
     sendEvent(json, "btConnectedDevice");
 
-}
-
-void WebServer::emitBTPaired(AsyncEventSourceClient *c) {
-    String str = Config::getInstance()->pairedDevice.used ? "true" : "false";
-    sendEvent(str, "btPaired", c);
 }
 
 void WebServer::emitLevelerRoll(AsyncEventSourceClient *c) {
@@ -387,10 +326,18 @@ void WebServer::emitLevelerPitch(AsyncEventSourceClient *c) {
     sendEvent(str, "pitch", c);
 }
 
-void WebServer::emitLevelerImplementAngle(AsyncEventSourceClient *c) {
+void WebServer::emitLevelerImplementRoll(AsyncEventSourceClient *c) {
     static unsigned long lastEmitTime = 0;
     if ((millis() - lastEmitTime) < 1000) return;
     lastEmitTime = millis();
-    String str = String(Leveler::getInstance()->implementAngle);
-    sendEvent(str, "implementAngle", c);
+    String str = String(Leveler::getInstance()->implementRoll);
+    sendEvent(str, "implementRoll", c);
+}
+
+void WebServer::emitLevelerImplementPitch(AsyncEventSourceClient *c) {
+    static unsigned long lastEmitTime = 0;
+    if ((millis() - lastEmitTime) < 1000) return;
+    lastEmitTime = millis();
+    String str = String(Leveler::getInstance()->implementPitch);
+    sendEvent(str, "implementPitch", c);
 }

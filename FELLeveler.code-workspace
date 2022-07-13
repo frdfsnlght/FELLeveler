@@ -10,7 +10,8 @@
 	"settings": {
 		"files.associations": {
 			"xstring": "cpp",
-			"string": "cpp"
+			"string": "cpp",
+			"xmemory": "cpp"
 		}
 	}
 }

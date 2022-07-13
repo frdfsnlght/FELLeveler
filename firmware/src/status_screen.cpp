@@ -29,9 +29,6 @@ StatusScreen::StatusScreen() : Screen() {
     Bluetooth::getInstance()->connectedDeviceChangedListeners.add([](void) {
         StatusScreen::getInstance()->btChanged();
     });
-    Bluetooth::getInstance()->pairedChangedListeners.add([](void) {
-        StatusScreen::getInstance()->btChanged();
-    });
 
     Leveler::getInstance()->rollChangedListeners.add([](void) {
         StatusScreen::getInstance()->rollChanged();
@@ -39,8 +36,11 @@ StatusScreen::StatusScreen() : Screen() {
     Leveler::getInstance()->pitchChangedListeners.add([](void) {
         StatusScreen::getInstance()->pitchChanged();
     });
-    Leveler::getInstance()->implementAngleChangedListeners.add([](void) {
-        StatusScreen::getInstance()->implementAngleChanged();
+    Leveler::getInstance()->implementRollChangedListeners.add([](void) {
+        StatusScreen::getInstance()->implementRollChanged();
+    });
+    Leveler::getInstance()->implementPitchChangedListeners.add([](void) {
+        StatusScreen::getInstance()->implementPitchChanged();
     });
 
 }
@@ -93,7 +93,12 @@ void StatusScreen::pitchChanged() {
     dirty = true;
 }
 
-void StatusScreen::implementAngleChanged() {
+void StatusScreen::implementRollChanged() {
+    // TODO
+    dirty = true;
+}
+
+void StatusScreen::implementPitchChanged() {
     // TODO
     dirty = true;
 }
