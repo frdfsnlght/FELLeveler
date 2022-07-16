@@ -145,5 +145,5 @@ void Network::setupAP() {
     dnsServer.start(53, "*", APAddress);
     Serial.print("Network IP Address: ");
     Serial.println(WiFi.softAPIP());
-    wifiModeChangedListeners.call();
+    stateChangedListeners.call();
 }

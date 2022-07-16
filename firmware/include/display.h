@@ -41,6 +41,7 @@ class Display : public Adafruit_SSD1351 {
     void printLeft(const char* str, int x, int y);
     void printCentered(const char* str, int x, int y);
     void printRight(const char* str, int x, int y);
+    void fillRight(uint16_t color);
 
     private:
 

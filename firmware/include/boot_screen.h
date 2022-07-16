@@ -13,7 +13,7 @@ class BootScreen : public Screen {
     String getName() { return "Boot"; }
     void onShow();
     void loop();
-    void paint();
+    void paintContent();
 
     private:
 

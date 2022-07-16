@@ -10,7 +10,7 @@ class MainScreen : public Screen {
     static MainScreen* getInstance();
 
     String getName() { return "Main"; }
-    void paint();
+    void paintContent();
 
     private:
 

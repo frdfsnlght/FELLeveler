@@ -22,12 +22,8 @@ WebServer* WebServer::getInstance() {
 }
 
 void WebServer::setup() {
-
     // Static content
     server.serveStatic("/", SPIFFS, "/w/").setDefaultFile("index.html");
-    server.onNotFound([](AsyncWebServerRequest *request) {
-        request->send(SPIFFS, "/w/index.html", String(), false);
-    });
 
     // API calls
     server.on("/api/configure", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiConfigure(r, d, l, i, t); });
@@ -39,34 +35,52 @@ void WebServer::setup() {
     server.on("/api/saveConfig", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiSaveConfig(r); });
     server.on("/api/reboot", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiReboot(r); });
 
-    Config* config = Config::getInstance();
-    Network* network = Network::getInstance();
-    Bluetooth* bt = Bluetooth::getInstance();
-    Leveler* leveler = Leveler::getInstance();
-
     // Server events
     events.onConnect([](AsyncEventSourceClient *client) {
+        Serial.println("HTTP client connected");
         if (client->lastId()) {
             Serial.print("Client connected with last message ID ");
             Serial.println(client->lastId());
         }
-        instance->emitConfigDirty(client);
-        instance->emitConfigSettings(client);
-        instance->emitConfigCalibrated(client);
-        instance->emitWifiMode(client);
-        instance->emitBTConnected(client);
-        instance->emitBTConnectedDevice(client);
-        instance->emitLevelerPitch(client);
+        instance->emitConfigDirty(client); delay(10);
+        instance->emitConfigSettings(client); delay(10);
+        instance->emitConfigCalibrated(client); delay(10);
+        instance->emitWifiMode(client); delay(10);
+        instance->emitBTConnected(client); delay(10);
+        instance->emitBTConnectedDevice(client); delay(10);
+        instance->emitLevelerPitch(client); delay(10);
         if (Config::getInstance()->mode == Config::Tractor) {
-            instance->emitLevelerRoll(client);
-            instance->emitLevelerImplementRoll(client);
-            instance->emitLevelerImplementPitch(client);
+            instance->emitLevelerRoll(client); delay(10);
+            instance->emitLevelerImplementRoll(client); delay(10);
+            instance->emitLevelerImplementPitch(client); delay(10);
         }
         if (Network::getInstance()->state != Network::AP) {
-            instance->emitWifiRSSI(client);
+            instance->emitWifiRSSI(client); delay(10);
         }
     });
     server.addHandler(&events);
+
+    // Catch all
+    server.onNotFound([](AsyncWebServerRequest *request) {
+#ifdef DEBUG_WEBSERVER_CORS
+        if (request->method() == HTTP_OPTIONS)
+            request->send(200);
+        else
+#endif    
+        request->send(SPIFFS, "/w/index.html", String(), false);
+    });
+
+#ifdef DEBUG_WEBSERVER_CORS
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Origin", "*");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "content-type");
+    DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
+#endif    
+    server.begin();
+
+    Config* config = Config::getInstance();
+    Network* network = Network::getInstance();
+    Bluetooth* bt = Bluetooth::getInstance();
+    Leveler* leveler = Leveler::getInstance();
 
     // Subscribe to listeners
     config->dirtyChangedListeners.add([](void) {
@@ -82,14 +96,14 @@ void WebServer::setup() {
         WebServer::instance->emitConfigPairedDevices();
     });
 
-    network->wifiModeChangedListeners.add([](void) {
+    network->stateChangedListeners.add([](void) {
         WebServer::instance->emitWifiMode(nullptr);
     });
     network->wifiRSSIChangedListeners.add([](void) {
         WebServer::instance->emitWifiRSSI(nullptr);
     });
 
-    bt->connectedChangedListeners.add([](void) {
+    bt->stateChangedListeners.add([](void) {
         WebServer::instance->emitBTConnected(nullptr);
     });
     bt->scannedDevicesChangedListeners.add([](void) {
@@ -112,8 +126,14 @@ void WebServer::setup() {
         WebServer::instance->emitLevelerPitch(nullptr);
     });
 
-    server.begin();
     Serial.println("Webserver setup complete");
+}
+
+void WebServer::loop() {
+    if ((millis() - lastKeepAliveTime) > KeepAliveInterval) {
+        lastKeepAliveTime = millis();
+        emitKeepAlive();
+    }
 }
 
 void WebServer::apiConfigure(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) {
@@ -226,6 +246,11 @@ void WebServer::sendEvent(String &msg, const char* event, AsyncEventSourceClient
         client->send(msg.c_str(), event, millis());
     else
         events.send(msg.c_str(), event, millis());
+}
+
+void WebServer::emitKeepAlive() {
+    if (! canSendEvent()) return;
+    events.send("keepAlive", "keepAlive", millis());
 }
 
 void WebServer::emitConfigDirty(AsyncEventSourceClient *c) {

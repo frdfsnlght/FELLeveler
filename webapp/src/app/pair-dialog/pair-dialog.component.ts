@@ -11,12 +11,11 @@ import { ModelService } from '../model.service';
 export class PairDialogComponent implements OnInit {
 
   mode: string = '';
-  btPairedSubscription!: Subscription;
-  scanning = false;
 
   constructor(
     private dialogRef: MatDialogRef<PairDialogComponent>,
     public model: ModelService) {
+      dialogRef.disableClose = true;
       this.mode = model.mode.value;
   }
 
@@ -25,13 +24,9 @@ export class PairDialogComponent implements OnInit {
   }
 
   scan(): void {
-    this.scanning = true;
     this.model.scanBTDevices().subscribe({
       next: (res: string) => {
         console.info('scanBTDevices: ' + res);
-      },
-      complete: () => {
-        this.scanning = false;
       }
     });
   }

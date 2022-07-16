@@ -1,8 +1,9 @@
 #ifndef DEBUG_H
 #define DEBUG_H
 
-#define DEBUG_ACCELEROMETER
+//#define DEBUG_ACCELEROMETER
 #define DEBUG_WEBSERVER
+#define DEBUG_WEBSERVER_CORS
 #define DEBUG_BLUETOOTH
 
 

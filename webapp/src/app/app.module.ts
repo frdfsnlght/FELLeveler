@@ -11,6 +11,7 @@ import { RebootDialogComponent } from './reboot-dialog/reboot-dialog.component';
 import { CalibrateDialogComponent } from './calibrate-dialog/calibrate-dialog.component';
 import { PairDialogComponent } from './pair-dialog/pair-dialog.component';
 import { UnpairDialogComponent } from './unpair-dialog/unpair-dialog.component';
+import { ConnectingDialogComponent } from './connecting-dialog/connecting-dialog.component';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { UnpairDialogComponent } from './unpair-dialog/unpair-dialog.component';
     RebootDialogComponent,
     CalibrateDialogComponent,
     PairDialogComponent,
-    UnpairDialogComponent
+    UnpairDialogComponent,
+    ConnectingDialogComponent
   ],
   entryComponents: [
     SettingsDialogComponent

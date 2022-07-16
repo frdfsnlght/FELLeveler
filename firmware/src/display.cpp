@@ -34,3 +34,10 @@ void Display::printRight(const char* str, int x, int y) {
     setCursor(x - w, y);
     print(str);
 }
+
+void Display::fillRight(uint16_t color) {
+    int16_t x1, y1;
+    uint16_t w, h;
+    getTextBounds("X", cursor_x, cursor_y, &x1, &y1, &w, &h);
+    fillRect(cursor_x, cursor_y, _width - cursor_x, h, color);
+}

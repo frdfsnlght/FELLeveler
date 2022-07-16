@@ -20,11 +20,10 @@ void BootScreen::loop() {
     }
 }
 
-void BootScreen::paint() {
+void BootScreen::paintContent() {
     Display* d = Display::getInstance();
-    d->fillScreen(BLACK);
     d->setTextColor(WHITE);
     d->setTextSize(2);
-    d->printCentered("FELLeveler", d->Width / 2, d->Height / 2);
+    d->printCentered("FELLeveler", d->width() / 2, d->height() / 2);
 }
 

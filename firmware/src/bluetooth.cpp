@@ -24,8 +24,10 @@ void Bluetooth::setup() {
     Config* config = Config::getInstance();
     strcpy(deviceName, BTBaseName);
     strcat(deviceName, config->name);
-    state = Stopped;
+    state = Idle;
     justConnected = justDisconnected = false;
+    connectedDevice.name[0] = '\0';
+    connectedDevice.address[0] = '\0';
 
     Leveler* leveler = Leveler::getInstance();
     leveler->rollChangedListeners.add([](void) {
@@ -39,17 +41,52 @@ void Bluetooth::setup() {
         Bluetooth::getInstance()->btCallback(event, param);
     });
 
-    start();
+    sendBufferStart = sendBufferEnd = 0;
+
+    /*
+    // This doesn't work because it needs to happen after bt_init and before first TX.
+    if (esp_bredr_tx_power_set(ESP_PWR_LVL_P9,ESP_PWR_LVL_P9) != ESP_OK)
+        Serial.println("Unable to set BT power level!");
+        delay(100);
+    }
+    */
+
+    esp_power_level_t min,max;
+    esp_bredr_tx_power_get(&min, &max);
+    Serial.print("BT power min ");
+    Serial.print(powerLevelToString(min));
+    Serial.print(", max ");
+    Serial.println(powerLevelToString(max));
+
+    mode = config->mode;
+    if (mode == Config::Tractor) {
+        DEBUG("Beginning BT in master mode");
+        bt.begin(deviceName, true);
+        setState(ScanForSlave);
+    } else if (mode == Config::Implement) {
+        DEBUG("Beginning BT in slave mode");
+        bt.begin(deviceName);
+        setState(WaitingForMaster);
+    }
 
     Serial.println("Bluetooth setup complete");
 }
 
-void Bluetooth::loop() {
-    //connectedChangedListeners.callNow();
-    //connectedDeviceChangedListeners.callNow();
-    //scannedDevicesChangedListeners.callNow();
-    //measurementsChangedListeners.callNow();
+const char* Bluetooth::powerLevelToString(esp_power_level_t pl) {
+    switch (pl) {
+        case ESP_PWR_LVL_N12: return "-12dbm";
+        case ESP_PWR_LVL_N9: return "-9dbm";
+        case ESP_PWR_LVL_N6: return "-6dbm";
+        case ESP_PWR_LVL_N3: return "-3dbm";
+        case ESP_PWR_LVL_N0: return "0dbm";
+        case ESP_PWR_LVL_P3: return "+3dbm";
+        case ESP_PWR_LVL_P6: return "+6dbm";
+        case ESP_PWR_LVL_P9: return "+9dbm";
+        default: return "unknown";
+    }
+}
 
+void Bluetooth::loop() {
     led.loop();
 
     if (justConnected)
@@ -73,6 +110,15 @@ void Bluetooth::loop() {
         }
     }
 
+    while (bt.connected() && (sendBufferStart != sendBufferEnd)) {
+        if (bt.write(sendBuffer[sendBufferStart])) {
+            sendBufferStart++;
+            if (sendBufferStart == MaxSendBuffer)
+                sendBufferStart = 0;
+        } else
+            break;
+    }
+
     switch (state) {
         case Connected:
             break;
@@ -82,11 +128,13 @@ void Bluetooth::loop() {
             scanForSlave();
             break;
         case ScanningForSlave:
+            checkScanTime();
             break;
-        case ConnectingToSlave:
+        case ConnectToSlave:
             connectToSlave();
             break;
         case ScanningDevices:
+            checkScanTime();
             break;
         case ScanningComplete:
             completeDeviceScan();
@@ -94,32 +142,80 @@ void Bluetooth::loop() {
     }
 }
 
-void Bluetooth::scanDevices() {
-    if (state == Connected) {
-        bt.disconnect();
-        doDisconnect();
+const char* Bluetooth::stateToString(State s) {
+    switch (s) {
+        case Idle: return "Idle";
+        case Connected: return "Connected";
+        case WaitingForMaster: return "WaitingForMaster";
+        case ScanForSlave: return "ScanForSlave";
+        case ScanningForSlave: return "ScanningForSlave";
+        case ConnectToSlave: return "ConnectToSlave";
+        case ScanningDevices: return "ScanningDevices";
+        case ScanningComplete: return "ScanningComplete";
+        default: return "unknown";
     }
-    state = ScanningDevices;
+}
+
+void Bluetooth::setState(State newState) {
+    if (state == newState) return;
+    state = newState;
+#ifdef DEBUG_BLUETOOTH
+    Serial.print("BT state is now ");
+    Serial.println(stateToString(state));
+#endif
+    stateChangedListeners.call();
+}
+
+void Bluetooth::scanDevices() {
+    bt.disconnect();
+    if (state == Connected)
+        doDisconnect();
+    bt.discoverAsyncStop();
+    setState(ScanningDevices);
+    Serial.println("BT discovering devices");
     bt.discoverClear();
-    bt.discoverAsync([](BTAdvertisedDevice* device) {
+    startScanTime = millis();
+    if (! bt.discoverAsync([](BTAdvertisedDevice* device) {
         Serial.print("BT discovered: ");
         Serial.print(device->getName().c_str());
-        Serial.println(" (");
-        Serial.print(device->getAddress());
-        Serial.println(')');
-    }, 10000);  // 10 seconds
+        Serial.print(" (");
+        Serial.print(device->getAddress().toString().c_str());
+        Serial.print("), ");
+        Serial.println(device->getRSSI());
+    })) {
+        Serial.println("BT discover failed!");
+        setState(ScanForSlave);
+    };
 }
 
 void Bluetooth::scanForSlave() {
-    if (state == Connected) {
-        bt.disconnect();
+    bt.disconnect();
+    if (state == Connected)
         doDisconnect();
-    }
-    state = ScanningForSlave;
+    bt.discoverAsyncStop();
+    setState(ScanningForSlave);
+    Serial.println("BT scanning for slaves");
     bt.discoverClear();
-    bt.discoverAsync([](BTAdvertisedDevice* device) {
+    startScanTime = millis();
+    if (! bt.discoverAsync([](BTAdvertisedDevice* device) {
         Bluetooth::getInstance()->checkFoundDevice(device);
-    }, 10000);  // 10 seconds
+    })) {
+        Serial.println("BT scan failed!");
+        setState(ScanForSlave);
+    }
+}
+
+void Bluetooth::checkScanTime() {
+    if ((millis() - startScanTime) > MaxScanTime) {
+        if (state == ScanningDevices)
+            setState(ScanningComplete);
+        else if (state == ScanningForSlave)
+            setState(ScanForSlave);
+        else {
+            startScanTime = millis();
+            Serial.println("BT scan is complete, but I don't know why?");
+        }
+    }
 }
 
 void Bluetooth::checkFoundDevice(BTAdvertisedDevice* device) {
@@ -128,8 +224,12 @@ void Bluetooth::checkFoundDevice(BTAdvertisedDevice* device) {
     for (int i = 0; i < Config::MaxPairedDevices; i++) {
         if (config->pairedDevices[i].used &&
             (strcmp(config->pairedDevices[i].device.address, device->getAddress().toString().c_str()) == 0)) {
-            state = ConnectingToSlave;
             slaveAddress = device->getAddress();
+            setState(ConnectToSlave);
+#ifdef DEBUG_BLUETOOTH
+            Serial.print("BT found paired device ");
+            Serial.println(slaveAddress.toString().c_str());
+#endif
             break;
         }
     }
@@ -137,15 +237,19 @@ void Bluetooth::checkFoundDevice(BTAdvertisedDevice* device) {
 
 void Bluetooth::connectToSlave() {
     bt.discoverAsyncStop();
+    Serial.print("BT attempting to connect to slave at ");
+    Serial.println(slaveAddress.toString().c_str());
     if (bt.connect(slaveAddress)) {
         justConnected = true;
     } else {
-        state = ScanForSlave;
+        Serial.println("BT connection failed!");
+        setState(ScanForSlave);
     }
 }
 
 void Bluetooth::completeDeviceScan() {
-    state = ScanForSlave;
+    bt.discoverAsyncStop();
+    int count = 0;
     BTScanResults* results = bt.getScanResults();
     for (int i = 0; i < MaxScannedDevices; i++) {
         if (i >= results->getCount()) {
@@ -156,10 +260,15 @@ void Bluetooth::completeDeviceScan() {
         scannedDevices[i].used = true;
         char name[256]; // max length is 248 bytes
         strcpy(name, device->getName().c_str());
-        name[31] ='\0'; // make sure it fits
+        name[BTDevice::MaxBTNameLength - 1] ='\0'; // make sure it fits
         strcpy(scannedDevices[i].device.name, name);
         strcpy(scannedDevices[i].device.address, device->getAddress().toString().c_str());
+        count++;
     }
+    Serial.print("BT device discovery complete, found ");
+    Serial.print(count);
+    Serial.println(" devices");
+    setState(ScanForSlave);
     scannedDevicesChangedListeners.call();
 }
 
@@ -177,74 +286,54 @@ bool Bluetooth::pairDevice(const char* address) {
 void Bluetooth::btCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param) {
     switch (event) {
         case ESP_SPP_INIT_EVT: // When SPP mode is initialized
-            DEBUG("BT initialized"); break;
+            DEBUG("ESP_SPP_INIT_EVT"); break;
         case ESP_SPP_UNINIT_EVT: // When the SPP mode is deinitialized
-            DEBUG("BT uninitialized"); break;
+            DEBUG("ESP_SPP_UNINIT_EVT"); break;
         case ESP_SPP_DISCOVERY_COMP_EVT: // When service discovery is complete
-            DEBUG("BT discovery completed");
+            DEBUG("ESP_SPP_DISCOVERY_COMP_EVT");
             if (state == ScanningDevices)
-                state = ScanningComplete;
+                setState(ScanningComplete);
+            else if (state == ScanningForSlave)
+                setState(ScanForSlave);
             break;
         case ESP_SPP_OPEN_EVT: // When an SPP client opens a connection
-            DEBUG("BT opened connection");
+            DEBUG("ESP_SPP_OPEN_EVT");
             break;
         case ESP_SPP_CLOSE_EVT: // When an SPP connection is closed
-            DEBUG("BT closed connection");
+            DEBUG("ESP_SPP_CLOSE_EVT");
             justDisconnected = true;
             break;
         case ESP_SPP_START_EVT: // When the SPP server is initialized
-            DEBUG("BT server started"); break;
+            DEBUG("ESP_SPP_START_EVT"); break;
         case ESP_SPP_CL_INIT_EVT: // When an SPP client initializes a connection
-            DEBUG("BT client initialized"); break;
+            DEBUG("ESP_SPP_CL_INIT_EVT"); break;
         case ESP_SPP_DATA_IND_EVT: // When receiving data through an SPP connection
             break;
         case ESP_SPP_CONG_EVT: // When congestion status changes on an SPP connection
-            DEBUG("BT congestion"); break;
+            DEBUG("ESP_SPP_CONG_EVT"); break;
         case ESP_SPP_WRITE_EVT: // When sending data through SPP.
             break;
         case ESP_SPP_SRV_OPEN_EVT: // When a client connects to the SPP server
-            DEBUG("BT client connected");
+            DEBUG("ESP_SPP_SRV_OPEN_EVT");
             justConnected = true;
             break;
         case ESP_SPP_SRV_STOP_EVT: // When the SPP server stops
-            DEBUG("BT server stopped"); break;
+            DEBUG("ESP_SPP_SRV_STOP_EVT"); break;
         default:
             break;
     }
-}
-
-void Bluetooth::start() {
-    mode = Config::getInstance()->mode;
-    if (mode == Config::Tractor) {
-        DEBUG("Beginning BT in master mode");
-        bt.begin(deviceName, true);
-        state = ScanForSlave;
-    } else if (mode == Config::Implement) {
-        DEBUG("Beginning BT in slave mode");
-        bt.begin(deviceName);
-        state = WaitingForMaster;
-    }
-}
-
-void Bluetooth::stop() {
-    bt.end();
-    State oldState = state;
-    state = Stopped;
-    if (oldState == Connected)
-        connectedChangedListeners.call();
 }
 
 void Bluetooth::doConnect() {
     justConnected = false;
     resetReceiveBuffer();
     led.turnOn();
-    state = Connected;
     if (mode == Config::Tractor) {
         Serial.println("BT connected to implement");
     } else if (mode == Config::Implement) {
         Serial.println("BT connected to tractor");
     }
-    connectedChangedListeners.call();
+    setState(Connected);
     sendDeviceInfo();
 }
 
@@ -253,18 +342,17 @@ void Bluetooth::doDisconnect() {
     led.blink();
     if (mode == Config::Tractor) {
         Serial.println("BT disconnected from implement");
-        state = ScanForSlave;
+        setState(ScanForSlave);
         measurements.roll = 0;
         measurements.pitch = 0;
         measurementsChangedListeners.call();
     } if (mode == Config::Implement) {
         Serial.println("BT disconnected from tractor");
-        state = WaitingForMaster;
+        setState(WaitingForMaster);
     }
-    connectedChangedListeners.call();
     connectedDevice.name[0] = '\0';
     connectedDevice.address[0] = '\0';
-    connectedChangedListeners.call();
+    connectedDeviceChangedListeners.call();
 }
 
 void Bluetooth::resetReceiveBuffer() {
@@ -283,9 +371,10 @@ void Bluetooth::processReceiveBuffer() {
         return;
     }
     // device info can be received by both tractor and implement
-    if (doc.containsKey("name"))
+    if (doc.containsKey("name")) {
         setConnectedDevice(doc);
-
+        return;
+    }
     if (mode == Config::Tractor) {
         if (doc.containsKey("pitch")) {
             setMeasurements(doc);
@@ -317,8 +406,27 @@ void Bluetooth::setMeasurements(const JsonDocument& doc) {
 
 void Bluetooth::sendString(String str) {
     const char* ptr = str.c_str();
-    while (*ptr != '\0')
-        bt.write(*ptr);
+    bool end = false;
+    char ch;
+    while (! end) {
+        ch = *ptr;
+        ptr++;
+        if (ch == '\0') {
+            ch = '\n';
+            end = true;
+        }
+        if (! sendChar(ch)) {
+            Serial.println("BT send buffer overflow!");
+            return;
+        }
+    }
+}
+
+bool Bluetooth::sendChar(const char ch) {
+    sendBuffer[sendBufferEnd++] = ch;
+    if (sendBufferEnd == MaxSendBuffer)
+        sendBufferEnd = 0;
+    return sendBufferStart != sendBufferEnd;
 }
 
 void Bluetooth::sendDeviceInfo() {

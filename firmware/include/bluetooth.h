@@ -3,6 +3,7 @@
 
 #include <BluetoothSerial.h>
 #include <ArduinoJson.h>
+#include <esp_bt.h>
 #include "callback_list.h"
 #include "led.h"
 #include "config.h"
@@ -16,12 +17,12 @@ class Bluetooth {
     static const int MaxScannedDevices = 10;
 
     enum State {
-        Stopped,
+        Idle,
         Connected,
         WaitingForMaster,
         ScanForSlave,
         ScanningForSlave,
-        ConnectingToSlave,
+        ConnectToSlave,
         ScanningDevices,
         ScanningComplete
     };
@@ -36,7 +37,7 @@ class Bluetooth {
         int pitch;
     };
 
-    CallbackList connectedChangedListeners = CallbackList();
+    CallbackList stateChangedListeners = CallbackList();
     CallbackList connectedDeviceChangedListeners = CallbackList();
     CallbackList scannedDevicesChangedListeners = CallbackList();
     CallbackList measurementsChangedListeners = CallbackList();
@@ -54,27 +55,39 @@ class Bluetooth {
 
     private:
 
+    static const int MaxSendBuffer = 256;
+    static const int MaxReceiveBuffer = 256;
+    static const int MaxDeviceName = 64;
+    static const int MaxScanTime = 10000;
+    static const char BTBaseName[];
+
     static Bluetooth* instance;
 
-    static const char BTBaseName[];
 
     LED led = LED(2, false);
     BluetoothSerial bt = BluetoothSerial();
     Config::MainMode mode;
-    char deviceName[64];
-    char receiveBuffer[256];
-    int receiveBufferPos;
+    char deviceName[MaxDeviceName];
     bool justConnected;
     bool justDisconnected;
     BTAddress slaveAddress;
+    unsigned long startScanTime;
+
+    char sendBuffer[MaxSendBuffer];
+    int sendBufferStart;
+    int sendBufferEnd;
+    char receiveBuffer[MaxReceiveBuffer];
+    int receiveBufferPos;
 
     Bluetooth() {}
+    const char* powerLevelToString(esp_power_level_t pl);
+    const char* stateToString(State s);
+    void setState(State newState);
     void btCallback(esp_spp_cb_event_t event, esp_spp_cb_param_t *param);
-    void start();
-    void stop();
     void doConnect();
     void doDisconnect();
     void scanForSlave();
+    void checkScanTime();
     void checkFoundDevice(BTAdvertisedDevice* device);
     void connectToSlave();
     void completeDeviceScan();
@@ -84,6 +97,7 @@ class Bluetooth {
     void setConnectedDevice(const JsonDocument& doc);
     void setMeasurements(const JsonDocument& doc);
     void sendString(String str);
+    bool sendChar(const char ch);
     void sendDeviceInfo();
     void sendMeasurements();
 

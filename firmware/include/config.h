@@ -12,6 +12,9 @@ class Config {
 
     static Config* getInstance();
     static const int MaxPairedDevices = 10;
+    static const int MaxNameLength = 32;
+    static const int MaxWifiSSIDLength = 32;
+    static const int MaxWifiPasswordLength = 32;
 
     enum MainMode {
         Tractor,
@@ -26,12 +29,14 @@ class Config {
     bool dirty;
 
     MainMode mode;
-    char name[32];
-    char wifiSSID[32];
-    char wifiPassword[32];
+    char name[MaxNameLength];
+    char wifiSSID[MaxWifiSSIDLength];
+    char wifiPassword[MaxWifiPasswordLength];
     bool calibrated;
     Vector3 downLevel;
     Vector3 downTipped;
+    Vector3 rollPlane;
+    Vector3 pitchPlane;
     PairedDevice pairedDevices[MaxPairedDevices];
 
     CallbackList dirtyChangedListeners = CallbackList();
@@ -39,6 +44,8 @@ class Config {
     CallbackList calibratedChangedListeners = CallbackList();
     CallbackList downLevelChangedListeners = CallbackList();
     CallbackList downTippedChangedListeners = CallbackList();
+    CallbackList rollPlaneChangedListeners = CallbackList();
+    CallbackList pitchPlaneChangedListeners = CallbackList();
     CallbackList pairedDevicesChangedListeners = CallbackList();
 
     bool read();
@@ -49,6 +56,8 @@ class Config {
     void setCalibrated(bool cal);
     void setDownLevel(Vector3 &v);
     void setDownTipped(Vector3 &v);
+    void setRollPlane(Vector3 &v);
+    void setPitchPlane(Vector3 &v);
     bool hasEmptyPairedDevice();
     bool addPairedDevice(const char* name, const char* address);
     bool removePairedDevice(const char* address);

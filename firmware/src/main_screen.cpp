@@ -11,6 +11,6 @@ MainScreen::MainScreen() : Screen() {
     // TODO: add listeners
 }
 
-void MainScreen::paint() {
+void MainScreen::paintContent() {
     // TODO
 }

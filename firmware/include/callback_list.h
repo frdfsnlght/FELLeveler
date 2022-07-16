@@ -7,52 +7,11 @@ class CallbackList {
 
     CallbackList() : first(nullptr), callDeferred(false) {}
 
-    void add(void (*cb)(void)) {
-        if (first == nullptr)
-            first = new CallbackListNode(cb);
-        else {
-            CallbackListNode* node = first;
-            while (node->next != nullptr)
-                node = node->next;
-            node->next = new CallbackListNode(cb);
-        }
-    }
-
-    void remove(void (*cb)(void)) {
-        CallbackListNode* node = first;
-        CallbackListNode* last = nullptr;
-        while (node != nullptr) {
-            if (node->cb == cb) {
-                if (last == nullptr)
-                    first = node->next;
-                else
-                    last->next = node->next;
-                delete node;
-                return;
-            }
-            last = node;
-            node = node->next;
-        }
-    }
-
-    void call() {
-        CallbackListNode* node = first;
-        while (node != nullptr) {
-            node->cb();
-            node = node->next;
-        }
-    }
-
-    void callLater() {
-        callDeferred = true;
-    }
-
-    void callNow() {
-        if (callDeferred) {
-            callDeferred = false;
-            call();
-        }
-    }
+    void add(void (*cb)(void));
+    void remove(void (*cb)(void));
+    void call();
+    void callLater();
+    void callNow();
 
     private:
 

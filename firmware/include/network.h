@@ -20,7 +20,6 @@ class Network {
     };
 
     CallbackList stateChangedListeners = CallbackList();
-    CallbackList wifiModeChangedListeners = CallbackList();
     CallbackList wifiRSSIChangedListeners = CallbackList();
 
     NetworkState state;
@@ -42,7 +41,6 @@ class Network {
     static const IPAddress APNetmask;
 
     static const int OTAPort;
-    //static const char* OTAHostname;
     static const int MaxConnectionAttempts;
     static const int ConnectionAttemptInterval;
 

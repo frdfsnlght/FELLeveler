@@ -10,18 +10,31 @@ class StatusScreen : public Screen {
     static StatusScreen* getInstance();
 
     String getName() { return "Status"; }
-    void paint();
+
+    protected:
+
+    void paintContent();
 
     private:
 
     static StatusScreen* instance;
 
+    struct DirtyFlags {
+        bool network : 1;
+        bool bluetooth : 1;
+        bool levelerRoll : 1;
+        bool levelerPitch : 1;
+        bool levelerImplementRoll : 1;
+        bool levelerImplementPitch : 1;
+    };
+
+    DirtyFlags dirtyFlags;
+
     static void statusUpdated(int);
 
     StatusScreen();
 
-    void networkStateChanged();
-    void networkRSSIChanged();
+    void networkChanged();
     void btChanged();
     void rollChanged();
     void pitchChanged();

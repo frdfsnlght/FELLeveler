@@ -45,10 +45,7 @@ void UI::loop() {
     button.loop();
     if (screen == nullptr) return;
     screen->loop();
-    if (screen->dirty)  {
-        screen->paint();
-        screen->dirty = false;
-    }
+    screen->paint();
 }
 
 void UI::handleButtonPress(Button* button) {

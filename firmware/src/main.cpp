@@ -41,4 +41,5 @@ void loop() {
     Bluetooth::getInstance()->loop();
     Accelerometer::getInstance()->loop();
     UI::getInstance()->loop();
+    WebServer::getInstance()->loop();
 }

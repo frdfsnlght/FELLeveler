@@ -47,7 +47,7 @@
     <mat-card-title><mat-icon>bluetooth</mat-icon> Bluetooth</mat-card-title>
     <mat-card-content>
         <p><strong>Connected:</strong> {{model.btConnected.value ? 'Yes' : 'No'}}</p>
-        <p *ngIf="model.btConnected.value"><strong>Connected to: </strong> {{model.btConnectedDevice.value ? (model.btConnectedDevice.value.name + ' (' + model.btConnectedDevice.value.address + ')') : 'None'}}</p>
+        <p *ngIf="model.btConnected.value"><strong>Connected to: </strong> {{(model.btConnectedDevice.value && model.btConnectedDevice.value.name) ? (model.btConnectedDevice.value.name + ' (' + model.btConnectedDevice.value.address + ')') : 'Unknown'}}</p>
     </mat-card-content>
 </mat-card>
 

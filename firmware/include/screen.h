@@ -9,17 +9,11 @@ class Screen {
 
     bool hidden = true;
     bool dirty = false;
+    bool firstPaint = false;
+    uint16_t backgroundColor = 0;
 
-    void show() {
-        hidden = false;
-        dirty = true;
-        onShow();
-    }
-
-    void hide() {
-        hidden = true;
-        onHide();
-    }
+    void show();
+    void hide();
 
     virtual String getName();
     virtual void onShow() {}
@@ -29,9 +23,14 @@ class Screen {
     virtual void handleButtonLongPress(Button* button) {}
     virtual void handleButtonLongRelease(Button* button) {}
 
-    virtual void paint() {}
-
+    virtual void paint();
+    virtual void paintContent() {}
+    
     virtual void loop() {}
+
+    protected:
+
+    virtual void paintBackground();
 
 };
 

@@ -11,6 +11,7 @@ class WebServer {
     static WebServer* getInstance();
 
     void setup();
+    void loop();
 
     private:
 
@@ -19,6 +20,9 @@ class WebServer {
     AsyncWebServer server = AsyncWebServer(80);
     AsyncEventSource events = AsyncEventSource("/events");
 
+    const int KeepAliveInterval = 1000;
+    unsigned long lastKeepAliveTime = 0;
+    
     WebServer() {}
 
     static void emptyHandler(AsyncWebServerRequest *r) {}
@@ -36,6 +40,7 @@ class WebServer {
     bool canSendEvent();
     void sendEvent(String &msg, const char* event, AsyncEventSourceClient *client = nullptr);
 
+    void emitKeepAlive();
     void emitConfigDirty(AsyncEventSourceClient *c);
     void emitConfigSettings(AsyncEventSourceClient *c);
     void emitConfigCalibrated(AsyncEventSourceClient *c);

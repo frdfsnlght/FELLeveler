@@ -8,9 +8,14 @@ import { BtDevice } from './bt-device';
 })
 export class ModelService {
 
-  private apiUrl = '/api/';
+  //private apiUrl = '/api/';
+  private apiUrl = 'http://10.10.10.122/api/';
 
   private eventSource: EventSource;
+  private watchdogTimer: any = false;
+  private watchdogTimeout = 3000
+
+  connected = new BehaviorSubject<boolean>(false);
 
   mode = new BehaviorSubject<string>('Tractor');  // Tractor or Implement
   name = new BehaviorSubject<string>('Missy');
@@ -19,11 +24,12 @@ export class ModelService {
   wifiPassword = new BehaviorSubject<string>('');
   wifiRSSI = new BehaviorSubject<number>(0);
   btScannedDevices = new BehaviorSubject<Array<BtDevice>>([]);  // tractor only
+  btScanComplete = new BehaviorSubject<boolean>(true);  // tractor only, local
   btPairedDevices = new BehaviorSubject<Array<BtDevice>>([]); // tractor only
   btConnected = new BehaviorSubject<boolean>(false);
   btConnectedDevice = new BehaviorSubject<BtDevice | null>(null);
 
-  calibrated = new BehaviorSubject<boolean>(true);
+  calibrated = new BehaviorSubject<boolean>(false);
   roll = new BehaviorSubject<number>(0);
   pitch = new BehaviorSubject<number>(0);
   implementRoll = new BehaviorSubject<number>(0);  // tractor only
@@ -35,21 +41,20 @@ export class ModelService {
   constructor(
     private http: HttpClient
   ) {
-    this.eventSource = new EventSource('/events');
+    this.eventSource = this.createEventSource();
+    this.resetWatchdog();
+  }
 
-    this.eventSource.addEventListener('open', e => {
-      console.log("Events Connected");
-      // TODO: handle connections
+  createEventSource(): EventSource {
+    //var es:EventSource = new EventSource('/events');
+    var es:EventSource = new EventSource('http://10.10.10.122/events');
+
+    es.addEventListener('keepAlive', e => {
+      this.connected.next(true);
+      this.resetWatchdog();
     });
 
-    this.eventSource.addEventListener('error', e => {
-      if (this.eventSource.readyState != EventSource.OPEN) {
-        console.log("Events Disconnected");
-        // TODO: handle connections
-    } 
-    });
-
-    this.eventSource.addEventListener('settings', e => {
+    es.addEventListener('settings', e => {
       var o = JSON.parse(e.data);
       this.mode.next(o.mode);
       this.name.next(o.name);
@@ -57,24 +62,25 @@ export class ModelService {
       this.wifiPassword.next(o.wifiPassword);
     });
 
-    this.eventSource.addEventListener('wifiMode', e => {
+    es.addEventListener('wifiMode', e => {
       this.wifiMode.next(e.data.toString());
     });
 
-    this.eventSource.addEventListener('wifiRSSI', e => {
+    es.addEventListener('wifiRSSI', e => {
       this.wifiRSSI.next(parseInt(e.data.toString()));
     });
 
-    this.eventSource.addEventListener('btScannedDevices', e => {
+    es.addEventListener('btScannedDevices', e => {
       var a = JSON.parse(e.data.toString());
       var devs:Array<BtDevice> = [];
       a.forEach((e: { name: string; address: string; }) => {
         devs.push(new BtDevice(e.name, e.address));
       });
       this.btScannedDevices.next(devs);
+      this.btScanComplete.next(true);
     });
 
-    this.eventSource.addEventListener('btPairedDevices', e => {
+    es.addEventListener('btPairedDevices', e => {
       var a = JSON.parse(e.data.toString());
       var devs:Array<BtDevice> = [];
       a.forEach((e: { name: string; address: string; }) => {
@@ -83,41 +89,54 @@ export class ModelService {
       this.btPairedDevices.next(devs);
     });
 
-    this.eventSource.addEventListener('btConnected', e => {
+    es.addEventListener('btConnected', e => {
       this.btConnected.next(e.data.toString() == 'true');
       if (! this.btConnected.value)
         this.btConnectedDevice.next(null);
     });
 
-    this.eventSource.addEventListener('btConnectedDevice', e => {
+    es.addEventListener('btConnectedDevice', e => {
       var o = JSON.parse(e.data.toString());
       this.btConnectedDevice.next(new BtDevice(o.name, o.address));
     });
 
-    this.eventSource.addEventListener('calibrated', e => {
+    es.addEventListener('calibrated', e => {
       this.calibrated.next(e.data.toString() == 'true');
     });
 
-    this.eventSource.addEventListener('roll', e => {
+    es.addEventListener('roll', e => {
       this.roll.next(parseInt(e.data.toString()));
     });
 
-    this.eventSource.addEventListener('pitch', e => {
+    es.addEventListener('pitch', e => {
       this.pitch.next(parseInt(e.data.toString()));
     });
 
-    this.eventSource.addEventListener('implementRoll', e => {
+    es.addEventListener('implementRoll', e => {
       this.implementRoll.next(parseInt(e.data.toString()));
     });
 
-    this.eventSource.addEventListener('implementPitch', e => {
+    es.addEventListener('implementPitch', e => {
       this.implementPitch.next(parseInt(e.data.toString()));
     });
 
-    this.eventSource.addEventListener('configDirty', e => {
+    es.addEventListener('configDirty', e => {
       this.configDirty.next(e.data.toString() == 'true');
     });
 
+    return es;
+  }
+
+  resetWatchdog(): void {
+    if (this.watchdogTimer)
+      clearTimeout(this.watchdogTimer);
+    this.watchdogTimer = setTimeout(() => {
+      console.log("Watchdog expired, reopening SSE connection");
+      this.connected.next(false);
+      if (this.eventSource)
+        this.eventSource.close();
+      this.eventSource = this.createEventSource();
+    }, this.watchdogTimeout);
   }
 
   configure(data: object): Observable<string> {
@@ -134,6 +153,7 @@ export class ModelService {
   
   scanBTDevices(): Observable<string> {
     this.btScannedDevices.next([]);
+    this.btScanComplete.next(false);
     return this.http.get(this.apiUrl + 'scanBTDevices', {responseType: 'text'});
   }
 

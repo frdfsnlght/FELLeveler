@@ -56,6 +56,12 @@ bool Config::read() {
     downTipped.x = doc["downTipped"]["x"];
     downTipped.y = doc["downTipped"]["y"];
     downTipped.z = doc["downTipped"]["z"];
+    rollPlane.x = doc["rollPlane"]["x"];
+    rollPlane.y = doc["rollPlane"]["y"];
+    rollPlane.z = doc["rollPlane"]["z"];
+    pitchPlane.x = doc["pitchPlane"]["x"];
+    pitchPlane.y = doc["pitchPlane"]["y"];
+    pitchPlane.z = doc["pitchPlane"]["z"];
 
     if (mode == Tractor) {
         JsonArray a = doc["pairedDevices"];
@@ -72,6 +78,8 @@ bool Config::read() {
         }
     }
 
+    serializeJsonPretty(doc, Serial);
+    Serial.println();
     Serial.println("Configuration read");
     setDirty(false);
     return true;
@@ -101,6 +109,14 @@ bool Config::write() {
     v["x"] = downTipped.x;
     v["y"] = downTipped.y;
     v["z"] = downTipped.z;
+    v = doc.createNestedObject("rollPlane");
+    v["x"] = rollPlane.x;
+    v["y"] = rollPlane.y;
+    v["z"] = rollPlane.z;
+    v = doc.createNestedObject("pitchPlane");
+    v["x"] = pitchPlane.x;
+    v["y"] = pitchPlane.y;
+    v["z"] = pitchPlane.z;
 
     JsonObject d;
     if (mode == Tractor) {
@@ -122,6 +138,7 @@ bool Config::write() {
     }
     file.close();
     serializeJsonPretty(doc, Serial);
+    Serial.println();
     Serial.println("Configuration written");
     setDirty(false);
     return true;
@@ -166,12 +183,26 @@ void Config::setDownTipped(Vector3 &v) {
     setDirty(true);
 }
 
+void Config::setRollPlane(Vector3 &v) {
+    if (rollPlane == v) return;
+    rollPlane.set(v);
+    rollPlaneChangedListeners.call();
+    setDirty(true);
+}
+
+void Config::setPitchPlane(Vector3 &v) {
+    if (pitchPlane == v) return;
+    pitchPlane.set(v);
+    pitchPlaneChangedListeners.call();
+    setDirty(true);
+}
+
 bool Config::addPairedDevice(const char* name, const char* address) {
     for (int i = 0; i < MaxPairedDevices; i++) {
         if (! pairedDevices[i].used) {
-            pairedDevices[i].used = true;
             strcpy(pairedDevices[i].device.name, name);
             strcpy(pairedDevices[i].device.address, address);
+            pairedDevices[i].used = true;
             pairedDevicesChangedListeners.call();
             setDirty(true);
             return true;
@@ -185,6 +216,8 @@ bool Config::removePairedDevice(const char* address) {
         if (pairedDevices[i].used &&
             (strcmp(pairedDevices[i].device.address, address) == 0)) {
             pairedDevices[i].used = false;
+            pairedDevices[i].device.name[0] = '\0';
+            pairedDevices[i].device.address[0] = '\0';
             pairedDevicesChangedListeners.call();
             setDirty(true);
             return true;
