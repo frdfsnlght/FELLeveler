@@ -4,16 +4,21 @@
 #include <Arduino.h>
 #include <DNSServer.h>
 #include "callback_list.h"
+#include "config.h"
 
 class Network {
 
     public:
 
     static Network* getInstance();
+    static const char* StateStrings[];
 
-    enum NetworkState {
+    enum State {
+        Idle,
+        OTA,
         AP,
-        Unconnected,
+        Disconnect,
+        Connect,
         Connecting,
         Waiting,
         Connected
@@ -22,7 +27,12 @@ class Network {
     CallbackList stateChangedListeners = CallbackList();
     CallbackList wifiRSSIChangedListeners = CallbackList();
 
-    NetworkState state;
+    Config::Mode mode;
+    Config::WifiMode wifiMode;
+    State state;
+    char ssid[Config::MaxSSIDLength];
+    char password[Config::MaxPasswordLength];
+
     IPAddress ipAddress;    // station only
     int32_t rssi;           // station only
 
@@ -35,9 +45,7 @@ class Network {
     static Network* instance;
 
     static const char* Hostname;
-    static const char* APSSID;
-    static const char* APPassword;
-    static const IPAddress APAddress;
+//    static const IPAddress APAddress;
     static const IPAddress APNetmask;
 
     static const int OTAPort;
@@ -51,7 +59,12 @@ class Network {
 
     Network() {}
 
-    void setupAP();
+    void setState(State newState);
+    void setupWifi();
+    void setupAP(const char* apSSID, const char* apPassword);
+    void setupStation(const char* stationSSID, const char* stationPassword);
+
+    void handleSettingsChanged();
 };
 
 

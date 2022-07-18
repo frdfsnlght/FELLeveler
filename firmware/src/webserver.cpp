@@ -4,7 +4,7 @@
 
 #include "config.h"
 #include "network.h"
-#include "bluetooth.h"
+#include "netsock.h"
 #include "leveler.h"
 #include "debug.h"
 
@@ -22,6 +22,7 @@ WebServer* WebServer::getInstance() {
 }
 
 void WebServer::setup() {
+
     // Static content
     server.serveStatic("/", SPIFFS, "/w/").setDefaultFile("index.html");
 
@@ -29,9 +30,6 @@ void WebServer::setup() {
     server.on("/api/configure", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiConfigure(r, d, l, i, t); });
     server.on("/api/calibrateLevel", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiCalibrateLevel(r); });
     server.on("/api/calibrateTipped", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiCalibrateTipped(r); });
-    server.on("/api/scanBTDevices", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiScanBTDevices(r); });
-    server.on("/api/pairBTDevice", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiPairBTDevice(r, d, l, i, t); });
-    server.on("/api/unpairBTDevice", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiUnpairBTDevice(r, d, l, i, t); });
     server.on("/api/saveConfig", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiSaveConfig(r); });
     server.on("/api/reboot", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiReboot(r); });
 
@@ -45,9 +43,8 @@ void WebServer::setup() {
         instance->emitConfigDirty(client); delay(10);
         instance->emitConfigSettings(client); delay(10);
         instance->emitConfigCalibrated(client); delay(10);
-        instance->emitWifiMode(client); delay(10);
-        instance->emitBTConnected(client); delay(10);
-        instance->emitBTConnectedDevice(client); delay(10);
+        instance->emitNetsockConnected(client); delay(10);
+        instance->emitNetsockRemoteDevice(client); delay(10);
         instance->emitLevelerPitch(client); delay(10);
         if (Config::getInstance()->mode == Config::Tractor) {
             instance->emitLevelerRoll(client); delay(10);
@@ -75,11 +72,10 @@ void WebServer::setup() {
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Headers", "content-type");
     DefaultHeaders::Instance().addHeader("Access-Control-Allow-Methods", "PUT,POST,GET,OPTIONS");
 #endif    
-    server.begin();
 
     Config* config = Config::getInstance();
     Network* network = Network::getInstance();
-    Bluetooth* bt = Bluetooth::getInstance();
+    Netsock* netsock = Netsock::getInstance();
     Leveler* leveler = Leveler::getInstance();
 
     // Subscribe to listeners
@@ -92,25 +88,19 @@ void WebServer::setup() {
     config->calibratedChangedListeners.add([](void) {
         WebServer::instance->emitConfigCalibrated(nullptr);
     });
-    config->pairedDevicesChangedListeners.add([](void) {
-        WebServer::instance->emitConfigPairedDevices();
-    });
 
     network->stateChangedListeners.add([](void) {
-        WebServer::instance->emitWifiMode(nullptr);
+        instance->handleNetworkStateChanged();
     });
     network->wifiRSSIChangedListeners.add([](void) {
         WebServer::instance->emitWifiRSSI(nullptr);
     });
 
-    bt->stateChangedListeners.add([](void) {
-        WebServer::instance->emitBTConnected(nullptr);
+    netsock->stateChangedListeners.add([](void) {
+        WebServer::instance->emitNetsockConnected(nullptr);
     });
-    bt->scannedDevicesChangedListeners.add([](void) {
-        WebServer::instance->emitBTScannedDevices();
-    });
-    bt->connectedDeviceChangedListeners.add([](void) {
-        WebServer::instance->emitBTConnectedDevice(nullptr);
+    netsock->remoteDeviceChangedListeners.add([](void) {
+        WebServer::instance->emitNetsockRemoteDevice(nullptr);
     });
 
     leveler->rollChangedListeners.add([](void) {
@@ -130,6 +120,8 @@ void WebServer::setup() {
 }
 
 void WebServer::loop() {
+    if (! Network::getInstance()->hasNetwork()) return;
+
     if ((millis() - lastKeepAliveTime) > KeepAliveInterval) {
         lastKeepAliveTime = millis();
         emitKeepAlive();
@@ -146,7 +138,15 @@ void WebServer::apiConfigure(AsyncWebServerRequest *r, uint8_t *d, size_t l, siz
         return;
     }
     Config* config = Config::getInstance();
-    config->setSettings(doc["mode"], doc["name"], doc["wifiSSID"], doc["wifiPassword"]);
+    config->setSettings(
+        doc["mode"],
+        doc["wifiMode"],
+        doc["name"],
+        doc["houseSSID"],
+        doc["housePassword"],
+        doc["tractorSSID"],
+        doc["tractorPassword"],
+        doc["tractorAddress"]);
     r->send(200, "text/plain", "OK");
 }
 
@@ -161,59 +161,6 @@ void WebServer::apiCalibrateTipped(AsyncWebServerRequest *r) {
     DEBUG("HTTP calibrateTipped");
     Leveler* leveler = Leveler::getInstance();
     leveler->calibrateTipped();
-    r->send(200, "text/plain", "OK");
-}
-
-void WebServer::apiScanBTDevices(AsyncWebServerRequest *r) {
-    DEBUG("HTTP scanBTDevices");
-    if (Config::getInstance()->mode != Config::Tractor) {
-        r->send(400, "text/plain", "Tractor only");
-        return;
-    }
-    Bluetooth* bt = Bluetooth::getInstance();
-    bt->scanDevices();
-    r->send(200, "text/plain", "OK");
-}
-
-void WebServer::apiPairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) {
-    DEBUG("HTTP pairDevice");
-    if (Config::getInstance()->mode != Config::Tractor) {
-        r->send(400, "text/plain", "Tractor only");
-        return;
-    }
-    DEBUG((const char*)d);
-    StaticJsonDocument<64> doc;
-    DeserializationError err = deserializeJson(doc, d);
-    if (err) {
-        r->send(400, "text/plain", err.c_str());
-        return;
-    }
-    Bluetooth* bt = Bluetooth::getInstance();
-    if (! bt->pairDevice(doc["address"])) {
-        r->send(400, "text/plain", "Unknown device or out of room");
-        return;
-    }
-    r->send(200, "text/plain", "OK");
-}
-
-void WebServer::apiUnpairBTDevice(AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) {
-    DEBUG("HTTP unpairDevice");
-    if (Config::getInstance()->mode != Config::Tractor) {
-        r->send(400, "text/plain", "Tractor only");
-        return;
-    }
-    DEBUG((const char*)d);
-    StaticJsonDocument<64> doc;
-    DeserializationError err = deserializeJson(doc, d);
-    if (err) {
-        r->send(400, "text/plain", err.c_str());
-        return;
-    }
-    Config* config = Config::getInstance();
-    if (! config->removePairedDevice(doc["address"])) {
-        r->send(400, "text/plain", "Device not paired");
-        return;
-    }
     r->send(200, "text/plain", "OK");
 }
 
@@ -262,13 +209,14 @@ void WebServer::emitConfigSettings(AsyncEventSourceClient *c) {
     String json = "";
     StaticJsonDocument<256> doc;
     Config* config = Config::getInstance();
-    if (config->mode == Config::Tractor)
-        doc["mode"] = "Tractor";
-    else if (config->mode == Config::Implement)
-        doc["mode"] = "Implement";
+    doc["mode"] = Config::ModeStrings[config->mode];
+    doc["wifiMode"] = Config::WifiModeStrings[config->wifiMode];
     doc["name"] = config->name;
-    doc["wifiSSID"] = config->wifiSSID;
-    doc["wifiPassword"] = config->wifiPassword;
+    doc["houseSSID"] = config->houseSSID;
+    doc["housePassword"] = config->housePassword;
+    doc["tractorSSID"] = config->tractorSSID;
+    doc["tractorPassword"] = config->tractorPassword;
+    doc["tractorAddress"] = config->tractorAddress.toString();
     serializeJson(doc, json);
     sendEvent(json, "settings", c);
 }
@@ -276,25 +224,6 @@ void WebServer::emitConfigSettings(AsyncEventSourceClient *c) {
 void WebServer::emitConfigCalibrated(AsyncEventSourceClient *c) {
     String str = Config::getInstance()->calibrated ? "true" : "false";
     sendEvent(str, "calibrated", c);
-}
-
-void WebServer::emitConfigPairedDevices() {
-    String json = "";
-    StaticJsonDocument<1536> doc;
-    Config* config = Config::getInstance();
-    for (int i = 0; i < Config::MaxPairedDevices; i++) {
-        if (! config->pairedDevices[i].used) continue;
-        JsonObject d = doc.createNestedObject();
-        d["name"] = config->pairedDevices[i].device.name;
-        d["address"] = config->pairedDevices[i].device.address;
-    }
-    serializeJson(doc, json);
-    sendEvent(json, "btPairedDevices");
-}
-
-void WebServer::emitWifiMode(AsyncEventSourceClient *c) {
-    String str = (Network::getInstance()->state == Network::AP) ? "AP" : "Station";
-    sendEvent(str, "wifiMode", c);
 }
 
 void WebServer::emitWifiRSSI(AsyncEventSourceClient *c) {
@@ -305,34 +234,19 @@ void WebServer::emitWifiRSSI(AsyncEventSourceClient *c) {
     sendEvent(str, "wifiRSSI", c);
 }
 
-void WebServer::emitBTConnected(AsyncEventSourceClient *c) {
-    String str = (Bluetooth::getInstance()->state == Bluetooth::Connected) ? "true" : "false";
-    sendEvent(str, "btConnected", c);
+void WebServer::emitNetsockConnected(AsyncEventSourceClient *c) {
+    String str = (Netsock::getInstance()->state == Netsock::Connected) ? "true" : "false";
+    sendEvent(str, "netsockConnected", c);
 }
 
-void WebServer::emitBTScannedDevices() {
-    String json = "";
-    StaticJsonDocument<1536> doc;
-    Bluetooth* bt = Bluetooth::getInstance();
-    for (int i = 0; i < Bluetooth::MaxScannedDevices; i++) {
-        if (! bt->scannedDevices[i].used) continue;
-        JsonObject d = doc.createNestedObject();
-        d["name"] = bt->scannedDevices[i].device.name;
-        d["address"] = bt->scannedDevices[i].device.address;
-    }
-    serializeJson(doc, json);
-    sendEvent(json, "btScannedDevices");
-}
-
-void WebServer::emitBTConnectedDevice(AsyncEventSourceClient *c) {
+void WebServer::emitNetsockRemoteDevice(AsyncEventSourceClient *c) {
     String json = "";
     StaticJsonDocument<128> doc;
-    Bluetooth* bt = Bluetooth::getInstance();
-    doc["name"] = bt->connectedDevice.name;
-    doc["address"] = bt->connectedDevice.address;
+    Netsock* netsock = Netsock::getInstance();
+    doc["name"] = netsock->remoteName;
+    doc["address"] = netsock->remoteAddress.toString();
     serializeJson(doc, json);
-    sendEvent(json, "btConnectedDevice");
-
+    sendEvent(json, "netsockRemoteDevice");
 }
 
 void WebServer::emitLevelerRoll(AsyncEventSourceClient *c) {
@@ -365,4 +279,17 @@ void WebServer::emitLevelerImplementPitch(AsyncEventSourceClient *c) {
     lastEmitTime = millis();
     String str = String(Leveler::getInstance()->implementPitch);
     sendEvent(str, "implementPitch", c);
+}
+
+void WebServer::handleNetworkStateChanged() {
+    Network* network = Network::getInstance();
+    if (network->state == Network::Connected) {
+        Serial.println("Webserver starting");
+        server.begin();
+
+    } else if ((network->state == Network::Disconnect) || (network->state == Network::OTA)) {
+        Serial.println("Webserver stopping");
+        server.end();
+
+    }
 }

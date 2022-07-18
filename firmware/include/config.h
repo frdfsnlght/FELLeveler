@@ -2,42 +2,48 @@
 #define CONFIG_H
 
 #include <Arduino.h>
+#include <WiFi.h>
 #include "vector3.h"
 #include "callback_list.h"
-#include "BTDevice.h"
 
 class Config {
 
     public:
 
-    static Config* getInstance();
-    static const int MaxPairedDevices = 10;
     static const int MaxNameLength = 32;
-    static const int MaxWifiSSIDLength = 32;
-    static const int MaxWifiPasswordLength = 32;
+    static const int MaxSSIDLength = 32;
+    static const int MaxPasswordLength = 32;
+    static const char* ModeStrings[];
+    static const char* WifiModeStrings[];
 
-    enum MainMode {
+    static Config* getInstance();
+
+    enum Mode {
         Tractor,
         Implement
     };
 
-    struct PairedDevice {
-        bool used;
-        BTDevice device;
+    enum WifiMode {
+        HouseWifi,
+        TractorWifi
     };
 
     bool dirty;
 
-    MainMode mode;
+    Mode mode;
+    WifiMode wifiMode;
     char name[MaxNameLength];
-    char wifiSSID[MaxWifiSSIDLength];
-    char wifiPassword[MaxWifiPasswordLength];
+    char houseSSID[MaxSSIDLength];
+    char housePassword[MaxPasswordLength];
+    char tractorSSID[MaxSSIDLength];
+    char tractorPassword[MaxPasswordLength];
+    IPAddress tractorAddress;
+
     bool calibrated;
     Vector3 downLevel;
     Vector3 downTipped;
     Vector3 rollPlane;
     Vector3 pitchPlane;
-    PairedDevice pairedDevices[MaxPairedDevices];
 
     CallbackList dirtyChangedListeners = CallbackList();
     CallbackList settingsChangedListeners = CallbackList();
@@ -46,21 +52,25 @@ class Config {
     CallbackList downTippedChangedListeners = CallbackList();
     CallbackList rollPlaneChangedListeners = CallbackList();
     CallbackList pitchPlaneChangedListeners = CallbackList();
-    CallbackList pairedDevicesChangedListeners = CallbackList();
 
     bool read();
     bool write();
 
     void setDirty(bool d);
-    void setSettings(const char* modeStr, const char* newName, const char* ssid, const char* password);
+    void setSettings(
+        const char* modeStr,
+        const char* wifiModeStr,
+        const char* newName,
+        const char* houseSSID,
+        const char* housePassword,
+        const char* tractorSSID,
+        const char* tractorPassword,
+        const char* tractorAddress);
     void setCalibrated(bool cal);
     void setDownLevel(Vector3 &v);
     void setDownTipped(Vector3 &v);
     void setRollPlane(Vector3 &v);
     void setPitchPlane(Vector3 &v);
-    bool hasEmptyPairedDevice();
-    bool addPairedDevice(const char* name, const char* address);
-    bool removePairedDevice(const char* address);
 
     private:
 

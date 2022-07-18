@@ -21,7 +21,7 @@ class StatusScreen : public Screen {
 
     struct DirtyFlags {
         bool network : 1;
-        bool bluetooth : 1;
+        bool netsock : 1;
         bool levelerRoll : 1;
         bool levelerPitch : 1;
         bool levelerImplementRoll : 1;
@@ -35,7 +35,7 @@ class StatusScreen : public Screen {
     StatusScreen();
 
     void networkChanged();
-    void btChanged();
+    void netsockChanged();
     void rollChanged();
     void pitchChanged();
     void implementRollChanged();

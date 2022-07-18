@@ -2,7 +2,7 @@
 #include "display.h"
 
 #include "network.h"
-#include "bluetooth.h"
+#include "netsock.h"
 #include "leveler.h"
 #include "config.h"
 
@@ -18,11 +18,11 @@ StatusScreen::StatusScreen() : Screen() {
         StatusScreen::getInstance()->networkChanged();
     });
 
-    Bluetooth::getInstance()->stateChangedListeners.add([](void) {
-        StatusScreen::getInstance()->btChanged();
+    Netsock::getInstance()->stateChangedListeners.add([](void) {
+        StatusScreen::getInstance()->netsockChanged();
     });
-    Bluetooth::getInstance()->connectedDeviceChangedListeners.add([](void) {
-        StatusScreen::getInstance()->btChanged();
+    Netsock::getInstance()->remoteDeviceChangedListeners.add([](void) {
+        StatusScreen::getInstance()->netsockChanged();
     });
 
     Leveler::getInstance()->rollChangedListeners.add([](void) {
@@ -55,7 +55,7 @@ void StatusScreen::paintContent() {
         Network* n = Network::getInstance();
         switch (n->state) {
             case Network::AP: d->print("AP"); break;
-            case Network::Unconnected: d->print("Unconnected"); break;
+            case Network::Connect: d->print("Unconnected"); break;
             case Network::Connecting: d->print("Connecting"); break;
             case Network::Waiting: d->print("Waiting"); break;
             case Network::Connected: d->print(n->ipAddress); break;
@@ -63,26 +63,23 @@ void StatusScreen::paintContent() {
         dirtyFlags.network = false;
     }
 
-    if (firstPaint || dirtyFlags.bluetooth) {
+    if (firstPaint || dirtyFlags.netsock) {
         d->printLeft("BT: ", 0, 10);
         d->fillRight(BLACK);
-        Bluetooth* bt = Bluetooth::getInstance();
-        switch (bt->state) {
-            case Bluetooth::Idle: d->print("Idle"); break;
-            case Bluetooth::Connected: {
+        Netsock* netsock = Netsock::getInstance();
+        switch (netsock->state) {
+            case Netsock::Idle: d->print("Idle"); break;
+            case Netsock::Connected: {
                 char tmpName[18]{0};
-                strncpy(tmpName, bt->connectedDevice.name, sizeof(tmpName) - 1);
+                strncpy(tmpName, netsock->remoteName, sizeof(tmpName) - 1);
                 d->print(tmpName);
                 break;
             }
-            case Bluetooth::WaitingForMaster: d->print("Waiting"); break;
-            case Bluetooth::ScanForSlave: d->print("Searching"); break;
-            case Bluetooth::ScanningForSlave: d->print("Searching"); break;
-            case Bluetooth::ConnectToSlave: d->print("Connecting"); break;
-            case Bluetooth::ScanningDevices: d->print("Scanning"); break;
-            case Bluetooth::ScanningComplete: d->print("Scanning"); break;
+            case Netsock::WaitingForClient: d->print("Listening"); break;
+            case Netsock::ConnectToServer: d->print("Connecting"); break;
+            case Netsock::WaitingToConnect: d->print("Waiting"); break;
         }
-        dirtyFlags.bluetooth = false;
+        dirtyFlags.netsock = false;
     }
 
     if (firstPaint || dirtyFlags.levelerRoll) {
@@ -127,8 +124,8 @@ void StatusScreen::networkChanged() {
     dirtyFlags.network = dirty = true;
 }
 
-void StatusScreen::btChanged() {
-    dirtyFlags.bluetooth = dirty = true;
+void StatusScreen::netsockChanged() {
+    dirtyFlags.netsock = dirty = true;
 }
 
 void StatusScreen::rollChanged() {

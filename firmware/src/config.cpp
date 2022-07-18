@@ -7,6 +7,8 @@
 #include "secrets.h"
 
 Config* Config::instance = nullptr;
+const char* Config::ModeStrings[] = {"Tractor", "Implement"};
+const char* Config::WifiModeStrings[] = {"HouseWifi", "TractorWifi"};
 
 Config* Config::getInstance() {
     if (instance == nullptr) instance = new Config();
@@ -15,17 +17,22 @@ Config* Config::getInstance() {
 
 Config::Config() {
     dirty = false;
-    // TODO: reset default
+    // TODO: reset defaults
 //    mode = Tractor;
-    mode = Implement;
+//    wifiMode = TractorWifi;
+    mode = Tractor;
+    wifiMode = HouseWifi;
     strcpy(name, "Unknown");
-    strcpy(wifiSSID, DEFAULT_WIFI_SSID);
-    strcpy(wifiPassword, DEFAULT_WIFI_PASSWORD);
+    strcpy(houseSSID, DEFAULT_HOUSE_SSID);
+    strcpy(housePassword, DEFAULT_HOUSE_PASSWORD);
+    strcpy(tractorSSID, DEFAULT_TRACTOR_SSID);
+    strcpy(tractorPassword, DEFAULT_TRACTOR_PASSWORD);
+    tractorAddress.fromString("8.8.8.8");
     calibrated = false;
     downLevel.set(0, 0, 0);
     downTipped.set(0, 0, 0);
-    for (int i = 0; i < MaxPairedDevices; i++)
-        pairedDevices[i].used = false;
+    rollPlane.set(0, 0, 0);
+    pitchPlane.set(0, 0, 0);
 }
 
 bool Config::read() {
@@ -42,13 +49,21 @@ bool Config::read() {
         Serial.println(err.c_str());
         return false;
     }
-    if (strcmp(doc["mode"], "Tractor") == 0)
+    if (strcmp(doc["mode"], ModeStrings[Tractor]) == 0)
         mode = Tractor;
-    else if (strcmp(doc["mode"], "Implement") == 0)
+    else if (strcmp(doc["mode"], ModeStrings[Implement]) == 0)
         mode = Implement;
+    if (strcmp(doc["wifiMode"], WifiModeStrings[HouseWifi]) == 0)
+        wifiMode = HouseWifi;
+    else if (strcmp(doc["wifiMode"], WifiModeStrings[TractorWifi]) == 0)
+        wifiMode = TractorWifi;
+
     strcpy(name, doc["name"]);
-    strcpy(wifiSSID, doc["wifiSSID"]);
-    strcpy(wifiPassword, doc["wifiPassword"]);
+    strcpy(houseSSID, doc["houseSSID"]);
+    strcpy(housePassword, doc["housePassword"]);
+    strcpy(tractorSSID, doc["tractorSSID"]);
+    strcpy(tractorPassword, doc["tractorPassword"]);
+    tractorAddress.fromString((const char*)doc["tractorAddress"]);
     calibrated = doc["calibrated"];
     downLevel.x = doc["downLevel"]["x"];
     downLevel.y = doc["downLevel"]["y"];
@@ -62,21 +77,6 @@ bool Config::read() {
     pitchPlane.x = doc["pitchPlane"]["x"];
     pitchPlane.y = doc["pitchPlane"]["y"];
     pitchPlane.z = doc["pitchPlane"]["z"];
-
-    if (mode == Tractor) {
-        JsonArray a = doc["pairedDevices"];
-        for (int i = 0; i < MaxPairedDevices; i++) {
-            if (i >= a.size()) {
-                pairedDevices[i].used = false;
-                pairedDevices[i].device.name[0] = '\0';
-                pairedDevices[i].device.address[0] = '\0';
-            } else {
-                pairedDevices[i].used = true;
-                strcpy(pairedDevices[i].device.name, a[i]["name"]);
-                strcpy(pairedDevices[i].device.address, a[i]["address"]);
-            }
-        }
-    }
 
     serializeJsonPretty(doc, Serial);
     Serial.println();
@@ -93,13 +93,14 @@ bool Config::write() {
     }
     StaticJsonDocument<ConfigSize> doc;
 
-    if (mode == Tractor)
-        doc["mode"] = "Tractor";
-    else if (mode == Implement)
-        doc["mode"] = "Implement";
+    doc["mode"] = ModeStrings[mode];
+    doc["wifiMode"] = WifiModeStrings[wifiMode];
     doc["name"] = name;
-    doc["wifiSSID"] = wifiSSID;
-    doc["wifiPassword"] = wifiPassword;
+    doc["houseSSID"] = houseSSID;
+    doc["housePassword"] = housePassword;
+    doc["tractorSSID"] = tractorSSID;
+    doc["tractorPassword"] = tractorPassword;
+    doc["tractorAddress"] = tractorAddress.toString();
     doc["calibrated"] = calibrated;
     JsonObject v = doc.createNestedObject("downLevel");
     v["x"] = downLevel.x;
@@ -117,19 +118,6 @@ bool Config::write() {
     v["x"] = pitchPlane.x;
     v["y"] = pitchPlane.y;
     v["z"] = pitchPlane.z;
-
-    JsonObject d;
-    if (mode == Tractor) {
-        JsonArray a = doc.createNestedArray("pairedDevices");
-        for (int i = 0; i < MaxPairedDevices; i++) {
-            if (pairedDevices[i].used) {
-                d = a.createNestedObject();
-                d["used"] = pairedDevices[i].used;
-                d["name"] = pairedDevices[i].device.name;
-                d["address"] = pairedDevices[i].device.address;
-            }
-        }
-    }
 
     if (! serializeJson(doc, file)) {
         Serial.println("Error writing configuration");
@@ -150,14 +138,29 @@ void Config::setDirty(bool d) {
     dirtyChangedListeners.call();
 }
 
-void Config::setSettings(const char* modeStr, const char* newName, const char* ssid, const char* password) {
-    if (strcmp(modeStr, "Tractor") == 0)
+void Config::setSettings(
+    const char* modeStr,
+    const char* wifiModeStr,
+    const char* newName,
+    const char* hSSID,
+    const char* hPassword,
+    const char* tSSID,
+    const char* tPassword,
+    const char* tAddress) {
+    if (strcmp(modeStr, ModeStrings[Tractor]) == 0)
         mode = Tractor;
-    else if (strcmp(modeStr, "Implement") == 0)
+    else if (strcmp(modeStr, ModeStrings[Implement]) == 0)
         mode = Implement;
+    if (strcmp(wifiModeStr, WifiModeStrings[HouseWifi]) == 0)
+        wifiMode = HouseWifi;
+    else if (strcmp(wifiModeStr, WifiModeStrings[TractorWifi]) == 0)
+        wifiMode = TractorWifi;
     strcpy(name, newName);
-    strcpy(wifiSSID, ssid);
-    strcpy(wifiPassword, password);
+    strcpy(houseSSID, hSSID);
+    strcpy(housePassword, hPassword);
+    strcpy(tractorSSID, tSSID);
+    strcpy(tractorPassword, tPassword);
+    tractorAddress.fromString(tAddress);
     settingsChangedListeners.call();
     setDirty(true);
 }
@@ -195,33 +198,4 @@ void Config::setPitchPlane(Vector3 &v) {
     pitchPlane.set(v);
     pitchPlaneChangedListeners.call();
     setDirty(true);
-}
-
-bool Config::addPairedDevice(const char* name, const char* address) {
-    for (int i = 0; i < MaxPairedDevices; i++) {
-        if (! pairedDevices[i].used) {
-            strcpy(pairedDevices[i].device.name, name);
-            strcpy(pairedDevices[i].device.address, address);
-            pairedDevices[i].used = true;
-            pairedDevicesChangedListeners.call();
-            setDirty(true);
-            return true;
-        }
-    }
-    return false;
-}
-
-bool Config::removePairedDevice(const char* address) {
-    for (int i = 0; i < MaxPairedDevices; i++) {
-        if (pairedDevices[i].used &&
-            (strcmp(pairedDevices[i].device.address, address) == 0)) {
-            pairedDevices[i].used = false;
-            pairedDevices[i].device.name[0] = '\0';
-            pairedDevices[i].device.address[0] = '\0';
-            pairedDevicesChangedListeners.call();
-            setDirty(true);
-            return true;
-        }
-    }
-    return false;
 }

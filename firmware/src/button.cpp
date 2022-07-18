@@ -12,8 +12,7 @@ void Button::setup() {
             pinMode(pin, INPUT_PULLDOWN);
             break;
     }
-    Serial.print("Button setup complete on pin ");
-    Serial.println(pin);
+    Serial.printf("Button setup complete on pin %d\n", pin);
 }
 
 void Button::loop() {

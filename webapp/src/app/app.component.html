@@ -17,14 +17,6 @@
         <mat-icon>perm_data_setting</mat-icon>
         <span>Calibrate</span>
     </button>
-    <button mat-menu-item (click)="pair()" *ngIf="model.mode.value == 'Tractor'">
-        <mat-icon>link</mat-icon>
-        <span>Pair</span>
-    </button>
-    <button mat-menu-item (click)="unpair()" *ngIf="model.mode.value == 'Tractor'">
-        <mat-icon>link_off</mat-icon>
-        <span>Unpair</span>
-    </button>
     <button mat-menu-item (click)="saveConfig()">
         <mat-icon>save</mat-icon>
         <span>Save</span>
@@ -38,26 +30,33 @@
 <mat-card>
     <mat-card-title><mat-icon>wifi</mat-icon> WiFi</mat-card-title>
     <mat-card-content>
-        <p><strong>Mode:</strong> {{model.wifiMode.value}}</p>
-        <p *ngIf="model.wifiMode.value=='Station'"><strong>RSSI:</strong> {{model.wifiRSSI.value}} dB</p>
+        <p>
+            <strong>Mode:</strong> {{model.wifiMode.value}}<br/>
+            <strong>RSSI:</strong> {{model.wifiRSSI.value}} dbm
+        </p>
     </mat-card-content>
 </mat-card>
 
 <mat-card>
-    <mat-card-title><mat-icon>bluetooth</mat-icon> Bluetooth</mat-card-title>
+    <mat-card-title *ngIf="model.mode.value == 'Tractor'"><mat-icon>build</mat-icon> Implement</mat-card-title>
+    <mat-card-title *ngIf="model.mode.value == 'Implement'"><mat-icon>agriculture</mat-icon> Tractor</mat-card-title>
     <mat-card-content>
-        <p><strong>Connected:</strong> {{model.btConnected.value ? 'Yes' : 'No'}}</p>
-        <p *ngIf="model.btConnected.value"><strong>Connected to: </strong> {{(model.btConnectedDevice.value && model.btConnectedDevice.value.name) ? (model.btConnectedDevice.value.name + ' (' + model.btConnectedDevice.value.address + ')') : 'Unknown'}}</p>
+        <p>
+            <strong>Connected:</strong> {{model.netsockConnected.value ? 'Yes' : 'No'}}<br/>
+            <span *ngIf="model.netsockConnected.value"><strong>Connected to: </strong> {{model.netsockRemoteDevice.value.name ? (model.netsockRemoteDevice.value.name + ' (' + model.netsockRemoteDevice.value.address + ')') : 'Unknown'}}</span>
+        </p>
     </mat-card-content>
 </mat-card>
 
 <mat-card>
     <mat-card-title><mat-icon>perm_data_setting</mat-icon> Measurements</mat-card-title>
     <mat-card-content>
-        <p><strong>Calibrated:</strong> {{model.calibrated.value ? 'Yes' : 'No'}}</p>
-        <p *ngIf="model.calibrated.value"><strong>Roll angle:</strong> {{(model.roll.value / 10)|number}} &deg;</p>
-        <p *ngIf="model.calibrated.value"><strong>Pitch angle:</strong> {{(model.pitch.value / 10)|number}} &deg;</p>
-        <p *ngIf="model.calibrated.value && model.mode.value=='Tractor'"><strong>Implement roll:</strong> {{(model.implementRoll.value / 10)|number}} &deg;</p>
-        <p *ngIf="model.calibrated.value && model.mode.value=='Tractor'"><strong>Implement pitch:</strong> {{(model.implementPitch.value / 10)|number}} &deg;</p>
+        <p>
+            <strong>Calibrated:</strong> {{model.calibrated.value ? 'Yes' : 'No'}}<br/>
+            <span *ngIf="model.calibrated.value"><strong>Roll angle:</strong> {{(model.roll.value / 10)|number}} &deg;<br/></span>
+            <span *ngIf="model.calibrated.value"><strong>Pitch angle:</strong> {{(model.pitch.value / 10)|number}} &deg;<br/></span>
+            <span *ngIf="model.calibrated.value && model.mode.value=='Tractor'"><strong>Implement roll:</strong> {{(model.implementRoll.value / 10)|number}} &deg;<br/></span>
+            <span *ngIf="model.calibrated.value && model.mode.value=='Tractor'"><strong>Implement pitch:</strong> {{(model.implementPitch.value / 10)|number}} &deg;</span>
+        </p>
     </mat-card-content>
 </mat-card>

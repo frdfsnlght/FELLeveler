@@ -1,7 +1,7 @@
 #include "leveler.h"
 
 #include "accelerometer.h"
-#include "bluetooth.h"
+#include "netsock.h"
 #include "config.h"
 #include "vector3.h"
 
@@ -16,7 +16,7 @@ void Leveler::setup() {
     Accelerometer::getInstance()->listeners.add([](void) {
         instance->update();
     });
-    Bluetooth::getInstance()->measurementsChangedListeners.add([](void) {
+    Netsock::getInstance()->measurementsChangedListeners.add([](void) {
         instance->updateImplement();
     });
     Serial.println("Leveler setup complete");
@@ -76,16 +76,16 @@ void Leveler::update() {
 }
 
 void Leveler::updateImplement() {
-    Bluetooth* bt = Bluetooth::getInstance();
+    Netsock* netsock = Netsock::getInstance();
     bool changed = false;
-    if (bt->measurements.roll != implementRoll) {
+    if (netsock->measurements.roll != implementRoll) {
         changed = true;
-        implementRoll = bt->measurements.roll;
+        implementRoll = netsock->measurements.roll;
         implementRollChangedListeners.call();
     }
-    if (bt->measurements.pitch != implementPitch) {
+    if (netsock->measurements.pitch != implementPitch) {
         changed = true;
-        implementPitch = bt->measurements.pitch;
+        implementPitch = netsock->measurements.pitch;
         implementPitchChangedListeners.call();
     }
     if (changed)

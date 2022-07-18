@@ -7,8 +7,6 @@ import { ConnectingDialogComponent } from './connecting-dialog/connecting-dialog
 import { SettingsDialogComponent } from './settings-dialog/settings-dialog.component';
 import { RebootDialogComponent } from './reboot-dialog/reboot-dialog.component';
 import { CalibrateDialogComponent } from './calibrate-dialog/calibrate-dialog.component';
-import { PairDialogComponent } from './pair-dialog/pair-dialog.component';
-import { UnpairDialogComponent } from './unpair-dialog/unpair-dialog.component';
 
 @Component({
   selector: 'app-root',
@@ -22,7 +20,6 @@ export class AppComponent {
   private modeSubscription!: Subscription;
   private nameSubscription!: Subscription;
   private connectedSubscription!: Subscription;
-  private connectingDialog!: Component;
 
   constructor(
     private titleService: Title,
@@ -49,7 +46,7 @@ export class AppComponent {
   }
 
   showConnecting(show: boolean): void {
-    var d = this.dialog.open(ConnectingDialogComponent);
+    this.dialog.open(ConnectingDialogComponent);
   }
 
   settings(): void {
@@ -58,14 +55,6 @@ export class AppComponent {
 
   calibrate(): void {
     this.dialog.open(CalibrateDialogComponent);
-  }
-  
-  pair(): void {
-    this.dialog.open(PairDialogComponent);
-  }
-  
-  unpair(): void {
-    this.dialog.open(UnpairDialogComponent);
   }
   
   saveConfig(): void {

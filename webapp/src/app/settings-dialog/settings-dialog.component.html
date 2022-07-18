@@ -11,6 +11,15 @@
             </mat-select>
         </mat-form-field>
         <mat-form-field hideRequiredMarker>
+            <mat-label>WiFi Mode</mat-label>
+            <mat-select
+                required
+                formControlName="wifiMode">
+                <mat-option value="HouseWifi">House</mat-option>
+                <mat-option value="TractorWifi">Tractor</mat-option>
+            </mat-select>
+        </mat-form-field>
+        <mat-form-field hideRequiredMarker>
             <mat-label>Name</mat-label>
             <input
                 type="text"
@@ -25,27 +34,63 @@
             </mat-error>
         </mat-form-field>
         <mat-form-field>
-            <mat-label>WiFi SSID</mat-label>
+            <mat-label>House SSID</mat-label>
             <input
                 type="text"
                 matInput
                 maxlength="31"
                 autocomplete="ssid"
-                formControlName="wifiSSID">
-            <mat-hint>Maximum 31 characters, leave empty for AP mode only</mat-hint>
+                [required]="form.controls['wifiMode'].value == 'HouseWifi'"
+                formControlName="houseSSID">
+            <mat-hint>Maximum 31 characters</mat-hint>
         </mat-form-field>
         <mat-form-field hideRequiredMarker>
-            <mat-label>WiFi Password</mat-label>
+            <mat-label>House Password</mat-label>
             <input
-                [type]="showPassword ? 'text' : 'password'"
+                [type]="showHousePassword ? 'text' : 'password'"
                 matInput
                 minlength="8"
                 maxlength="31"
-                autocomplete="wifipassword"
-                [required]="form.controls['wifiSSID'].value!.length > 0"
-                formControlName="wifiPassword">
-            <mat-icon matSuffix (click)="showPassword=!showPassword">{{showPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
-            <mat-hint>Minimum 8 characters, maximum 31 characters</mat-hint>
+                autocomplete="housepassword"
+                [required]="form.controls['wifiMode'].value == 'HouseWifi'"
+                formControlName="housePassword">
+            <mat-icon matSuffix (click)="showHousePassword=!showHousePassword">{{showHousePassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+            <mat-hint>Minimum 8, maximum 31 characters</mat-hint>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Tractor SSID</mat-label>
+            <input
+                type="text"
+                matInput
+                maxlength="31"
+                autocomplete="ssid"
+                [required]="form.controls['wifiMode'].value == 'TractorWifi'"
+                formControlName="tractorSSID">
+            <mat-hint>Maximum 31 characters</mat-hint>
+        </mat-form-field>
+        <mat-form-field hideRequiredMarker>
+            <mat-label>Tractor Password</mat-label>
+            <input
+                [type]="showTractorPassword ? 'text' : 'password'"
+                matInput
+                minlength="8"
+                maxlength="31"
+                autocomplete="tractorpassword"
+                [required]="form.controls['wifiMode'].value == 'TractorWifi'"
+                formControlName="tractorPassword">
+            <mat-icon matSuffix (click)="showTractorPassword=!showTractorPassword">{{showTractorPassword ? 'visibility' : 'visibility_off'}}</mat-icon>
+            <mat-hint>Minimum 8, maximum 31 characters</mat-hint>
+        </mat-form-field>
+        <mat-form-field>
+            <mat-label>Tractor Address</mat-label>
+            <input
+                type="text"
+                matInput
+                maxlength="15"
+                autocomplete="ipaddress"
+                [required]="form.controls['wifiMode'].value == 'TractorWifi' || form.controls['mode'].value == 'Implement'"
+                formControlName="tractorAddress">
+            <mat-hint>Maximum 15 characters</mat-hint>
         </mat-form-field>
     </form>
 </mat-dialog-content>
