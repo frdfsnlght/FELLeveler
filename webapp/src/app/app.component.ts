@@ -49,6 +49,14 @@ export class AppComponent {
     this.dialog.open(ConnectingDialogComponent);
   }
 
+  test(): void {
+    this.model.test().subscribe({
+      next: (res: any) => {
+        console.info('test: ' + res);
+      }
+    });
+  }
+
   settings(): void {
     this.dialog.open(SettingsDialogComponent);
   }

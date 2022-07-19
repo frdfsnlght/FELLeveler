@@ -122,8 +122,9 @@ void Network::loop() {
             ipAddress = (uint32_t)0;
             setState(Connect);
         } else {
-            if (WiFi.RSSI() != rssi) {
-                rssi = WiFi.RSSI();
+            int newRSSI = WiFi.RSSI();
+            if (newRSSI != rssi) {
+                rssi = newRSSI;
                 wifiRSSIChangedListeners.call();
             }
         }

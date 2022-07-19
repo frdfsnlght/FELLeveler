@@ -11,7 +11,14 @@
 		"files.associations": {
 			"xstring": "cpp",
 			"string": "cpp",
-			"xmemory": "cpp"
+			"xmemory": "cpp",
+			"locale": "cpp",
+			"thread": "cpp",
+			"xlocale": "cpp",
+			"xlocmes": "cpp",
+			"xlocmon": "cpp",
+			"xlocnum": "cpp",
+			"xloctime": "cpp"
 		}
 	}
 }
