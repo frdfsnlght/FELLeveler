@@ -16,7 +16,7 @@ void Screen::hide() {
 
 void Screen::paint() {
     if (! dirty) return;
-    if (firstPaint)
+    if (firstPaint || alwaysPaintBackground)
         paintBackground();
     paintContent();
     dirty = firstPaint = false;

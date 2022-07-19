@@ -30,7 +30,8 @@ const char* Network::StateStrings[] = {
     "Connect",
     "Connecting",
     "Waiting",
-    "Connected"};
+    "Connected"
+};
 
 Network* Network::getInstance() {
     if (instance == nullptr) instance = new Network();

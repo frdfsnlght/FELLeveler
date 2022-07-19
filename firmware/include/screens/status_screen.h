@@ -14,6 +14,7 @@ class StatusScreen : public Screen {
     protected:
 
     void paintContent();
+    void handleButtonRelease(Button* button);
 
     private:
 

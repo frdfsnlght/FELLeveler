@@ -45,7 +45,6 @@ class Network {
     static Network* instance;
 
     static const char* Hostname;
-//    static const IPAddress APAddress;
     static const IPAddress APNetmask;
 
     static const int OTAPort;

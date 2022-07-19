@@ -1,10 +1,13 @@
-#include "status_screen.h"
-#include "display.h"
+#include "screens/status_screen.h"
 
+#include "ui.h"
+#include "display.h"
 #include "network.h"
 #include "netsock.h"
 #include "leveler.h"
 #include "config.h"
+
+#include "screens/implement_screen.h"
 
 StatusScreen* StatusScreen::instance = nullptr;
 
@@ -42,7 +45,9 @@ StatusScreen::StatusScreen() : Screen() {
 
 }
 
-// TODO: add button handlers to change screens
+void StatusScreen::handleButtonRelease(Button* button) {
+    UI::getInstance()->showScreen(ImplementScreen::getInstance());
+}
 
 void StatusScreen::paintContent() {
     Display* d = Display::getInstance();

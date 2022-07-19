@@ -26,56 +26,10 @@ void WebServer::setup() {
     // Static content
     server.serveStatic("/", SPIFFS, "/w/").setDefaultFile("index.html");
 
-/*
-    // API calls
-    server.on("/api/configure", HTTP_POST, emptyHandler, NULL, [](AsyncWebServerRequest *r, uint8_t *d, size_t l, size_t i, size_t t) { instance->apiConfigure(r, d, l, i, t); });
-    server.on("/api/calibrateLevel", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiCalibrateLevel(r); });
-    server.on("/api/calibrateTipped", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiCalibrateTipped(r); });
-    server.on("/api/saveConfig", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiSaveConfig(r); });
-    server.on("/api/reboot", HTTP_GET, [](AsyncWebServerRequest *r) { instance->apiReboot(r); });
-
-    // Server events
-    events.onConnect([](AsyncEventSourceClient *client) {
-        Serial.println("HTTP client connected");
-        if (client->lastId()) {
-            Serial.print("Client connected with last message ID ");
-            Serial.println(client->lastId());
-        }
-        instance->emitConfigDirty(client); delay(10);
-        instance->emitConfigSettings(client); delay(10);
-        instance->emitConfigCalibrated(client); delay(10);
-        instance->emitNetsockConnected(client); delay(10);
-        instance->emitNetsockRemoteDevice(client); delay(10);
-        instance->emitLevelerPitch(client); delay(10);
-        if (Config::getInstance()->mode == Config::Tractor) {
-            instance->emitLevelerRoll(client); delay(10);
-            instance->emitLevelerImplementRoll(client); delay(10);
-            instance->emitLevelerImplementPitch(client); delay(10);
-        }
-        if (Network::getInstance()->state != Network::AP) {
-            instance->emitWifiRSSI(client); delay(10);
-        }
-    });
-    server.addHandler(&events);
-*/
-
     ws.onEvent([](AsyncWebSocket* server, AsyncWebSocketClient* client, AwsEventType type, void* arg, uint8_t *data, size_t len) {
         if (type == WS_EVT_CONNECT) {
             Serial.println("WebSocket client connected");
-            instance->emitConfigDirty(client); delay(10);
-            instance->emitConfigSettings(client); delay(10);
-            instance->emitConfigCalibrated(client); delay(10);
-            instance->emitNetsockConnected(client); delay(10);
-            instance->emitNetsockRemoteDevice(client); delay(10);
-            instance->emitLevelerPitch(client); delay(10);
-            if (Config::getInstance()->mode == Config::Tractor) {
-                instance->emitLevelerRoll(client); delay(10);
-                instance->emitLevelerImplementRoll(client); delay(10);
-                instance->emitLevelerImplementPitch(client); delay(10);
-            }
-            if (Network::getInstance()->state != Network::AP) {
-                instance->emitWifiRSSI(client); delay(10);
-            }
+            instance->enqueueWebSocketRequest(client, "");
         } else if (type == WS_EVT_DISCONNECT) {
             Serial.println("WebSocket client disconnected");
         } else if (type == WS_EVT_DATA) {
@@ -83,8 +37,15 @@ void WebServer::setup() {
             if (info->final && info->index == 0 && info->len == len) {
                 if (info->opcode == WS_TEXT) {
                     data[len] = 0;
-                    WebServer::getInstance()->receiveMessage(client, (const char*)data);
-                    return;
+#ifdef DEBUG_WEBSERVER
+                    Serial.printf("RECEIVE: %s\n", data);
+#endif
+                    if (len < MaxRequestBufferLen) {
+                        instance->enqueueWebSocketRequest(client, (const char*)data);
+                        return;
+                    } else {
+                        Serial.printf("WebSocket message exceeded max length: %d >= %d\n", len, MaxRequestBufferLen);
+                    }
                 } else {
                     Serial.println("WebSocket received and ignored binary message");
                 }
@@ -161,6 +122,12 @@ void WebServer::setup() {
 void WebServer::loop() {
     if (! Network::getInstance()->hasNetwork()) return;
 
+    WebSocketRequest* request = dequeueWebSocketRequest();
+    while (request) {
+        processRequest(request);
+        request = dequeueWebSocketRequest();
+    }
+
     if ((millis() - lastKeepAliveTime) > KeepAliveInterval) {
         lastKeepAliveTime = millis();
         ws.cleanupClients();
@@ -168,32 +135,67 @@ void WebServer::loop() {
     }
 }
 
-void WebServer::receiveMessage(AsyncWebSocketClient* client, const char* msg) {
-#ifdef DEBUG_WEBSERVER
-    Serial.printf("RECEIVE: %s\n", msg);
-#endif
+bool WebServer::enqueueWebSocketRequest(AsyncWebSocketClient* client, const char* msg) {
+    webSocketRequests[webSocketRequestsEnd].client = client;
+    strcpy(webSocketRequests[webSocketRequestsEnd].buffer, msg);
+    if (++webSocketRequestsEnd >= MaxRequests)
+        webSocketRequestsEnd = 0;
+    if (webSocketRequestsEnd == webSocketRequestsStart) {
+        Serial.println("WebSocket request buffer overflow!");
+        return false;
+    }
+    return true;
+}
+
+WebServer::WebSocketRequest* WebServer::dequeueWebSocketRequest() {
+    if (webSocketRequestsStart == webSocketRequestsEnd) return NULL;
+    WebSocketRequest* ptr = &webSocketRequests[webSocketRequestsStart++];
+    if (webSocketRequestsStart >= MaxRequests)
+        webSocketRequestsStart = 0;
+    return ptr;
+}
+
+void WebServer::processRequest(WebServer::WebSocketRequest* request) {
+    if (request->buffer[0] == '\0') {
+        emitConfigDirty(request->client); delay(10);
+        emitConfigSettings(request->client); delay(10);
+        emitConfigCalibrated(request->client); delay(10);
+        emitNetsockConnected(request->client); delay(10);
+        emitNetsockRemoteDevice(request->client); delay(10);
+        emitLevelerPitch(request->client); delay(10);
+        if (Config::getInstance()->mode == Config::Tractor) {
+            emitLevelerRoll(request->client); delay(10);
+            emitLevelerImplementRoll(request->client); delay(10);
+            emitLevelerImplementPitch(request->client); delay(10);
+        }
+        if (Network::getInstance()->state != Network::AP) {
+            emitWifiRSSI(request->client); delay(10);
+        }
+        return;
+    }
+
     StaticJsonDocument<256> doc;
-    DeserializationError err = deserializeJson(doc, msg);
+    DeserializationError err = deserializeJson(doc, request->buffer);
     if (err) {
         Serial.printf("WebSocket JSON serialization error: %s\n", err.c_str());
         return;
     }
     const char* method = doc["method"];
     if (strcmp(method, "configure") == 0)
-        apiConfigure(client, doc["id"], doc["data"]);
+        apiConfigure(request->client, doc["id"], doc["data"]);
     else if (strcmp(method, "calibrateLevel") == 0)
-        apiCalibrateLevel(client, doc["id"]);
+        apiCalibrateLevel(request->client, doc["id"]);
     else if (strcmp(method, "calibrateTipped") == 0)
-        apiCalibrateTipped(client, doc["id"]);
+        apiCalibrateTipped(request->client, doc["id"]);
     else if (strcmp(method, "saveConfig") == 0)
-        apiSaveConfig(client, doc["id"]);
+        apiSaveConfig(request->client, doc["id"]);
     else if (strcmp(method, "reboot") == 0)
-        apiReboot(client, doc["id"]);
+        apiReboot(request->client, doc["id"]);
     else if (strcmp(method, "test") == 0)
-        apiTest(client, doc["id"]);
+        apiTest(request->client, doc["id"]);
     // more API calls...
     else
-        sendJSONString(client, doc["id"], "Unknown method");
+        sendJSONString(request->client, doc["id"], "Unknown method");
 }
 
 bool WebServer::canSend() {
@@ -288,7 +290,7 @@ void WebServer::emitKeepAlive() {
     StaticJsonDocument<64> doc;
     doc["event"] = "keepAlive";
     doc["data"] = true;
-    sendJSON(doc, NULL, false);
+    //sendJSON(doc, NULL, false);
 }
 
 void WebServer::emitConfigDirty(AsyncWebSocketClient *c) {
@@ -328,7 +330,7 @@ void WebServer::emitWifiRSSI(AsyncWebSocketClient *c) {
     StaticJsonDocument<64> doc;
     doc["event"] = "wifiRSSI";
     doc["data"] = Network::getInstance()->rssi;
-    sendJSON(doc, c);
+    //sendJSON(doc, c);
 }
 
 void WebServer::emitNetsockConnected(AsyncWebSocketClient *c) {

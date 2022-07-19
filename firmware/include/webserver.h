@@ -15,20 +15,31 @@ class WebServer {
 
     private:
 
+    static const int KeepAliveInterval = 1000;
+    static const int MaxRequestBufferLen = 256;
+    static const int MaxRequests = 10;
+
     static WebServer* instance;
 
+    struct WebSocketRequest {
+        AsyncWebSocketClient* client;
+        char buffer[MaxRequestBufferLen];
+    };
+
     AsyncWebServer server = AsyncWebServer(80);
-    //AsyncEventSource events = AsyncEventSource("/events");
     AsyncWebSocket ws = AsyncWebSocket("/ws");
 
-    const int KeepAliveInterval = 1000;
     unsigned long lastKeepAliveTime = 0;
-    
+    WebSocketRequest webSocketRequests[MaxRequests];
+    int webSocketRequestsStart;
+    int webSocketRequestsEnd;
+
     WebServer() {}
 
-    static void emptyHandler(AsyncWebServerRequest *r) {}
+    bool enqueueWebSocketRequest(AsyncWebSocketClient* client, const char* msg);
+    WebSocketRequest* dequeueWebSocketRequest();
 
-    void receiveMessage(AsyncWebSocketClient* client, const char* msg);
+    void processRequest(WebSocketRequest* request);
     bool canSend();
     void sendJSON(JsonDocument &doc, AsyncWebSocketClient* client = nullptr, bool debug = true);
     void sendJSONString(AsyncWebSocketClient* client, int id, const char* msg);

@@ -9,7 +9,8 @@
 #include "netsock.h"
 #include "accelerometer.h"
 #include "leveler.h"
-#include "boot_screen.h"
+
+#include "screens/boot_screen.h"
 
 #define FACTORY_RESET_PIN 12
 
@@ -49,7 +50,7 @@ void setup() {
     Netsock::getInstance()->setup();
     WebServer::getInstance()->setup();
 
-    Serial.println("Ready ======================");
+    Serial.println("Ready ----------------------------");
 }
 
 void loop() {

@@ -1,7 +1,9 @@
-#include "boot_screen.h"
+#include "screens/boot_screen.h"
+
+#include "ui.h"
 #include "display.h"
 
-#include "status_screen.h"
+#include "screens/implement_screen.h"
 
 BootScreen* BootScreen::instance = nullptr;
 
@@ -16,7 +18,7 @@ void BootScreen::onShow() {
 
 void BootScreen::loop() {
     if ((millis() - time) > ShowTime) {
-        UI::getInstance()->showScreen(StatusScreen::getInstance());
+        UI::getInstance()->showScreen(ImplementScreen::getInstance());
     }
 }
 

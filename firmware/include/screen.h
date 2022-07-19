@@ -10,6 +10,7 @@ class Screen {
     bool hidden = true;
     bool dirty = false;
     bool firstPaint = false;
+    bool alwaysPaintBackground = false;
     uint16_t backgroundColor = 0;
 
     void show();

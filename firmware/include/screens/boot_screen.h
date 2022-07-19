@@ -2,7 +2,6 @@
 #define BOOT_SCREEN_H
 
 #include "screen.h"
-#include "ui.h"
 
 class BootScreen : public Screen {
 
