@@ -4,20 +4,32 @@
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 
+#include "callback_list.h"
+
 class WebServer {
 
     public:
 
+    enum State {
+        Idle,
+        Listening
+    };
+
     static WebServer* getInstance();
+
+    CallbackList stateChangedListeners = CallbackList();
+    State state;
 
     void setup();
     void loop();
 
     private:
 
-    static const int KeepAliveInterval = 1000;
+    //static const int KeepAliveInterval = 1000;
+    static const int CleanClientsInterval = 1000;
     static const int MaxRequestBufferLen = 256;
     static const int MaxRequests = 10;
+    static const char* StateStrings[];
 
     static WebServer* instance;
 
@@ -29,12 +41,15 @@ class WebServer {
     AsyncWebServer server = AsyncWebServer(80);
     AsyncWebSocket ws = AsyncWebSocket("/ws");
 
-    unsigned long lastKeepAliveTime = 0;
+    //unsigned long lastKeepAliveTime = 0;
+    unsigned long lastCleanClientsTime = 0;
     WebSocketRequest webSocketRequests[MaxRequests];
     int webSocketRequestsStart;
     int webSocketRequestsEnd;
 
     WebServer() {}
+
+    void setState(State newState);
 
     bool enqueueWebSocketRequest(AsyncWebSocketClient* client, const char* msg);
     WebSocketRequest* dequeueWebSocketRequest();
@@ -53,7 +68,7 @@ class WebServer {
     void apiReboot(AsyncWebSocketClient* client, int id);
     void apiTest(AsyncWebSocketClient* client, int id);
 
-    void emitKeepAlive();
+//    void emitKeepAlive();
     void emitConfigDirty(AsyncWebSocketClient *c);
     void emitConfigSettings(AsyncWebSocketClient *c);
     void emitConfigCalibrated(AsyncWebSocketClient *c);

@@ -52,7 +52,8 @@ export class ModelService {
   private nextRequestId: number = 1;
   private requests = new Map<number, ReplaySubject<any>>();
   private eventHandlers = new Map<string, (data: any)=>void>();
-    
+  private pingTimer;
+
   constructor() {
 
     this.eventHandlers.set('keepAlive', b => {
@@ -114,6 +115,10 @@ export class ModelService {
     this.ws.subscribe({
       next: (obj: any) => {
         this.connected.next(true);
+        if (obj == 'pong') {
+          console.log('received pong');
+          return;
+        }
         //console.log(obj);
         if ('id' in obj && 'data' in obj) {
           console.log(obj);
@@ -144,14 +149,27 @@ export class ModelService {
         // TODO: add RPC call handling if needed
       },
       error: (err) => {
-        console.log('Websocket error: ' + err);
+        if (err instanceof CloseEvent) {
+          this.connected.next(false);
+          // TODO: attempt to reconnect
+        } else {
+          console.log('Websocket error:');
+          console.log(err);
+        }
       },
       complete: () => {
         console.log('Websocket closed');
         this.connected.next(false);
-        // TODO: set timer to reconnect?
+        // TODO: attempt to reconnect
       }
     });
+
+    this.pingTimer = setInterval(() => {
+      if (! this.ws.closed) {
+        console.log('sending ping');
+        this.ws.next('ping');
+      }
+    }, 1000);
 
     //this.resetWatchdog();
   }

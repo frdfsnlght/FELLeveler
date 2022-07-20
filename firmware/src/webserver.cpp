@@ -16,12 +16,24 @@
 
 WebServer* WebServer::instance = nullptr;
 
+const char* WebServer::StateStrings[] = {
+    "Idle",
+    "Listening"
+};
+
 WebServer* WebServer::getInstance() {
     if (instance == nullptr) instance = new WebServer();
     return instance;
 }
 
 void WebServer::setup() {
+    state = Idle;
+
+    for (int i = 0; i < MaxRequests; i++) {
+        webSocketRequests[i].client = NULL;
+        webSocketRequests[i].buffer[0] = '\0';
+    }
+    webSocketRequestsStart = webSocketRequestsEnd = 0;
 
     // Static content
     server.serveStatic("/", SPIFFS, "/w/").setDefaultFile("index.html");
@@ -32,6 +44,10 @@ void WebServer::setup() {
             instance->enqueueWebSocketRequest(client, "");
         } else if (type == WS_EVT_DISCONNECT) {
             Serial.println("WebSocket client disconnected");
+        } else if (type == WS_EVT_PONG) {
+            Serial.println("WebSocket client received pong");
+        } else if (type == WS_EVT_ERROR) {
+            Serial.println("WebSocket client error");
         } else if (type == WS_EVT_DATA) {
             AwsFrameInfo* info = (AwsFrameInfo*)arg;
             if (info->final && info->index == 0 && info->len == len) {
@@ -128,11 +144,25 @@ void WebServer::loop() {
         request = dequeueWebSocketRequest();
     }
 
+    if ((millis() - lastCleanClientsTime) > CleanClientsInterval) {
+        lastCleanClientsTime = millis();
+        ws.cleanupClients();
+    }
+/*
     if ((millis() - lastKeepAliveTime) > KeepAliveInterval) {
         lastKeepAliveTime = millis();
-        ws.cleanupClients();
         emitKeepAlive();
     }
+    */
+}
+
+void WebServer::setState(State newState) {
+    if (newState == state) return;
+    state = newState;
+#ifdef DEBUG_WEBSERVER
+    Serial.printf("WebServer state changed to %s\n", StateStrings[state]);
+#endif
+    stateChangedListeners.call();
 }
 
 bool WebServer::enqueueWebSocketRequest(AsyncWebSocketClient* client, const char* msg) {
@@ -156,6 +186,8 @@ WebServer::WebSocketRequest* WebServer::dequeueWebSocketRequest() {
 }
 
 void WebServer::processRequest(WebServer::WebSocketRequest* request) {
+    if (request->client == NULL) return;
+
     if (request->buffer[0] == '\0') {
         emitConfigDirty(request->client); delay(10);
         emitConfigSettings(request->client); delay(10);
@@ -171,6 +203,12 @@ void WebServer::processRequest(WebServer::WebSocketRequest* request) {
         if (Network::getInstance()->state != Network::AP) {
             emitWifiRSSI(request->client); delay(10);
         }
+        request->client = NULL;
+        return;
+    }
+
+    if (strcmp(request->buffer, "ping") == 0) {
+        request->client->text("pong");
         return;
     }
 
@@ -196,10 +234,12 @@ void WebServer::processRequest(WebServer::WebSocketRequest* request) {
     // more API calls...
     else
         sendJSONString(request->client, doc["id"], "Unknown method");
+
+    request->client = NULL;
 }
 
 bool WebServer::canSend() {
-    return Network::getInstance()->hasNetwork();
+    return (state == Listening) && Network::getInstance()->hasNetwork();
 }
 
 void WebServer::sendJSON(JsonDocument &doc, AsyncWebSocketClient *client, bool debug) {
@@ -285,13 +325,14 @@ void WebServer::apiTest(AsyncWebSocketClient* client, int id) {
 }
 
 
-
+/*
 void WebServer::emitKeepAlive() {
     StaticJsonDocument<64> doc;
     doc["event"] = "keepAlive";
     doc["data"] = true;
-    //sendJSON(doc, NULL, false);
+    sendJSON(doc, NULL, false);
 }
+*/
 
 void WebServer::emitConfigDirty(AsyncWebSocketClient *c) {
     StaticJsonDocument<64> doc;
@@ -395,10 +436,11 @@ void WebServer::handleNetworkStateChanged() {
     if (network->state == Network::Connected) {
         Serial.println("Webserver starting");
         server.begin();
+        setState(Listening);
 
     } else if ((network->state == Network::Disconnect) || (network->state == Network::OTA)) {
         Serial.println("Webserver stopping");
         server.end();
-
+        setState(Idle);
     }
 }

@@ -39,7 +39,6 @@ void ImplementScreen::paintContent() {
     Display* d = Display::getInstance();
     Leveler* leveler = Leveler::getInstance();
 
-    d->setTextSize(18);
     int diff;
     if (mode == Tractor)
         diff = leveler->implementPitch - leveler->pitch;
@@ -47,25 +46,27 @@ void ImplementScreen::paintContent() {
         diff = leveler->implementPitch;
 
     char angle[10];
-    sprintf(angle, "%.1f %c", abs(diff), (char)247);
+    sprintf(angle, "%.1f %c", (float)abs(diff) / 10.0f, (unsigned char)247);
 
+    d->setTextSize(15);
     if (diff > 10) {
         d->setTextColor(RED);
         d->printCentered(">", d->width() / 2, 0);
         d->setTextSize(1);
         d->setTextColor(WHITE);
-        d->printLeft(angle, 0, 60);
-    } else if (diff < 10) {
+        d->printLeft(angle, 0, 50);
+    } else if (diff < -10) {
         d->setTextColor(RED);
         d->printCentered("<", d->width() / 2, 0);
         d->setTextSize(1);
         d->setTextColor(WHITE);
-        d->printRight(angle, d->width(), 60);
+        d->printRight(angle, d->width(), 50);
     } else {
         d->setTextColor(GREEN);
         d->printCentered("-", d->width() / 2, 0);
     }
 
+    d->setTextColor(WHITE);
     d->setTextSize(1);
     d->printCentered(ModeStrings[mode], d->width() / 2, d->height() - 10);
 }
