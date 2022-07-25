@@ -3,8 +3,13 @@
 
 #include <Arduino.h>
 #include <DNSServer.h>
-#include "callback_list.h"
+#include <WebServer.h>
+#include <ArduinoJson.h>
+
 #include "config.h"
+#include "callback_list.h"
+#include "sockio.h"
+#include "led.h"
 
 class Network {
 
@@ -38,7 +43,7 @@ class Network {
 
     void setup();
     void loop();
-    bool hasNetwork();
+    bool available();
     
     private:
 
@@ -56,14 +61,39 @@ class Network {
     unsigned long lastConnectionAttemptTime;
     int otaUpdateType;
 
-    Network() {}
+    WebServer webServer;
+    SockIOServer sockio;
+    LED led;
+
+    Network():
+        webServer(80),
+        sockio(81, "/ws"),
+        led(2)
+        {}
+
+    void handleSettingsChanged();
 
     void setState(State newState);
+
     void setupWifi();
     void setupAP(const char* apSSID, const char* apPassword);
     void setupStation(const char* stationSSID, const char* stationPassword);
 
-    void handleSettingsChanged();
+    void setupDNSServer();
+    void setupOTA();
+
+    void setupWebServer();
+    void setupSockIO();
+
+    void activateServices();
+    void deactivateServices();
+
+    // ====================================
+    // SockIO API
+
+    void apiTest(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+
+
 };
 
 

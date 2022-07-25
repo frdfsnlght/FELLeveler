@@ -1,7 +1,6 @@
 #include "leveler.h"
 
 #include "accelerometer.h"
-#include "netsock.h"
 #include "config.h"
 #include "vector3.h"
 
@@ -16,9 +15,11 @@ void Leveler::setup() {
     Accelerometer::getInstance()->listeners.add([](void) {
         instance->update();
     });
+    /* TODO
     Netsock::getInstance()->measurementsChangedListeners.add([](void) {
         instance->updateImplement();
     });
+    */
     Serial.println("Leveler setup complete");
 }
 
@@ -76,6 +77,7 @@ void Leveler::update() {
 }
 
 void Leveler::updateImplement() {
+    /* TODO
     Netsock* netsock = Netsock::getInstance();
     bool changed = false;
     if (netsock->measurements.roll != implementRoll) {
@@ -90,6 +92,7 @@ void Leveler::updateImplement() {
     }
     if (changed)
         updateLevel();
+    */
 }
 
 void Leveler::updateLevel() {

@@ -22,12 +22,12 @@ export class ModelService {
   //private wsUrl = '/ws';
   private wsUrl = 'ws://10.10.10.122/ws';
 
-  private ws: WebSocketSubject<any>;
+  //private ws: WebSocketSubject<any>;
 
   private watchdogTimer: any = false;
   private watchdogTimeout = 3000
 
-  connected = new BehaviorSubject<boolean>(false);
+  connected = new BehaviorSubject<boolean>(true);
 
   mode = new BehaviorSubject<string>('Tractor');  // Tractor or Implement
   wifiMode = new BehaviorSubject<string>('TractorWifi');  // HouseWifi or TractorWifi
@@ -52,7 +52,7 @@ export class ModelService {
   private nextRequestId: number = 1;
   private requests = new Map<number, ReplaySubject<any>>();
   private eventHandlers = new Map<string, (data: any)=>void>();
-  private pingTimer;
+  //private pingTimer;
 
   constructor() {
 
@@ -108,6 +108,7 @@ export class ModelService {
       this.configDirty.next(b);
     });
 
+    /*
     this.ws = webSocket({
       url: this.wsUrl
     });
@@ -150,7 +151,7 @@ export class ModelService {
       },
       error: (err) => {
         if (err instanceof CloseEvent) {
-          this.connected.next(false);
+          //this.connected.next(false);
           // TODO: attempt to reconnect
         } else {
           console.log('Websocket error:');
@@ -159,7 +160,7 @@ export class ModelService {
       },
       complete: () => {
         console.log('Websocket closed');
-        this.connected.next(false);
+        //this.connected.next(false);
         // TODO: attempt to reconnect
       }
     });
@@ -170,6 +171,7 @@ export class ModelService {
         this.ws.next('ping');
       }
     }, 1000);
+    */
 
     //this.resetWatchdog();
   }
@@ -219,7 +221,7 @@ export class ModelService {
     var sub = new ReplaySubject<any>(1);
     this.requests.set(req.id, sub);
     console.log('Request: ' + JSON.stringify(req));
-    this.ws.next(req);
+    //this.ws.next(req);
     return sub.asObservable();
   }
 

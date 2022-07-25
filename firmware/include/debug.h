@@ -2,9 +2,9 @@
 #define DEBUG_H
 
 #define DEBUG_NETWORK
-#define DEBUG_WEBSERVER
-#define DEBUG_WEBSERVER_CORS
-#define DEBUG_NETSOCK
+#define DEBUG_SOCKIO
+
+//#define DEBUG_WEBSERVER_CORS
 //#define DEBUG_ACCELEROMETER
 //#define DEBUG_LEVELER
 

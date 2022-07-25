@@ -3,7 +3,6 @@
 #include "ui.h"
 #include "display.h"
 #include "network.h"
-#include "netsock.h"
 #include "leveler.h"
 #include "config.h"
 
@@ -21,12 +20,14 @@ StatusScreen::StatusScreen() : Screen() {
         StatusScreen::getInstance()->networkChanged();
     });
 
+/* TODO
     Netsock::getInstance()->stateChangedListeners.add([](void) {
         StatusScreen::getInstance()->netsockChanged();
     });
     Netsock::getInstance()->remoteDeviceChangedListeners.add([](void) {
         StatusScreen::getInstance()->netsockChanged();
     });
+*/
 
     Leveler::getInstance()->rollChangedListeners.add([](void) {
         StatusScreen::getInstance()->rollChanged();
@@ -71,6 +72,7 @@ void StatusScreen::paintContent() {
     if (firstPaint || dirtyFlags.netsock) {
         d->printLeft("BT: ", 0, 10);
         d->fillRight(BLACK);
+        /*
         Netsock* netsock = Netsock::getInstance();
         switch (netsock->state) {
             case Netsock::Idle: d->print("Idle"); break;
@@ -84,6 +86,7 @@ void StatusScreen::paintContent() {
             case Netsock::ConnectToServer: d->print("Connecting"); break;
             case Netsock::WaitingToConnect: d->print("Waiting"); break;
         }
+        */
         dirtyFlags.netsock = false;
     }
 

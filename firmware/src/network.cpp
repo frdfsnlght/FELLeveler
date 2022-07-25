@@ -9,9 +9,9 @@
 #include "secrets.h"
 
 #ifdef DEBUG_NETWORK
-#define DEBUG(msg) Serial.println(msg)
+#define DEBUG(...) Serial.printf(__VA_ARGS__)
 #else
-#define DEBUG(msg)
+#define DEBUG(...)
 #endif
 
 Network* Network::instance = nullptr;
@@ -39,51 +39,25 @@ Network* Network::getInstance() {
 }
 
 void Network::setup() {
+    led.setup();
+    led.turnOn();
     Config* config = Config::getInstance();
     state = Idle;
     setupWifi();
     config->settingsChangedListeners.add([](void) {
-        Network::getInstance()->handleSettingsChanged();
+        instance->handleSettingsChanged();
     });
 
-    // OTA
-    ArduinoOTA.setPort(OTAPort);
-    ArduinoOTA.setHostname(Hostname);
-    ArduinoOTA.setRebootOnSuccess(true);
-  
-    // No authentication by default
-    // ArduinoOTA.setPassword("admin");
-    // Password can be set with it's md5 value as well
-    // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
-    // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
-    ArduinoOTA.onStart([]() {
-        if (ArduinoOTA.getCommand() == U_FLASH)
-            Serial.println("OTA Update flash");
-        else {
-            Serial.println("OTA Update filesystem");
-            SPIFFS.end();
-        }
-        Network::getInstance()->setState(OTA);
-    });
-    ArduinoOTA.onEnd([]() {
-        Serial.println("\nReboot");
-    });
-    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
-        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
-    });
-    ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
-        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
-        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
-        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
-        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
-        else if (error == OTA_END_ERROR) Serial.println("End Failed");
-    });
-
-    Serial.println("Network and OTA setup complete");
+    setupDNSServer();
+    setupOTA();
+    setupWebServer();
+    setupSockIO();
+    Serial.println("Network setup complete");
+    led.blink();
 }
 
 void Network::loop() {
+    led.loop();
     if (state == Connect) {
         connectionAttempts++;
         Serial.printf("Connecting to \"%s\", attempt %d of %d\n", ssid, connectionAttempts, MaxConnectionAttempts);
@@ -96,9 +70,9 @@ void Network::loop() {
             ipAddress = WiFi.localIP();
             Serial.println("Network connected");
             Serial.printf("Network IP Address: %s\n", ipAddress.toString());
-            ArduinoOTA.begin();
             Serial.println("Network OTA started");
             setState(Connected);
+            activateServices();
         } else if (WiFi.status() == WL_CONNECT_FAILED) {
             Serial.println("Network connection failed");
             if (connectionAttempts >= MaxConnectionAttempts) {
@@ -129,22 +103,30 @@ void Network::loop() {
                 wifiRSSIChangedListeners.call();
             }
         }
-    } else if (state == AP) {
-        dnsServer.processNextRequest();
     }
-    ArduinoOTA.handle();
+
+    if (available()) {
+        if (state == AP)
+            dnsServer.processNextRequest();
+        ArduinoOTA.handle();
+        sockio.loop();
+    }
 }
 
-bool Network::hasNetwork() {
+bool Network::available() {
     return (state == AP) || (state == Connected);
+}
+
+void Network::handleSettingsChanged() {
+    Config* config = Config::getInstance();
+    if ((config->mode != mode) || (config->wifiMode != wifiMode))
+        setupWifi();
 }
 
 void Network::setState(State newState) {
     if (newState == state) return;
     state = newState;
-#ifdef DEBUG_NETWORK
     Serial.printf("Network state changed to %s\n", StateStrings[state]);
-#endif
     stateChangedListeners.call();
 }
 
@@ -152,14 +134,13 @@ void Network::setupWifi() {
     Config* config = Config::getInstance();
 
     if (state == Connected) {
+        deactivateServices();
         setState(Disconnect);
-        ArduinoOTA.end();
         WiFi.disconnect();
         setState(Idle);
     } else if (state == AP) {
+        deactivateServices();
         setState(Disconnect);
-        ArduinoOTA.end();
-        dnsServer.stop();
         WiFi.softAPdisconnect();
         setState(Idle);
     }
@@ -211,11 +192,10 @@ void Network::setupAP(const char* apSSID, const char* apPassword) {
     IPAddress address = Config::getInstance()->tractorAddress;
     WiFi.softAPConfig(address, address, APNetmask);
     WiFi.softAP(apSSID, apPassword);
-    dnsServer.setErrorReplyCode(DNSReplyCode::NoError); 
-    dnsServer.start(53, "*", address);
     Serial.print("Network IP Address: ");
     Serial.println(WiFi.softAPIP());
     setState(AP);
+    activateServices();
 }
 
 void Network::setupStation(const char* stationSSID, const char* stationPassword) {
@@ -227,9 +207,81 @@ void Network::setupStation(const char* stationSSID, const char* stationPassword)
     setState(Connect);
 }
 
-void Network::handleSettingsChanged() {
-    Config* config = Config::getInstance();
-    if ((config->mode != mode) || (config->wifiMode != wifiMode))
-        setupWifi();
+void Network::setupDNSServer() {
+    dnsServer.setErrorReplyCode(DNSReplyCode::NoError); 
 }
 
+void Network::setupOTA() {
+    ArduinoOTA.setPort(OTAPort);
+    ArduinoOTA.setHostname(Hostname);
+    ArduinoOTA.setRebootOnSuccess(true);
+  
+    // No authentication by default
+    // ArduinoOTA.setPassword("admin");
+    // Password can be set with it's md5 value as well
+    // MD5(admin) = 21232f297a57a5a743894a0e4a801fc3
+    // ArduinoOTA.setPasswordHash("21232f297a57a5a743894a0e4a801fc3");
+    ArduinoOTA.onStart([]() {
+        if (ArduinoOTA.getCommand() == U_FLASH)
+            Serial.println("OTA Update flash");
+        else {
+            Serial.println("OTA Update filesystem");
+            SPIFFS.end();
+        }
+        Network::getInstance()->setState(OTA);
+    });
+    ArduinoOTA.onEnd([]() {
+        Serial.println("\nReboot");
+    });
+    ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+        Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+    });
+    ArduinoOTA.onError([](ota_error_t error) {
+        Serial.printf("Error[%u]: ", error);
+        if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+        else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+        else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+        else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+        else if (error == OTA_END_ERROR) Serial.println("End Failed");
+    });
+}
+
+void Network::setupWebServer() {
+    webServer.serveStatic("/", SPIFFS, "/w/");
+}
+
+void Network::setupSockIO() {
+    sockio.on("connected", [](SockIOServerClient& client) {
+        Serial.println("Network websocket server connected");
+        client.on("test", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+            instance->apiTest(client, args, ret);
+        });
+    });
+}
+
+void Network::activateServices() {
+    if (state == AP)
+        dnsServer.start(53, "*", Config::getInstance()->tractorAddress);
+    ArduinoOTA.begin();
+    webServer.begin();
+    sockio.begin();
+}
+
+void Network::deactivateServices() {
+    sockio.end();
+    webServer.stop();
+    ArduinoOTA.end();
+    if (state == AP)
+        dnsServer.stop();
+
+}
+
+// ======================================================
+// SockIO API
+
+void Network::apiTest(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+    ret.add(true);
+    ret.add("a string");
+    ret.add(3.1415);
+    ret.add(1234);
+}

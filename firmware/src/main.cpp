@@ -5,8 +5,6 @@
 #include "display.h"
 #include "ui.h"
 #include "network.h"
-#include "webserver.h"
-#include "netsock.h"
 #include "accelerometer.h"
 #include "leveler.h"
 
@@ -41,22 +39,18 @@ void setup() {
         Serial.println("No configuration found, using defaults");
     }
 
-    Display::getInstance()->setup();
+//    Display::getInstance()->setup();
     Network::getInstance()->setup();
-    Accelerometer::getInstance()->setup();
-    Leveler::getInstance()->setup();
+//    Accelerometer::getInstance()->setup();
+//    Leveler::getInstance()->setup();
 
-    UI::getInstance()->setup(BootScreen::getInstance());
-    Netsock::getInstance()->setup();
-    WebServer::getInstance()->setup();
+//    UI::getInstance()->setup(BootScreen::getInstance());
 
     Serial.println("Ready ----------------------------");
 }
 
 void loop() {
     Network::getInstance()->loop();
-    Accelerometer::getInstance()->loop();
-    UI::getInstance()->loop();
-    Netsock::getInstance()->loop();
-    WebServer::getInstance()->loop();
+//    Accelerometer::getInstance()->loop();
+//    UI::getInstance()->loop();
 }

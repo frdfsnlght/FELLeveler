@@ -7,7 +7,7 @@ class LED {
 
     public:
 
-    LED(int pin, bool invert) :
+    LED(int pin, bool invert = false) :
         pin(pin),
         invert(invert)
         {}

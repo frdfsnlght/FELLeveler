@@ -7,6 +7,7 @@ import { ConnectingDialogComponent } from './connecting-dialog/connecting-dialog
 import { SettingsDialogComponent } from './settings-dialog/settings-dialog.component';
 import { RebootDialogComponent } from './reboot-dialog/reboot-dialog.component';
 import { CalibrateDialogComponent } from './calibrate-dialog/calibrate-dialog.component';
+import { SockIOClient } from './sockio';
 
 @Component({
   selector: 'app-root',
@@ -21,6 +22,8 @@ export class AppComponent {
   private nameSubscription!: Subscription;
   private connectedSubscription!: Subscription;
 
+  private io!: SockIOClient;
+
   constructor(
     private titleService: Title,
     public model: ModelService,
@@ -31,6 +34,10 @@ export class AppComponent {
     this.modeSubscription = this.model.mode.asObservable().subscribe(s => {this.setTitle()});
     this.nameSubscription = this.model.name.asObservable().subscribe(s => {this.setTitle()});
     this.connectedSubscription = this.model.name.asObservable().subscribe(b => {this.showConnecting(!b)});
+
+    this.io = new SockIOClient('ws://10.10.10.122:81/ws');
+    //this.io = new SockIOClient('ws://localhost:8080');
+
   }
 
   ngOnDestroy() {
@@ -50,11 +57,19 @@ export class AppComponent {
   }
 
   test(): void {
+    /*
     this.model.test().subscribe({
       next: (res: any) => {
         console.info('test: ' + res);
       }
     });
+    */
+    this.io.emit('test', (res: any) => {
+        console.log('got a response:', res);
+    });
+
+
+
   }
 
   settings(): void {

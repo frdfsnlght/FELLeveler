@@ -9,10 +9,6 @@
     </mat-icon>
 </mat-toolbar>
 <mat-menu #mainMenu="matMenu">
-    <button mat-menu-item (click)="test()">
-        <mat-icon>quiz</mat-icon>
-        <span>Test</span>
-    </button>
     <button mat-menu-item (click)="settings()">
         <mat-icon>settings</mat-icon>
         <span>Settings</span>
@@ -64,3 +60,7 @@
         </p>
     </mat-card-content>
 </mat-card>
+
+<button mat-raised-button (click)="test()">
+    <span>Test</span>
+</button>
