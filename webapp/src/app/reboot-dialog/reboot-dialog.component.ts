@@ -16,12 +16,10 @@ export class RebootDialogComponent {
   }
 
   reboot(): void {
-    this.model.reboot().subscribe({
-      next: (res: any) => {
-        console.info('reboot: ' + res);
-        if (res)
-          this.dialogRef.close(true);
-      }
+    this.model.io.emit('reboot', (res: any) => {
+      console.log('reboot:', res);
+      if (res)
+        this.dialogRef.close(true);
     });
   }
 

@@ -19,7 +19,7 @@ export class ConnectingDialogComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this.connectedSubscription = this.model.connected.asObservable().subscribe(b => {this.close(b)});
+    this.connectedSubscription = this.model.connectedSubject.asObservable().subscribe((b: boolean) => {this.close(b)});
   }
 
   ngOnDestroy(): void {

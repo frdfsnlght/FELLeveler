@@ -21,22 +21,18 @@ export class CalibrateDialogComponent implements OnInit {
 
   calibrate(): void {
     if (this.calibrateLevel) {
-      this.model.calibrateLevel().subscribe({
-        next: (res: string) => {
-          console.info('calibrateLevel: ' + res);
-          if (res == 'OK') {
-            this.calibrateLevel = false;
-            this.calibrateTipped = true;
-          }
+      this.model.io.emit('calibrateLevel', (res: any) => {
+        console.log('calibrateLevel:', res);
+        if (res) {
+          this.calibrateLevel = false;
+          this.calibrateTipped = true;
         }
       });
     } else if (this.calibrateTipped) {
-      this.model.calibrateTipped().subscribe({
-        next: (res: string) => {
-          console.info('calibrateTipped: ' + res);
-          if (res == 'OK')
-            this.dialogRef.close(true);
-        }
+      this.model.io.emit('calibrateTipped', (res: any) => {
+        console.log('calibrateTipped:', res);
+        if (res)
+          this.dialogRef.close(true);
       });
     }
   }

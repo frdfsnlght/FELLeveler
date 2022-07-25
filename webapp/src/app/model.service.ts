@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from 'rxjs';
-import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
+//import { webSocket, WebSocketSubject, WebSocketSubjectConfig } from 'rxjs/webSocket';
+import { SockIOClient } from './sockio';
 
 export class Device {
   name: string;
@@ -20,15 +21,35 @@ export class ModelService {
   //private apiUrl = '/api/';
   //private apiUrl = 'http://10.10.10.122/api/';
   //private wsUrl = '/ws';
-  private wsUrl = 'ws://10.10.10.122/ws';
+  //private wsUrl = 'ws://10.10.10.122/ws';
+  //private url = 'ws://localhost:8080/';
+  
+  io = new SockIOClient('ws://localhost:8080/');
 
-  //private ws: WebSocketSubject<any>;
+  connected: boolean = false;
+  mode: string = 'Tractor';  // Tractor or Implement
+  wifiMode: string = 'TractorWifi';  // HouseWifi or TractorWifi
+  name: string = 'Missy';
+  houseSSID: string = '';
+  housePassword: string = '';
+  tractorSSID: string = 'Tractor';
+  tractorPassword: string = '12345678';
+  tractorAddress: string = '8.8.8.8';
+  wifiRSSI: number = 0;
+  calibrated: boolean = false;
+  roll: number = 0;
+  pitch: number = 0;
+  implementConnected: boolean = false;
+  implementInfo: Device = new Device('', '');
+  implementRoll: number = 0;
+  implementPitch: number = 0;
+  configDirty: boolean  = false;
+  
+  configUpdatedSubject = new ReplaySubject<void>();
+  connectedSubject = new BehaviorSubject<boolean>(false);
 
-  private watchdogTimer: any = false;
-  private watchdogTimeout = 3000
-
+  /*
   connected = new BehaviorSubject<boolean>(true);
-
   mode = new BehaviorSubject<string>('Tractor');  // Tractor or Implement
   wifiMode = new BehaviorSubject<string>('TractorWifi');  // HouseWifi or TractorWifi
   name = new BehaviorSubject<string>('Missy');
@@ -48,181 +69,68 @@ export class ModelService {
   implementPitch = new BehaviorSubject<number>(0);  // tractor only
 
   configDirty = new BehaviorSubject<boolean>(false);
-
-  private nextRequestId: number = 1;
-  private requests = new Map<number, ReplaySubject<any>>();
-  private eventHandlers = new Map<string, (data: any)=>void>();
-  //private pingTimer;
+  */
 
   constructor() {
 
-    this.eventHandlers.set('keepAlive', b => {
-      this.connected.next(true);
-      //this.resetWatchdog();
+    this.io.on('connected', () => {
+      this.connected = true;
+      this.connectedSubject.next(true);
+    });
+    
+    this.io.on('disconnected', () => {
+      this.connected = false;
+      this.connectedSubject.next(false);
     });
 
-    this.eventHandlers.set('settings', o => {
-      this.mode.next(o.mode);
-      this.wifiMode.next(o.wifiMode);
-      this.name.next(o.name);
-      this.houseSSID.next(o.houseSSID);
-      this.housePassword.next(o.housePassword);
-      this.tractorSSID.next(o.tractorSSID);
-      this.tractorPassword.next(o.tractorPassword);
-      this.tractorAddress.next(o.tractorAddress);
+    this.io.on('settings', o => {
+      this.mode = o.mode;
+      this.wifiMode = o.wifiMode;
+      this.name = o.name;
+      this.houseSSID = o.houseSSID;
+      this.housePassword = o.housePassword;
+      this.tractorSSID = o.tractorSSID;
+      this.tractorPassword = o.tractorPassword;
+      this.tractorAddress = o.tractorAddress;
+      this.configUpdatedSubject.next();
     });
 
-    this.eventHandlers.set('wifiRSSI', n => {
-      this.wifiRSSI.next(n);
+    this.io.on('wifiRSSI', n => {
+      this.wifiRSSI = n;
     });
 
-    this.eventHandlers.set('netsockConnected', b => {
-      this.netsockConnected.next(b);
+    this.io.on('calibrated', b => {
+      this.calibrated = b;
+    });
+    
+     this.io.on('pitch', n => {
+      this.pitch = n;
     });
 
-    this.eventHandlers.set('netsockRemoteDevice', o => {
-      this.netsockRemoteDevice.next(new Device(o.name, o.address));
+    this.io.on('roll', n => {
+      this.roll = n;
     });
 
-    this.eventHandlers.set('calibrated', b => {
-      this.calibrated.next(b);
+    this.io.on('implementConnected', b => {
+      this.implementConnected = b;
     });
 
-    this.eventHandlers.set('roll', n => {
-      this.roll.next(n);
+    this.io.on('implementInfo', o => {
+      this.implementInfo = new Device(o.name, o.address);
     });
 
-    this.eventHandlers.set('pitch', n => {
-      this.pitch.next(n);
+    this.io.on('implementRoll', n => {
+      this.implementRoll = n;
     });
 
-    this.eventHandlers.set('implementRoll', n => {
-      this.implementRoll.next(n);
+    this.io.on('implementPitch', n => {
+      this.implementPitch = n;
     });
 
-    this.eventHandlers.set('implementPitch', n => {
-      this.implementPitch.next(n);
+    this.io.on('configDirty', b => {
+      this.configDirty = b;
     });
 
-    this.eventHandlers.set('configDirty', b => {
-      this.configDirty.next(b);
-    });
-
-    /*
-    this.ws = webSocket({
-      url: this.wsUrl
-    });
-
-    this.ws.subscribe({
-      next: (obj: any) => {
-        this.connected.next(true);
-        if (obj == 'pong') {
-          console.log('received pong');
-          return;
-        }
-        //console.log(obj);
-        if ('id' in obj && 'data' in obj) {
-          console.log(obj);
-          var id = obj.id;
-          var data = obj.data;
-          var sub = this.requests.get(id);
-          if (sub) {
-            console.debug('found matching request for ' + id);
-            this.requests.delete(id);
-            sub.next(data);
-            return;
-          }
-          console.warn('no request found for ' + id);
-          return;
-        }
-        if ('event' in obj && 'data' in obj) {
-          var event = obj.event;
-          var data = obj.data;
-          var handler = this.eventHandlers.get(event);
-          if (handler) {
-            //console.debug('found matching event handler for "' + event + '"');
-            handler(data);
-            return;
-          }
-          console.warn('no event handler found for "' + event + '"');
-          return;
-        }
-        // TODO: add RPC call handling if needed
-      },
-      error: (err) => {
-        if (err instanceof CloseEvent) {
-          //this.connected.next(false);
-          // TODO: attempt to reconnect
-        } else {
-          console.log('Websocket error:');
-          console.log(err);
-        }
-      },
-      complete: () => {
-        console.log('Websocket closed');
-        //this.connected.next(false);
-        // TODO: attempt to reconnect
-      }
-    });
-
-    this.pingTimer = setInterval(() => {
-      if (! this.ws.closed) {
-        console.log('sending ping');
-        this.ws.next('ping');
-      }
-    }, 1000);
-    */
-
-    //this.resetWatchdog();
   }
   
-/*
-  resetWatchdog(): void {
-    if (this.watchdogTimer)
-      clearTimeout(this.watchdogTimer);
-    this.watchdogTimer = setTimeout(() => {
-      console.log("Watchdog expired, reopening SSE connection");
-      this.connected.next(false);
-      if (this.eventSource)
-        this.eventSource.close();
-      this.eventSource = this.createEventSource();
-    }, this.watchdogTimeout);
-  }
-*/
-
-  configure(data: object): Observable<any> {
-    return this.makeRequest('configure', data);
-  }
-
-  calibrateLevel(): Observable<any> {
-    return this.makeRequest('calibrateLevel');
-  }
-
-  calibrateTipped(): Observable<any> {
-    return this.makeRequest('calibrateTipped');
-  }
-  
-  saveConfig(): Observable<any> {
-    return this.makeRequest('saveConfig');
-  }
-
-  reboot(): Observable<any> {
-    return this.makeRequest('reboot');
-  }
-
-  test(): Observable<any> {
-    return this.makeRequest('test');
-  }
-
-  makeRequest(method: string, data: any = null): Observable<any> {
-    if (! this.connected)
-      return new BehaviorSubject<string>("Not connected").asObservable();
-    var req = {id: this.nextRequestId++, method: method, data: data};
-    var sub = new ReplaySubject<any>(1);
-    this.requests.set(req.id, sub);
-    console.log('Request: ' + JSON.stringify(req));
-    //this.ws.next(req);
-    return sub.asObservable();
-  }
-
 }

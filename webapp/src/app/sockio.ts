@@ -1,8 +1,8 @@
 
 export class SockIOClient {
 
-    public pingTime: number = 0;
     public requestsInFlight: number = 0;
+    public pingTime: number = 0;
 
     private url: string;
     private pingInterval: number = 0;
@@ -113,7 +113,7 @@ export class SockIOClient {
                     ws.send(out);
                 }
             }
-            this.triggerEvent('open');
+            this.triggerEvent('connected');
             this.setupPingTimer();
             this.setupPongTimer();
         };
@@ -122,7 +122,7 @@ export class SockIOClient {
             if (this.wasOpen) {
                 this.wasOpen = false;
                 console.log('SockIO closed');
-                this.triggerEvent('close');
+                this.triggerEvent('disconnected');
                 this.clearPongTimer();
                 this.clearPingTimer();
             }
@@ -177,8 +177,8 @@ export class SockIOClient {
                         console.log('SockIO no requestor for ACK id', e.data);
                         return;
                     }
-                    requester(...args);
                     this.requests.delete(ackId);
+                    requester(...args);
                     this.requestsInFlight = this.requests.size;
                     break;
                 default:

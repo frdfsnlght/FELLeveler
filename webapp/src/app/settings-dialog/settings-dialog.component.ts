@@ -30,25 +30,23 @@ export class SettingsDialogComponent {
     ) {
       dialogRef.disableClose = true;
       this.form.setValue({
-        mode: model.mode.value,
-        wifiMode: model.wifiMode.value,
-        name: model.name.value,
-        houseSSID: model.houseSSID.value,
-        housePassword: model.housePassword.value,
-        tractorSSID: model.tractorSSID.value,
-        tractorPassword: model.tractorPassword.value,
-        tractorAddress: model.tractorAddress.value
+        mode: model.mode,
+        wifiMode: model.wifiMode,
+        name: model.name,
+        houseSSID: model.houseSSID,
+        housePassword: model.housePassword,
+        tractorSSID: model.tractorSSID,
+        tractorPassword: model.tractorPassword,
+        tractorAddress: model.tractorAddress
     });
   }
 
   @HostListener('window:keyup.Enter', ['$event'])
   ok(): void {
-    this.model.configure(this.form.value).subscribe({
-      next: (res: string) => {
-        console.info('configure: ' + res);
-        if (res == 'OK')
-          this.dialogRef.close(true);
-      }
+    this.model.io.emit('configure', this.form.value, (res: any) => {
+      console.log('configure:', res);
+      if (res)
+        this.dialogRef.close(true);
     });
   }
 
