@@ -2,6 +2,12 @@
 
 Display* Display::instance = nullptr;
 
+const GFXfont* Display::Fonts[] = {
+    &FreeSans9pt7b,
+    &FreeSans12pt7b,
+    &FreeSans24pt7b
+};
+
 Display* Display::getInstance() {
     if (! instance) instance = new Display();
     return instance;
@@ -12,6 +18,14 @@ void Display::setup() {
     // Rotate the display: 0=none, 1=90 CW, 2=180, 3=270 CW
     //setRotation(1);
     Serial.println("Display setup complete");
+    setFont(0);
+}
+
+void Display::setFont(int num) {
+    if (num < 0)
+        Adafruit_SSD1351::setFont();
+    else
+        Adafruit_SSD1351::setFont(Fonts[num]);
 }
 
 void Display::printLeft(const char* str, int x, int y) {

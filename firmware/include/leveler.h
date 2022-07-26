@@ -11,30 +11,26 @@ class Leveler {
 
     static Leveler* getInstance();
 
-    CallbackList rollChangedListeners = CallbackList();
-    CallbackList pitchChangedListeners = CallbackList();
-    CallbackList implementConnectedListeners = CallbackList();
-    CallbackList implementInfoListeners = CallbackList();
-    CallbackList implementRollChangedListeners = CallbackList();
-    CallbackList implementPitchChangedListeners = CallbackList();
-//    CallbackList implementLevelChangedListeners = CallbackList();
+    CallbackList anglesListeners = CallbackList();
+    CallbackList remoteConnectedListeners = CallbackList();
+    CallbackList remoteInfoListeners = CallbackList();
+    CallbackList remoteAnglesListeners = CallbackList();
 
     int roll = 0;
     int pitch = 0;
-    bool implementConnected = false;
-    String implementName = "";
-    String implementAddress = "";
-    int implementRoll = 0;
-    int implementPitch = 0;
-//    bool implementRollFrameLevel = false;
-//    bool implementRollEarthLevel = false;
-//    bool implementPitchFrameLevel = false;
-//    bool implementPitchEarthLevel = false;
+    bool remoteConnected = false;
+    String remoteName = "";
+    String remoteAddress = "";
+    int remoteRoll = 0;
+    int remotePitch = 0;
 
     void setup();
     
     void calibrateLevel();
     void calibrateTipped();
+    void setRemoteConnected(bool b);
+    void setRemoteInfo(const String& name, const String& address);
+    void setRemoteData(int roll, int pitch);
 
     private:
 
@@ -43,8 +39,6 @@ class Leveler {
     Leveler() {}
     
     void update();
-    void updateImplement();
-    //void updateLevel();
 };
 
 #endif

@@ -20,7 +20,13 @@
 			"xlocnum": "cpp",
 			"xloctime": "cpp",
 			"xiosbase": "cpp",
-			"queue": "cpp"
+			"queue": "cpp",
+			"memory": "cpp",
+			"random": "cpp",
+			"regex": "cpp",
+			"sstream": "cpp",
+			"xhash": "cpp",
+			"*.tcc": "cpp"
 		}
 	}
 }

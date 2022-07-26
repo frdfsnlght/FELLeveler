@@ -67,6 +67,7 @@ export class SockIOClient {
             out += id.toString();
             this.requests.set(id, cb);
             this.requestsInFlight = this.requests.size;
+            console.log('inflight', this.requestsInFlight);
         }
         out += '|';
         out += JSON.stringify(args);
@@ -180,6 +181,7 @@ export class SockIOClient {
                     this.requests.delete(ackId);
                     requester(...args);
                     this.requestsInFlight = this.requests.size;
+                    console.log('inflight', this.requestsInFlight);
                     break;
                 default:
                     console.log('SockIO received unknown message type', e.data);

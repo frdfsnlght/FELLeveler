@@ -1,6 +1,8 @@
 #ifndef STATUS_SCREEN_H
 #define STATUS_SCREEN_H
 
+#include <SPIFFS_ImageReader.h>
+
 #include "screen.h"
 
 class StatusScreen : public Screen {
@@ -22,25 +24,20 @@ class StatusScreen : public Screen {
 
     struct DirtyFlags {
         bool network : 1;
-        bool netsock : 1;
-        bool levelerRoll : 1;
-        bool levelerPitch : 1;
-        bool levelerImplementRoll : 1;
-        bool levelerImplementPitch : 1;
+        bool angles : 1;
+        bool remote : 1;
+        bool remoteAngles : 1;
     };
+
+    SPIFFS_Image leftImage;
+    SPIFFS_Image rightImage;
+    SPIFFS_Image levelImage;
 
     DirtyFlags dirtyFlags;
 
     static void statusUpdated(int);
 
     StatusScreen();
-
-    void networkChanged();
-    void netsockChanged();
-    void rollChanged();
-    void pitchChanged();
-    void implementRollChanged();
-    void implementPitchChanged();
 
 };
 

@@ -30,8 +30,8 @@ class Network {
         Reboot
     };
 
-    CallbackList stateChangedListeners = CallbackList();
-    CallbackList wifiRSSIChangedListeners = CallbackList();
+    CallbackList stateListeners = CallbackList();
+    CallbackList wifiRSSIListeners = CallbackList();
 
     Config::Mode mode;
     Config::WifiMode wifiMode;
@@ -66,12 +66,17 @@ class Network {
     unsigned long rebootTimer;
 
     WebServer webServer;
-    SockIOServer sockio;
+    SockIOServer webSock;
+    SockIOServer* implSock;
+    SockIOClient* implClient;
+
     LED led;
 
     Network():
         webServer(80),
-        sockio(81, "/ws"),
+        webSock(81, "/"),
+        implSock(NULL),
+        implClient(NULL),
         led(2)
         {}
 
@@ -87,33 +92,43 @@ class Network {
     void setupOTA();
 
     void setupWebServer();
-    void setupSockIO();
+    void setupWebSockIO();
+    void setupImplSockIO();
+    void teardownImplSockIO();
 
     void activateServices();
     void deactivateServices();
 
+
     // ====================================
-    // SockIO API
+    // SockIO Web API
 
-    void apiTest(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
-    void apiConfigure(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
-    void apiCalibrateLevel(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
-    void apiCalibrateTipped(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
-    void apiSaveConfig(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
-    void apiReboot(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiWebTest(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiWebConfigure(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiWebCalibrateLevel(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiWebCalibrateTipped(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiWebSaveConfig(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiWebReboot(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
 
-    void emit(SockIOServerClient *c, const String& event, JsonArray& array);
-    void emitConfigDirty(SockIOServerClient *c);
-    void emitConfigSettings(SockIOServerClient *c);
-    void emitConfigCalibrated(SockIOServerClient *c);
-    void emitWifiRSSI(SockIOServerClient *c);
-    void emitImplementConnected(SockIOServerClient *c);
-    void emitImplementInfo(SockIOServerClient *c);
-    void emitRoll(SockIOServerClient *c);
-    void emitPitch(SockIOServerClient *c);
-    void emitImplementRoll(SockIOServerClient *c);
-    void emitImplementPitch(SockIOServerClient *c);
+    void emitWeb(SockIOServerClient *c, const String& event, JsonArray& array);
+    void emitWebConfigDirty(SockIOServerClient *c);
+    void emitWebConfigSettings(SockIOServerClient *c);
+    void emitWebConfigCalibrated(SockIOServerClient *c);
+    void emitWebWifiRSSI(SockIOServerClient *c);
+    void emitWebAngles(SockIOServerClient *c);
+    void emitWebRemoteConnected(SockIOServerClient *c);
+    void emitWebRemoteInfo(SockIOServerClient *c);
+    void emitWebRemoteAngles(SockIOServerClient *c);
 
+    // ====================================
+    // SockIO Implement API
+
+    void apiImplRemoteInfo(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiImplRemoteAngles(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+
+    void emitImpl(SockIOServerClient *c, const String& event, JsonArray& array);
+    void emitImplRemoteInfo(SockIOServerClient *c);
+    void emitImplRemoteAngles(SockIOServerClient *c);
 
 };
 

@@ -45,13 +45,13 @@ class Config {
     Vector3 rollPlane;
     Vector3 pitchPlane;
 
-    CallbackList dirtyChangedListeners = CallbackList();
-    CallbackList settingsChangedListeners = CallbackList();
-    CallbackList calibratedChangedListeners = CallbackList();
-    CallbackList downLevelChangedListeners = CallbackList();
-    CallbackList downTippedChangedListeners = CallbackList();
-    CallbackList rollPlaneChangedListeners = CallbackList();
-    CallbackList pitchPlaneChangedListeners = CallbackList();
+    CallbackList dirtyListeners = CallbackList();
+    CallbackList settingsListeners = CallbackList();
+    CallbackList calibratedListeners = CallbackList();
+    CallbackList downLevelListeners = CallbackList();
+    CallbackList downTippedListeners = CallbackList();
+    CallbackList rollPlaneListeners = CallbackList();
+    CallbackList pitchPlaneListeners = CallbackList();
 
     bool read();
     bool write();

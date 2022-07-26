@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, ViewChild } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { MatDialog } from '@angular/material/dialog';
 import { Subscription } from 'rxjs';
@@ -16,6 +16,7 @@ import { CalibrateDialogComponent } from './calibrate-dialog/calibrate-dialog.co
 export class AppComponent {
 
   title: string = '';
+  @ViewChild('sidenav', { static: true }) sidenav!: ElementRef;
 
   private configUpdatedSubscription!: Subscription;
   private connectedSubscription!: Subscription;
@@ -29,6 +30,7 @@ export class AppComponent {
   ngOnInit(): void {
     this.configUpdatedSubscription = this.model.configUpdatedSubject.asObservable().subscribe(() => {this.setTitle()});
     this.connectedSubscription = this.model.connectedSubject.asObservable().subscribe((b: boolean) => {this.showConnecting(!b)});
+    this.setTitle();
   }
 
   ngOnDestroy() {
@@ -49,7 +51,7 @@ export class AppComponent {
   test(): void {
     this.model.io.emit('test', (res: any) => {
         console.log('got a response:', res);
-    });
+      });
   }
 
   settings(): void {

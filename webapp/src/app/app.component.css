@@ -3,13 +3,13 @@ mat-sidenav-container {
 }
 
 mat-sidenav {
-    padding: 16px;
-}
-
-mat-sidenav {
-    width: 200px;
+    width: 250px;
 }
 
 .spacer {
     flex: 1 1 auto;
+}
+
+.mat-spinner::ng-deep circle {
+    stroke: #fff;
 }

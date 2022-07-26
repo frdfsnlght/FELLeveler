@@ -3,6 +3,9 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1351.h>
+#include <Fonts/FreeSans9pt7b.h>
+#include <Fonts/FreeSans12pt7b.h>
+#include <Fonts/FreeSans24pt7b.h>
 #include <SPI.h>
 
 #define SPI_PORT 3
@@ -38,6 +41,8 @@ class Display : public Adafruit_SSD1351 {
     static Display* getInstance();
 
     void setup();
+
+    void setFont(int num);
     void printLeft(const char* str, int x, int y);
     void printCentered(const char* str, int x, int y);
     void printRight(const char* str, int x, int y);
@@ -46,6 +51,8 @@ class Display : public Adafruit_SSD1351 {
     void drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t width, uint16_t color, bool rounded = false);
     
     private:
+
+    static const GFXfont* Fonts[];
 
 #if SPI_PORT == 2
     static constexpr int CSPin = 15;
@@ -66,9 +73,6 @@ class Display : public Adafruit_SSD1351 {
 #endif
 
     static Display* instance;
-
-    // Software SPI
-    //Display() : Adafruit_SSD1351(Width, Height, CSPin, DCPin, MOSIPin, SCLKPin) {}
 
     //Hardware SPI
 #if SPI_PORT == 2

@@ -1,5 +1,7 @@
 #include "screens/status_screen.h"
 
+#include <SPIFFS.h>
+
 #include "ui.h"
 #include "display.h"
 #include "network.h"
@@ -16,33 +18,34 @@ StatusScreen* StatusScreen::getInstance() {
 }
 
 StatusScreen::StatusScreen() : Screen() {
-    Network::getInstance()->stateChangedListeners.add([](void) {
-        StatusScreen::getInstance()->networkChanged();
+    Network::getInstance()->stateListeners.add([](void) {
+        instance->dirty = instance->dirtyFlags.network = true;
     });
 
-/* TODO
-    Netsock::getInstance()->stateChangedListeners.add([](void) {
-        StatusScreen::getInstance()->netsockChanged();
+    Leveler::getInstance()->anglesListeners.add([](void) {
+        instance->dirty = instance->dirtyFlags.angles = true;
     });
-    Netsock::getInstance()->remoteDeviceChangedListeners.add([](void) {
-        StatusScreen::getInstance()->netsockChanged();
+    Leveler::getInstance()->remoteConnectedListeners.add([](void) {
+        instance->dirty = instance->dirtyFlags.remote = true;
     });
-*/
+    Leveler::getInstance()->remoteInfoListeners.add([](void) {
+        instance->dirty = instance->dirtyFlags.remote = true;
+    });
+    Leveler::getInstance()->remoteAnglesListeners.add([](void) {
+        if (Config::getInstance()->mode != Config::Tractor) return;
+        instance->dirty = instance->dirtyFlags.remoteAngles = true;
+    });
 
-    Leveler::getInstance()->rollChangedListeners.add([](void) {
-        StatusScreen::getInstance()->rollChanged();
-    });
-    Leveler::getInstance()->pitchChangedListeners.add([](void) {
-        StatusScreen::getInstance()->pitchChanged();
-    });
-    Leveler::getInstance()->implementRollChangedListeners.add([](void) {
-        if (Config::getInstance()->mode != Config::Tractor) return;
-        StatusScreen::getInstance()->implementRollChanged();
-    });
-    Leveler::getInstance()->implementPitchChangedListeners.add([](void) {
-        if (Config::getInstance()->mode != Config::Tractor) return;
-        StatusScreen::getInstance()->implementPitchChanged();
-    });
+    // load images
+    SPIFFS_ImageReader reader;
+    ImageReturnCode ret;
+    
+    ret = reader.loadBMP((char*)"/implLeft.bmp", leftImage);
+    reader.printStatus(ret);
+    ret = reader.loadBMP((char*)"/implRight.bmp", rightImage);
+    reader.printStatus(ret);
+    ret = reader.loadBMP((char*)"/implLevel.bmp", levelImage);
+    reader.printStatus(ret);
 
 }
 
@@ -60,94 +63,51 @@ void StatusScreen::paintContent() {
         d->fillRight(BLACK);
         Network* n = Network::getInstance();
         switch (n->state) {
-            case Network::AP: d->print("AP"); break;
+            case Network::OTA: d->print("Updating"); break;
+            case Network::Disconnect: d->print("Unconnected"); break;
             case Network::Connect: d->print("Unconnected"); break;
             case Network::Connecting: d->print("Connecting"); break;
-            case Network::Waiting: d->print("Waiting"); break;
             case Network::Connected: d->print(n->ipAddress); break;
+            default:
+                d->print(Network::StateStrings[n->state]);
+                break;
         }
         dirtyFlags.network = false;
     }
 
-    if (firstPaint || dirtyFlags.netsock) {
-        d->printLeft("BT: ", 0, 10);
-        d->fillRight(BLACK);
-        /*
-        Netsock* netsock = Netsock::getInstance();
-        switch (netsock->state) {
-            case Netsock::Idle: d->print("Idle"); break;
-            case Netsock::Connected: {
-                char tmpName[18]{0};
-                strncpy(tmpName, netsock->remoteName, sizeof(tmpName) - 1);
-                d->print(tmpName);
-                break;
-            }
-            case Netsock::WaitingForClient: d->print("Listening"); break;
-            case Netsock::ConnectToServer: d->print("Connecting"); break;
-            case Netsock::WaitingToConnect: d->print("Waiting"); break;
-        }
-        */
-        dirtyFlags.netsock = false;
-    }
-
-    if (firstPaint || dirtyFlags.levelerRoll) {
-        d->printLeft("Roll: ", 0, 20);
-        d->fillRight(BLACK);
+    if (firstPaint || dirtyFlags.angles) {
         Leveler* leveler = Leveler::getInstance();
+        d->printLeft("Roll: ", 0, 10);
+        d->fillRight(BLACK);
         d->printf("%.1f ", (float)leveler->roll / 10.0);
         d->print((char)247);
-        dirtyFlags.levelerRoll = false;
-    }
-    if (firstPaint || dirtyFlags.levelerPitch) {
-        d->printLeft("Pitch: ", 0, 30);
+        d->printLeft("Pitch: ", 0, 20);
         d->fillRight(BLACK);
-        Leveler* leveler = Leveler::getInstance();
         d->printf("%.1f ", (float)leveler->pitch / 10.0);
         d->print((char)247);
-        dirtyFlags.levelerPitch = false;
+        dirtyFlags.angles = false;
+    }
+
+    if (firstPaint || dirtyFlags.remote) {
+        Leveler* leveler = Leveler::getInstance();
+        d->printLeft("Remote: ", 0, 30);
+        d->fillRight(BLACK);
+        d->print(leveler->remoteConnected ? leveler->remoteName : "Not connected");
+        dirtyFlags.remote = false;
     }
 
     if (Config::getInstance()->mode != Config::Tractor) return;
 
-    if (firstPaint || dirtyFlags.levelerImplementRoll) {
-        d->printLeft("Roll: ", 0, 40);
-        d->fillRight(BLACK);
+    if (firstPaint || dirtyFlags.remoteAngles) {
         Leveler* leveler = Leveler::getInstance();
-        d->printf("%.1f ", (float)leveler->implementRoll / 10.0);
-        d->print((char)247);
-        dirtyFlags.levelerImplementRoll = false;
-    }
-    if (firstPaint || dirtyFlags.levelerImplementPitch) {
-        d->printLeft("Pitch: ", 0, 50);
+        d->printLeft("Impl Roll: ", 0, 40);
         d->fillRight(BLACK);
-        Leveler* leveler = Leveler::getInstance();
-        d->printf("%.1f ", (float)leveler->implementPitch / 10.0);
+        d->printf("%.1f ", (float)leveler->remoteRoll / 10.0);
         d->print((char)247);
-        dirtyFlags.levelerImplementPitch = false;
+        d->printLeft("Impl Pitch: ", 0, 50);
+        d->fillRight(BLACK);
+        d->printf("%.1f ", (float)leveler->remotePitch / 10.0);
+        d->print((char)247);
     }
 
-}
-
-void StatusScreen::networkChanged() {
-    dirtyFlags.network = dirty = true;
-}
-
-void StatusScreen::netsockChanged() {
-    dirtyFlags.netsock = dirty = true;
-}
-
-void StatusScreen::rollChanged() {
-    dirtyFlags.levelerRoll = dirty = true;
-}
-
-void StatusScreen::pitchChanged() {
-    dirtyFlags.levelerPitch = dirty = true;
-}
-
-void StatusScreen::implementRollChanged() {
-    dirtyFlags.levelerImplementRoll = dirty = true;
-}
-
-void StatusScreen::implementPitchChanged() {
-    dirtyFlags.levelerImplementPitch = dirty = true;
 }

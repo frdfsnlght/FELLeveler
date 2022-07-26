@@ -15,11 +15,6 @@ void Leveler::setup() {
     Accelerometer::getInstance()->listeners.add([](void) {
         instance->update();
     });
-    /* TODO
-    Netsock::getInstance()->measurementsChangedListeners.add([](void) {
-        instance->updateImplement();
-    });
-    */
     Serial.println("Leveler setup complete");
 }
 
@@ -64,64 +59,32 @@ void Leveler::update() {
     if (newRoll != roll) {
         changed = true;
         roll = newRoll;
-        rollChangedListeners.call();
     }
     if (newPitch != pitch) {
         changed = true;
         pitch = newPitch;
-        pitchChangedListeners.call();
-    }
-
-//    if (changed && (config->mode == Config::Tractor))
-//        updateLevel();
-}
-
-void Leveler::updateImplement() {
-    /* TODO
-    Netsock* netsock = Netsock::getInstance();
-    bool changed = false;
-    if (netsock->measurements.roll != implementRoll) {
-        changed = true;
-        implementRoll = netsock->measurements.roll;
-        implementRollChangedListeners.call();
-    }
-    if (netsock->measurements.pitch != implementPitch) {
-        changed = true;
-        implementPitch = netsock->measurements.pitch;
-        implementPitchChangedListeners.call();
     }
     if (changed)
-        updateLevel();
-    */
+        anglesListeners.call();
 }
 
-/*
-void Leveler::updateLevel() {
-    bool newRollFrameLevel = abs(roll - implementRoll) < 10;
-    bool newRollEarthLevel = abs(implementRoll) < 10;
-    bool newPitchFrameLevel = abs(pitch - implementPitch) < 10;
-    bool newPitchEarthLevel = abs(implementPitch) < 10;
-
-    bool changed = false;
-
-    if (newRollFrameLevel != implementRollFrameLevel) {
-        changed = true;
-        implementRollFrameLevel = newRollFrameLevel;
-    }
-    if (newRollEarthLevel != implementRollEarthLevel) {
-        changed = true;
-        implementRollEarthLevel = newRollEarthLevel;
-    }
-    if (newPitchFrameLevel != implementPitchFrameLevel) {
-        changed = true;
-        implementPitchFrameLevel = newPitchFrameLevel;
-    }
-    if (newPitchEarthLevel != implementPitchEarthLevel) {
-        changed = true;
-        implementPitchEarthLevel = newPitchEarthLevel;
-    }
-
-    if (changed)
-        implementLevelChangedListeners.call();
+void Leveler::setRemoteConnected(bool b) {
+    if (remoteConnected == b) return;
+    remoteConnected = b;
+    remoteConnectedListeners.call();
 }
-*/
+
+void Leveler::setRemoteInfo(const String& name, const String& address) {
+    if (remoteName == name && remoteAddress == address) return;
+    remoteName = name;
+    remoteAddress = address;
+    remoteInfoListeners.call();
+}
+
+void Leveler::setRemoteData(int roll, int pitch) {
+    if (remoteRoll == roll && remotePitch == pitch) return;
+    remoteRoll = roll;
+    remotePitch = pitch;
+    remoteAnglesListeners.call();
+}
+

@@ -19,8 +19,8 @@ ImplementScreen* ImplementScreen::getInstance() {
 
 ImplementScreen::ImplementScreen() : Screen() {
     Leveler* leveler = Leveler::getInstance();
-    leveler->implementPitchChangedListeners.add([](void) { instance->dirty = true; });
-    leveler->pitchChangedListeners.add([](void) { instance->dirty = true; });
+    leveler->remoteAnglesListeners.add([](void) { instance->dirty = true; });
+    leveler->anglesListeners.add([](void) { instance->dirty = true; });
     alwaysPaintBackground = true;
     mode = Tractor;
 }
@@ -41,9 +41,9 @@ void ImplementScreen::paintContent() {
 
     int diff;
     if (mode == Tractor)
-        diff = leveler->implementPitch - leveler->pitch;
+        diff = leveler->remotePitch - leveler->pitch;
     else if (mode == Earth)
-        diff = leveler->implementPitch;
+        diff = leveler->remotePitch;
 
     char angle[10];
     sprintf(angle, "%.1f %c", (float)abs(diff) / 10.0f, (unsigned char)247);

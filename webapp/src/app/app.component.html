@@ -1,66 +1,80 @@
-<mat-toolbar color="primary">
-    <button mat-icon-button aria-label="Main Menu" [matMenuTriggerFor]="mainMenu"><mat-icon>menu</mat-icon></button>
-    <span>{{title}}</span>
-    <span class="spacer"></span>
-    <mat-icon
-        [style.display]="model.configDirty ? 'block' : 'none'"
-        matTooltip="The configuration has not been saved">
-        warning
-    </mat-icon>
-</mat-toolbar>
-<mat-menu #mainMenu="matMenu">
-    <button mat-menu-item (click)="settings()">
-        <mat-icon>settings</mat-icon>
-        <span>Settings</span>
-    </button>
-    <button mat-menu-item (click)="calibrate()" *ngIf="model.mode">
-        <mat-icon>perm_data_setting</mat-icon>
-        <span>Calibrate</span>
-    </button>
-    <button mat-menu-item (click)="saveConfig()">
-        <mat-icon>save</mat-icon>
-        <span>Save</span>
-    </button>
-    <button mat-menu-item (click)="reboot()">
-        <mat-icon>restart_alt</mat-icon>
-        <span>Reboot</span>
-    </button>
-</mat-menu>
+<mat-sidenav-container>
 
-<mat-card>
-    <mat-card-title><mat-icon>wifi</mat-icon> WiFi</mat-card-title>
-    <mat-card-content>
-        <p>
-            <strong>Mode:</strong> {{model.wifiMode}}<br/>
-            <strong>RSSI:</strong> {{model.wifiRSSI}} dbm
-        </p>
-    </mat-card-content>
-</mat-card>
+    <mat-sidenav #sidenav>
+        <mat-toolbar color="primary">
+            <button mat-icon-button aria-label="Sidenav" (click)="sidenav.close()"><mat-icon>menu</mat-icon></button>
+            <span>{{title}}</span>
+        </mat-toolbar>
+        <mat-action-list>
+            <button mat-list-item (click)="settings()">
+                <mat-icon>settings</mat-icon> Settings
+            </button>
+            <button mat-list-item (click)="calibrate()" *ngIf="model.mode">
+                <mat-icon>perm_data_setting</mat-icon> Calibrate
+            </button>
+            <button mat-list-item (click)="saveConfig()">
+                <mat-icon>save</mat-icon> Save
+            </button>
+            <mat-divider></mat-divider>
+            <button mat-list-item (click)="reboot()">
+                <mat-icon>restart_alt</mat-icon> Reboot
+            </button>
+        </mat-action-list>
+    </mat-sidenav>
 
-<mat-card>
-    <mat-card-title *ngIf="model.mode == 'Tractor'"><mat-icon>build</mat-icon> Implement</mat-card-title>
-    <mat-card-title *ngIf="model.mode == 'Implement'"><mat-icon>agriculture</mat-icon> Tractor</mat-card-title>
-    <mat-card-content>
-        <p>
-            <strong>Connected:</strong> {{model.implementConnected ? 'Yes' : 'No'}}<br/>
-            <span *ngIf="model.implementConnected"><strong>Connected to: </strong> {{model.implementInfo.name ? (model.implementInfo.name + ' (' + model.implementInfo.address + ')') : 'Unknown'}}</span>
-        </p>
-    </mat-card-content>
-</mat-card>
+    <mat-sidenav-content>
 
-<mat-card>
-    <mat-card-title><mat-icon>perm_data_setting</mat-icon> Measurements</mat-card-title>
-    <mat-card-content>
-        <p>
-            <strong>Calibrated:</strong> {{model.calibrated ? 'Yes' : 'No'}}<br/>
-            <span *ngIf="model.calibrated"><strong>Roll angle:</strong> {{(model.roll / 10)|number}} &deg;<br/></span>
-            <span *ngIf="model.calibrated"><strong>Pitch angle:</strong> {{(model.pitch / 10)|number}} &deg;<br/></span>
-            <span *ngIf="model.calibrated && model.mode=='Tractor'"><strong>Implement roll:</strong> {{(model.implementRoll / 10)|number}} &deg;<br/></span>
-            <span *ngIf="model.calibrated && model.mode=='Tractor'"><strong>Implement pitch:</strong> {{(model.implementPitch / 10)|number}} &deg;</span>
-        </p>
-    </mat-card-content>
-</mat-card>
+        <mat-toolbar color="primary">
+            <button mat-icon-button aria-label="Sidenav open" (click)="sidenav.open()"><mat-icon>menu</mat-icon></button>
+            <span>{{title}}</span>
+            <span class="spacer"></span>
+            <mat-icon
+                [style.display]="model.configDirty ? 'block' : 'none'"
+                matTooltip="The configuration has not been saved">
+                warning
+            </mat-icon>
+            <mat-spinner
+                [style.display]="(model.io.requestsInFlight > 0) ? 'block' : 'none'"
+                [diameter]="30"></mat-spinner>
+        </mat-toolbar>
 
-<button mat-raised-button (click)="test()">
-    <span>Test</span>
-</button>
+        <mat-card>
+            <mat-card-title><mat-icon>wifi</mat-icon> WiFi</mat-card-title>
+            <mat-card-content>
+                <p>
+                    <strong>Mode:</strong> {{model.wifiMode}}<br/>
+                    <strong>RSSI:</strong> {{model.wifiRSSI}} dbm
+                </p>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card>
+            <mat-card-title *ngIf="model.mode == 'Tractor'"><mat-icon>build</mat-icon> Implement</mat-card-title>
+            <mat-card-title *ngIf="model.mode == 'Implement'"><mat-icon>agriculture</mat-icon> Tractor</mat-card-title>
+            <mat-card-content>
+                <p>
+                    <strong>Connected:</strong> {{model.remoteConnected ? 'Yes' : 'No'}}<br/>
+                    <span *ngIf="model.remoteConnected"><strong>Connected to: </strong> {{model.remoteName ? (model.remoteName + ' (' + model.remoteAddress + ')') : 'Unknown'}}</span>
+                </p>
+            </mat-card-content>
+        </mat-card>
+
+        <mat-card>
+            <mat-card-title><mat-icon>perm_data_setting</mat-icon> Measurements</mat-card-title>
+            <mat-card-content>
+                <p>
+                    <strong>Calibrated:</strong> {{model.calibrated ? 'Yes' : 'No'}}<br/>
+                    <span *ngIf="model.calibrated"><strong>Roll angle:</strong> {{(model.roll / 10)|number}} &deg;<br/></span>
+                    <span *ngIf="model.calibrated"><strong>Pitch angle:</strong> {{(model.pitch / 10)|number}} &deg;<br/></span>
+                    <span *ngIf="model.calibrated && model.mode=='Tractor'"><strong>Implement roll:</strong> {{(model.remoteRoll / 10)|number}} &deg;<br/></span>
+                    <span *ngIf="model.calibrated && model.mode=='Tractor'"><strong>Implement pitch:</strong> {{(model.remotePitch / 10)|number}} &deg;</span>
+                </p>
+            </mat-card-content>
+        </mat-card>
+
+        <button mat-raised-button (click)="test()">
+            <span>Test</span>
+        </button>
+
+    </mat-sidenav-content>
+</mat-sidenav-container>

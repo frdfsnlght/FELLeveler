@@ -14,8 +14,7 @@ TractorScreen* TractorScreen::getInstance() {
 
 TractorScreen::TractorScreen() : Screen() {
     Leveler* leveler = Leveler::getInstance();
-    leveler->rollChangedListeners.add([](void) { instance->dirty = true; });
-    leveler->pitchChangedListeners.add([](void) { instance->dirty = true; });
+    leveler->anglesListeners.add([](void) { instance->dirty = true; });
 }
 
 void TractorScreen::handleButtonRelease(Button* button) {

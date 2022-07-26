@@ -135,7 +135,7 @@ bool Config::write() {
 void Config::setDirty(bool d) {
     if (d == dirty) return;
     dirty = d;
-    dirtyChangedListeners.call();
+    dirtyListeners.call();
 }
 
 void Config::setSettings(
@@ -161,41 +161,41 @@ void Config::setSettings(
     strcpy(tractorSSID, tSSID);
     strcpy(tractorPassword, tPassword);
     tractorAddress.fromString(tAddress);
-    settingsChangedListeners.call();
+    settingsListeners.call();
     setDirty(true);
 }
 
 void Config::setCalibrated(bool cal) {
     if (cal == calibrated) return;
     calibrated = cal;
-    calibratedChangedListeners.call();
+    calibratedListeners.call();
     setDirty(true);
 }
 
 void Config::setDownLevel(Vector3 &v) {
     if (downLevel == v) return;
     downLevel.set(v);
-    downLevelChangedListeners.call();
+    downLevelListeners.call();
     setDirty(true);
 }
 
 void Config::setDownTipped(Vector3 &v) {
     if (downTipped == v) return;
     downTipped.set(v);
-    downTippedChangedListeners.call();
+    downTippedListeners.call();
     setDirty(true);
 }
 
 void Config::setRollPlane(Vector3 &v) {
     if (rollPlane == v) return;
     rollPlane.set(v);
-    rollPlaneChangedListeners.call();
+    rollPlaneListeners.call();
     setDirty(true);
 }
 
 void Config::setPitchPlane(Vector3 &v) {
     if (pitchPlane == v) return;
     pitchPlane.set(v);
-    pitchPlaneChangedListeners.call();
+    pitchPlaneListeners.call();
     setDirty(true);
 }
