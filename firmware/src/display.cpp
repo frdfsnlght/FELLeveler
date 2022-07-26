@@ -41,3 +41,15 @@ void Display::fillRight(uint16_t color) {
     getTextBounds("X", cursor_x, cursor_y, &x1, &y1, &w, &h);
     fillRect(cursor_x, cursor_y, _width - cursor_x, h, color);
 }
+
+void Display::drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t width, uint16_t color, bool rounded) {
+    float dx = (width / 2.0) * (x0 - x1) / sqrt(sq(x0 - x1) + sq(y0 - y1));
+    float dy = (width / 2.0) * (y0 - y1) / sqrt(sq(x0 - x1) + sq(y0 - y1));
+    fillTriangle(x0 + dx, y0 - dy, x0 - dx, y0 + dy, x1 + dx, y1 - dy, color);
+    fillTriangle(x0 - dx, y0 + dy, x1 - dx, y1 + dy, x1 + dx, y1 - dy, color);
+    if (rounded) {
+        fillCircle(x0, y0, (uint16_t)(width / 2.0), color);
+        fillCircle(x1, y1, (uint16_t)(width / 2.0), color);
+    }
+}
+

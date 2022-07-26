@@ -43,6 +43,8 @@ class Display : public Adafruit_SSD1351 {
     void printRight(const char* str, int x, int y);
     void fillRight(uint16_t color);
 
+    void drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t width, uint16_t color, bool rounded = false);
+    
     private:
 
 #if SPI_PORT == 2

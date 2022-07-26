@@ -5,8 +5,10 @@
 #include <DNSServer.h>
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
+
 #include "debug.h"
 #include "secrets.h"
+#include "leveler.h"
 
 #ifdef DEBUG_NETWORK
 #define DEBUG(...) Serial.printf(__VA_ARGS__)
@@ -19,6 +21,8 @@ const int Network::OTAPort = 3232;
 const char* Network::Hostname = "felleveler";
 const int Network::MaxConnectionAttempts = 6;
 const int Network::ConnectionAttemptInterval = 10000;
+const int Network::RebootDelay = 1000;
+const int Network::ReportRSSIInterval = 1000;
 //const IPAddress Network::APAddress(8, 8, 8, 8);
 const IPAddress Network::APNetmask(255, 255, 255, 0);
 
@@ -30,7 +34,8 @@ const char* Network::StateStrings[] = {
     "Connect",
     "Connecting",
     "Waiting",
-    "Connected"
+    "Connected",
+    "Reboot"
 };
 
 Network* Network::getInstance() {
@@ -102,6 +107,10 @@ void Network::loop() {
                 rssi = newRSSI;
                 wifiRSSIChangedListeners.call();
             }
+        }
+    } else if (state == Reboot) {
+        if ((millis() - rebootTimer) > RebootDelay) {
+            ESP.restart();
         }
     }
 
@@ -256,7 +265,59 @@ void Network::setupSockIO() {
         client.on("test", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
             instance->apiTest(client, args, ret);
         });
+        client.on("configure", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+            instance->apiConfigure(client, args, ret);
+        });
+        client.on("calibrateLevel", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+            instance->apiCalibrateLevel(client, args, ret);
+        });
+        client.on("calibrateTipped", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+            instance->apiCalibrateTipped(client, args, ret);
+        });
+        client.on("saveConfig", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+            instance->apiSaveConfig(client, args, ret);
+        });
+        client.on("reboot", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+            instance->apiReboot(client, args, ret);
+        });
+        // TODO: add event for connection type (web or implement) and emit a bunch of stuff for web
+        // TODO: add event for implement roll/pitch
     });
+
+    // Subscribe to listeners
+
+    Config* config = Config::getInstance();
+    Leveler* leveler = Leveler::getInstance();
+
+    config->dirtyChangedListeners.add([](void) {
+        instance->emitConfigDirty(nullptr);
+    });
+    config->settingsChangedListeners.add([](void) {
+        instance->emitConfigSettings(nullptr);
+    });
+    config->calibratedChangedListeners.add([](void) {
+        instance->emitConfigCalibrated(nullptr);
+    });
+
+    leveler->rollChangedListeners.add([](void) {
+        instance->emitRoll(nullptr);
+    });
+    leveler->implementConnectedListeners.add([](void) {
+        instance->emitImplementConnected(nullptr);
+    });
+    leveler->implementInfoListeners.add([](void) {
+        instance->emitImplementInfo(nullptr);
+    });
+    leveler->implementRollChangedListeners.add([](void) {
+        instance->emitImplementRoll(nullptr);
+    });
+    leveler->implementPitchChangedListeners.add([](void) {
+        instance->emitImplementPitch(nullptr);
+    });
+    leveler->pitchChangedListeners.add([](void) {
+        instance->emitPitch(nullptr);
+    });
+
 }
 
 void Network::activateServices() {
@@ -273,7 +334,6 @@ void Network::deactivateServices() {
     ArduinoOTA.end();
     if (state == AP)
         dnsServer.stop();
-
 }
 
 // ======================================================
@@ -284,4 +344,157 @@ void Network::apiTest(SockIOServerClient& client, JsonArray& args, JsonArray& re
     ret.add("a string");
     ret.add(3.1415);
     ret.add(1234);
+}
+
+void Network::apiConfigure(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+    DEBUG("API configure");
+    if ((args.size() != 1) || (! args[0].is<JsonObject>())) {
+        ret.add(false);
+        ret.add("expected object");
+        return;
+    }
+    JsonObject obj = args[0].as<JsonObject>();
+    Config* config = Config::getInstance();
+    config->setSettings(
+        obj["mode"],
+        obj["wifiMode"],
+        obj["name"],
+        obj["houseSSID"],
+        obj["housePassword"],
+        obj["tractorSSID"],
+        obj["tractorPassword"],
+        obj["tractorAddress"]);
+    ret.add(true);
+}
+
+void Network::apiCalibrateLevel(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+    DEBUG("API calibrateLevel");
+    Leveler* leveler = Leveler::getInstance();
+    leveler->calibrateLevel();
+    ret.add(true);
+}
+
+void Network::apiCalibrateTipped(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+    DEBUG("API calibrateTipped");
+    Leveler* leveler = Leveler::getInstance();
+    leveler->calibrateTipped();
+    ret.add(true);
+}
+
+void Network::apiSaveConfig(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+    DEBUG("API saveConfig");
+    Config::getInstance()->write();
+    ret.add(true);
+}
+
+void Network::apiReboot(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+    DEBUG("API reboot");
+    setState(Reboot);
+    rebootTimer = millis();
+    ret.add(true);
+}
+
+void Network::emit(SockIOServerClient *c, const String& event, JsonArray& array  ) {
+    if (! available()) return;
+    if (c)
+        c->emit(event, array);
+    else
+        sockio.emit(event, array);
+}
+
+void Network::emitConfigDirty(SockIOServerClient *c) {
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Config::getInstance()->dirty);
+    emit(c, "configDirty", array);
+}
+
+void Network::emitConfigSettings(SockIOServerClient *c) {
+    StaticJsonDocument<256> doc;
+    JsonArray array = doc.to<JsonArray>();
+    JsonObject obj = array.createNestedObject();
+    Config* config = Config::getInstance();
+    obj["mode"] = Config::ModeStrings[config->mode];
+    obj["wifiMode"] = Config::WifiModeStrings[config->wifiMode];
+    obj["name"] = config->name;
+    obj["houseSSID"] = config->houseSSID;
+    obj["housePassword"] = config->housePassword;
+    obj["tractorSSID"] = config->tractorSSID;
+    obj["tractorPassword"] = config->tractorPassword;
+    obj["tractorAddress"] = config->tractorAddress.toString();
+    emit(c, "settings", array);
+}
+
+void Network::emitConfigCalibrated(SockIOServerClient *c) {
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Config::getInstance()->calibrated);
+    emit(c, "calibrated", array);
+}
+
+void Network::emitWifiRSSI(SockIOServerClient *c) {
+    static unsigned long lastEmitTime = 0;
+    if ((millis() - lastEmitTime) < ReportRSSIInterval) return;
+    lastEmitTime = millis();
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(rssi);
+    emit(c, "wifiRSSI", array);
+}
+
+void Network::emitImplementConnected(SockIOServerClient *c) {
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Leveler::getInstance()->implementConnected);
+    emit(c, "netsockConnected", array);
+}
+
+void Network::emitImplementInfo(SockIOServerClient *c) {
+    StaticJsonDocument<192> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.createNestedObject();
+    Leveler* leveler = Leveler::getInstance();
+    array[0]["name"] = leveler->implementName;
+    array[0]["address"] = leveler->implementAddress;
+    emit(c, "implementInfo", array);
+}
+
+void Network::emitRoll(SockIOServerClient *c) {
+    static unsigned long lastEmitTime = 0;
+    if ((millis() - lastEmitTime) < 1000) return;
+    lastEmitTime = millis();
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Leveler::getInstance()->roll);
+    emit(c, "roll", array);
+}
+
+void Network::emitPitch(SockIOServerClient *c) {
+    static unsigned long lastEmitTime = 0;
+    if ((millis() - lastEmitTime) < 1000) return;
+    lastEmitTime = millis();
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Leveler::getInstance()->pitch);
+    emit(c, "pitch", array);
+}
+
+void Network::emitImplementRoll(SockIOServerClient *c) {
+    static unsigned long lastEmitTime = 0;
+    if ((millis() - lastEmitTime) < 1000) return;
+    lastEmitTime = millis();
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Leveler::getInstance()->implementRoll);
+    emit(c, "implementRoll", array);
+}
+
+void Network::emitImplementPitch(SockIOServerClient *c) {
+    static unsigned long lastEmitTime = 0;
+    if ((millis() - lastEmitTime) < 1000) return;
+    lastEmitTime = millis();
+    StaticJsonDocument<64> doc;
+    JsonArray array = doc.to<JsonArray>();
+    array.add(Leveler::getInstance()->implementPitch);
+    emit(c, "implementPitch", array);
 }

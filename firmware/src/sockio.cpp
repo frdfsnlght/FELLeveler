@@ -11,7 +11,7 @@
 bool SockIO::serializeMessage(MessageStruct& msg, String& buffer) {
     int len = 1;
     if (msg.ackId) len += 8;
-    len += measureJson(msg.array);
+    len += measureJson(*msg.array);
     if (! buffer.reserve(len)) {
         Serial.printf("SockIO unable to reserve buffer of size %d!\n", len);
         return false;
@@ -48,9 +48,9 @@ bool SockIO::deserializeMessage(const String& buffer, MessageStruct& msg) {
 SockIOServer::SockIOServer(
     uint16_t port,
     const String& origin,
-    uint32_t pingInterval = 200,
-    uint32_t pongTimeout = 2000,
-    uint8_t disconnectTimeoutCount = 5) {
+    uint32_t pingInterval,
+    uint32_t pongTimeout,
+    uint8_t disconnectTimeoutCount) {
     socket = new WebSocketsServer(port, origin, "SockIO");
     socket->enableHeartbeat(pingInterval, pongTimeout, disconnectTimeoutCount);
     SockIOServer* self = this;

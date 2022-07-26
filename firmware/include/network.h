@@ -26,7 +26,8 @@ class Network {
         Connect,
         Connecting,
         Waiting,
-        Connected
+        Connected,
+        Reboot
     };
 
     CallbackList stateChangedListeners = CallbackList();
@@ -55,11 +56,14 @@ class Network {
     static const int OTAPort;
     static const int MaxConnectionAttempts;
     static const int ConnectionAttemptInterval;
+    static const int RebootDelay;
+    static const int ReportRSSIInterval;
 
     DNSServer dnsServer;
     int connectionAttempts;
     unsigned long lastConnectionAttemptTime;
     int otaUpdateType;
+    unsigned long rebootTimer;
 
     WebServer webServer;
     SockIOServer sockio;
@@ -92,6 +96,23 @@ class Network {
     // SockIO API
 
     void apiTest(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiConfigure(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiCalibrateLevel(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiCalibrateTipped(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiSaveConfig(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiReboot(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+
+    void emit(SockIOServerClient *c, const String& event, JsonArray& array);
+    void emitConfigDirty(SockIOServerClient *c);
+    void emitConfigSettings(SockIOServerClient *c);
+    void emitConfigCalibrated(SockIOServerClient *c);
+    void emitWifiRSSI(SockIOServerClient *c);
+    void emitImplementConnected(SockIOServerClient *c);
+    void emitImplementInfo(SockIOServerClient *c);
+    void emitRoll(SockIOServerClient *c);
+    void emitPitch(SockIOServerClient *c);
+    void emitImplementRoll(SockIOServerClient *c);
+    void emitImplementPitch(SockIOServerClient *c);
 
 
 };

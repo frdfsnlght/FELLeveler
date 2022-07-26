@@ -72,8 +72,8 @@ void Leveler::update() {
         pitchChangedListeners.call();
     }
 
-    if (changed && (config->mode == Config::Tractor))
-        updateLevel();
+//    if (changed && (config->mode == Config::Tractor))
+//        updateLevel();
 }
 
 void Leveler::updateImplement() {
@@ -95,6 +95,7 @@ void Leveler::updateImplement() {
     */
 }
 
+/*
 void Leveler::updateLevel() {
     bool newRollFrameLevel = abs(roll - implementRoll) < 10;
     bool newRollEarthLevel = abs(implementRoll) < 10;
@@ -123,4 +124,4 @@ void Leveler::updateLevel() {
     if (changed)
         implementLevelChangedListeners.call();
 }
-
+*/
