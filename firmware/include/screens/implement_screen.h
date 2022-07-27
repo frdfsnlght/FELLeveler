@@ -11,25 +11,26 @@ class ImplementScreen : public Screen {
 
     static ImplementScreen* getInstance();
 
+    void setup();
     String getName() { return "Implement"; }
     void paintContent();
 
     private:
 
     static ImplementScreen* instance;
-    static const char* ModeStrings[];
 
-    enum Mode {
-        Tractor,
-        Earth
-    };
+    SPIFFS_Image rollLeft1Image;
+    SPIFFS_Image rollLeft2Image;
+    SPIFFS_Image rollLevelImage;
+    SPIFFS_Image rollRight1Image;
+    SPIFFS_Image rollRight2Image;
 
-    Mode mode;
-    SPIFFS_Image leftImage;
-    SPIFFS_Image rightImage;
-    SPIFFS_Image levelImage;
+    SPIFFS_Image pitchUp1Image;
+    SPIFFS_Image pitchUp2Image;
+    SPIFFS_Image pitchLevelImage;
+    SPIFFS_Image pitchDown1Image;
+    SPIFFS_Image pitchDown2Image;
 
-    ImplementScreen();
     void handleButtonRelease(Button* button);
 
 };

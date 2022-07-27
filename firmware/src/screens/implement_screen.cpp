@@ -1,86 +1,97 @@
 #include "screens/implement_screen.h"
 
-#include <SPIFFS.h>
-
+#include "config.h"
 #include "ui.h"
 #include "display.h"
 #include "leveler.h"
+
 #include "screens/tractor_screen.h"
 
 ImplementScreen* ImplementScreen::instance = nullptr;
-
-const char* ImplementScreen::ModeStrings[] = {
-    "Tractor",
-    "Earth"
-};
 
 ImplementScreen* ImplementScreen::getInstance() {
     if (instance == nullptr) instance = new ImplementScreen();
     return instance;
 }
 
-ImplementScreen::ImplementScreen() : Screen() {
+void ImplementScreen::setup() {
     Leveler* leveler = Leveler::getInstance();
-    leveler->remoteAnglesListeners.add([](void) { instance->dirty = true; });
-    leveler->anglesListeners.add([](void) { instance->dirty = true; });
+    leveler->remoteConnectedListeners.add([](void) {
+        if ((Config::getInstance()->mode == Config::Tractor) && (! Leveler::getInstance()->remoteConnected)) {
+            UI::getInstance()->showScreen(TractorScreen::getInstance());
+        }
+    });
+    leveler->anglesListeners.add([](void) {
+        instance->dirty = Config::getInstance()->mode == Config::Implement;
+    });
+    leveler->remoteAnglesListeners.add([](void) {
+        instance->dirty = Config::getInstance()->mode == Config::Tractor;
+    });
     alwaysPaintBackground = true;
-    mode = Tractor;
 
-    // load images
-    SPIFFS_ImageReader reader;
-    ImageReturnCode ret;
-    
-    ret = reader.loadBMP((char*)"/implLeft.bmp", leftImage);
-    Serial.print("Load /implLeft.bmp: "); reader.printStatus(ret);
-    ret = reader.loadBMP((char*)"/implRight.bmp", rightImage);
-    Serial.print("Load /implRight.bmp: "); reader.printStatus(ret);
-    ret = reader.loadBMP((char*)"/implLevel.bmp", levelImage);
-    Serial.print("Load /implLevel.bmp: "); reader.printStatus(ret);
+    Display* d = Display::getInstance();
+    d->loadImage("/implRollLeft1.bmp", rollLeft1Image);
+    d->loadImage("/implRollLeft2.bmp", rollLeft2Image);
+    d->loadImage("/implRollLevel.bmp", rollLevelImage);
+    d->loadImage("/implRollRight1.bmp", rollRight1Image);
+    d->loadImage("/implRollRight2.bmp", rollRight2Image);
 
+    d->loadImage("/implPitchUp1.bmp", pitchUp1Image);
+    d->loadImage("/implPitchUp2.bmp", pitchUp2Image);
+    d->loadImage("/implPitchLevel.bmp", pitchLevelImage);
+    d->loadImage("/implPitchDown1.bmp", pitchDown1Image);
+    d->loadImage("/implPitchDown2.bmp", pitchDown2Image);
 }
 
 void ImplementScreen::handleButtonRelease(Button* button) {
-    if (mode == Tractor) {
-        mode = Earth;
-        dirty = true;
-    } else if (mode == Earth) {
-        mode = Tractor;
-        UI::getInstance()->showScreen(TractorScreen::getInstance());
-    }
+    UI::getInstance()->nextScreen();
 }
 
 void ImplementScreen::paintContent() {
     Display* d = Display::getInstance();
     Leveler* leveler = Leveler::getInstance();
-
-    int diff;
-    if (mode == Tractor)
-        diff = leveler->remotePitch - leveler->pitch;
-    else if (mode == Earth)
-        diff = leveler->remotePitch;
-
+    float roll, pitch;
     char angle[10];
-    sprintf(angle, "%.1f %c", (float)abs(diff) / 10.0f, (unsigned char)247);
 
-    d->setTextSize(15);
-    if (diff > 10) {
-        d->setTextColor(RED);
-        d->printCentered(">", d->width() / 2, 0);
-        d->setTextSize(1);
-        d->setTextColor(WHITE);
-        d->printLeft(angle, 0, 50);
-    } else if (diff < -10) {
-        d->setTextColor(RED);
-        d->printCentered("<", d->width() / 2, 0);
-        d->setTextSize(1);
-        d->setTextColor(WHITE);
-        d->printRight(angle, d->width(), 50);
-    } else {
-        d->setTextColor(GREEN);
-        d->printCentered("-", d->width() / 2, 0);
+    switch (Config::getInstance()->mode) {
+        case Config::Tractor:
+            roll = (float)leveler->roll / 10.0;
+            pitch = (float)leveler->pitch / 10.0;
+            break;
+        case Config::Implement:
+            roll = (float)leveler->remoteRoll / 10.0;
+            pitch = (float)leveler->remotePitch / 10.0;
+            break;
     }
 
     d->setTextColor(WHITE);
-    d->setTextSize(1);
-    d->printCentered(ModeStrings[mode], d->width() / 2, d->height() - 10);
+    d->setFont(0);
+
+    if (roll <= -10.0)
+        d->drawImage(rollLeft2Image, 0, 0);
+    else if (roll < -1.0)
+        d->drawImage(rollLeft1Image, 0, 0);
+    else if (roll <= 1.0)
+        d->drawImage(rollLevelImage, 0, 0);
+    else if (roll < 10.0)
+        d->drawImage(rollRight1Image, 0, 0);
+    else
+        d->drawImage(rollRight2Image, 0, 0);
+
+    sprintf(angle, "%.1f", roll);
+    d->printRight(angle, d->width(), 32);
+
+    if (pitch <= -10.0)
+        d->drawImage(pitchDown2Image, 0, 0);
+    else if (pitch < -1.0)
+        d->drawImage(pitchDown1Image, 0, 0);
+    else if (pitch <= 1.0)
+        d->drawImage(pitchLevelImage, 0, 0);
+    else if (pitch < 10.0)
+        d->drawImage(pitchDown1Image, 0, 0);
+    else
+        d->drawImage(pitchDown2Image, 0, 0);
+
+    sprintf(angle, "%.1f", pitch);
+    d->printRight(angle, d->width(), 96);
 }

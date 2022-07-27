@@ -552,7 +552,7 @@ void Network::apiImplRemoteAngles(SockIOServerClient& client, JsonArray& args, J
     if (mode != Config::Tractor) return;
     if (args.size() != 2) return;
     Leveler* leveler = Leveler::getInstance();
-    leveler->setRemoteData(args[0], args[1]);
+    leveler->setRemoteAngles(args[0], args[1]);
 }
 
 void Network::emitImpl(SockIOServerClient *c, const String& event, JsonArray& array  ) {

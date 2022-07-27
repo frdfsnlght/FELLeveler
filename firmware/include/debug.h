@@ -3,9 +3,7 @@
 
 #define DEBUG_NETWORK
 #define DEBUG_SOCKIO
-
-//#define DEBUG_WEBSERVER_CORS
 //#define DEBUG_ACCELEROMETER
-//#define DEBUG_LEVELER
+#define DEBUG_LEVELER
 
 #endif

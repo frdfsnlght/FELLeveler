@@ -13,6 +13,8 @@ class Screen {
     bool alwaysPaintBackground = false;
     uint16_t backgroundColor = 0;
 
+    virtual void setup() {}
+
     void show();
     void hide();
 

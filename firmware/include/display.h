@@ -3,9 +3,6 @@
 
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1351.h>
-#include <Fonts/FreeSans9pt7b.h>
-#include <Fonts/FreeSans12pt7b.h>
-#include <Fonts/FreeSans24pt7b.h>
 #include <SPI.h>
 #include <SPIFFS_ImageReader.h>
 
@@ -42,6 +39,8 @@ class Display : public Adafruit_SSD1351 {
     static Display* getInstance();
 
     void setup();
+
+    bool loadImage(const char* path, SPIFFS_Image& img);
 
     void setFont(int num);
     void printLeft(const char* str, int x, int y);

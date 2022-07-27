@@ -1,11 +1,11 @@
 #include "display.h"
 
+#include <Fonts/FreeSans9pt7b.h>
+
 Display* Display::instance = nullptr;
 
 const GFXfont* Display::Fonts[] = {
     &FreeSans9pt7b,
-    &FreeSans12pt7b,
-    &FreeSans24pt7b
 };
 
 Display* Display::getInstance() {
@@ -18,7 +18,18 @@ void Display::setup() {
     // Rotate the display: 0=none, 1=90 CW, 2=180, 3=270 CW
     //setRotation(1);
     Serial.println("Display setup complete");
-    setFont(0);
+    setFont(-1);
+}
+
+bool Display::loadImage(const char* path, SPIFFS_Image& img) {
+    SPIFFS_ImageReader reader;
+    ImageReturnCode ret;
+    ret = reader.loadBMP((char*)path, img);
+    Serial.print("Load ");
+    Serial.print(path);
+    Serial.print(": ");
+    reader.printStatus(ret);
+    return ret == IMAGE_SUCCESS;
 }
 
 void Display::setFont(int num) {

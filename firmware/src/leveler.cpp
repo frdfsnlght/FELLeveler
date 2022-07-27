@@ -3,6 +3,13 @@
 #include "accelerometer.h"
 #include "config.h"
 #include "vector3.h"
+#include "debug.h"
+
+#ifdef DEBUG_LEVELER
+#define DEBUG(...) Serial.printf(__VA_ARGS__)
+#else
+#define DEBUG(...)
+#endif
 
 Leveler* Leveler::instance = nullptr;
 
@@ -28,6 +35,7 @@ void Leveler::calibrateTipped() {
     Config* config = Config::getInstance();
 
     Vector3 down = Accelerometer::getInstance()->filtered;
+
     Vector3 rollPlane, pitchPlane;
     Vector3::cross(down, config->downLevel, pitchPlane);
     pitchPlane.normalize();
@@ -38,6 +46,11 @@ void Leveler::calibrateTipped() {
     config->setRollPlane(rollPlane);
     config->setPitchPlane(pitchPlane);
     config->setCalibrated(true);
+
+    DEBUG("Down level: %s\n", config->downLevel.toString().c_str());
+    DEBUG("Down tipped: %s\n", config->downTipped.toString().c_str());
+    DEBUG("Roll plane: %s\n", config->rollPlane.toString().c_str());
+    DEBUG("Pitch plane: %s\n", config->pitchPlane.toString().c_str());
 }
 
 void Leveler::update() {
@@ -56,22 +69,27 @@ void Leveler::update() {
 
     bool changed = false;
 
-    if (newRoll != roll) {
-        changed = true;
+    if ((newRoll != roll) || (newPitch != pitch)) {
         roll = newRoll;
-    }
-    if (newPitch != pitch) {
-        changed = true;
         pitch = newPitch;
-    }
-    if (changed)
         anglesListeners.call();
+    }
 }
 
 void Leveler::setRemoteConnected(bool b) {
     if (remoteConnected == b) return;
     remoteConnected = b;
+    if (! remoteConnected) {
+        remoteName = "";
+        remoteAddress = "";
+        remoteRoll = 0;
+        remotePitch = 0;
+    }
     remoteConnectedListeners.call();
+    if (! remoteConnected) {
+        remoteInfoListeners.call();
+        remoteAnglesListeners.call();
+    }
 }
 
 void Leveler::setRemoteInfo(const String& name, const String& address) {
@@ -81,7 +99,7 @@ void Leveler::setRemoteInfo(const String& name, const String& address) {
     remoteInfoListeners.call();
 }
 
-void Leveler::setRemoteData(int roll, int pitch) {
+void Leveler::setRemoteAngles(int roll, int pitch) {
     if (remoteRoll == roll && remotePitch == pitch) return;
     remoteRoll = roll;
     remotePitch = pitch;

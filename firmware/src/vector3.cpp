@@ -70,3 +70,9 @@ void Vector3::normalize() {
     } else
         x = y = z = 0;
 }
+
+const String Vector3::toString() {
+    String s = "";
+    s += '<' + x + ',' + y + ',' + z + '>';
+    return s;
+}

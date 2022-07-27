@@ -16,6 +16,8 @@ class UI {
     void setup(Screen* startScreen);
     void loop();
 
+    void nextScreen();
+    
     private:
 
     static UI* instance;

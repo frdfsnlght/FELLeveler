@@ -17,7 +17,8 @@ void Screen::hide() {
 void Screen::paint() {
     if (! dirty) return;
     if (firstPaint || alwaysPaintBackground) {
-        Display::getInstance()->setFont(0);
+        Display::getInstance()->setFont(-1);
+        Display::getInstance()->setTextSize(1);
         paintBackground();
     }
     paintContent();

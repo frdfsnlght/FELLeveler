@@ -30,7 +30,7 @@ class Leveler {
     void calibrateTipped();
     void setRemoteConnected(bool b);
     void setRemoteInfo(const String& name, const String& address);
-    void setRemoteData(int roll, int pitch);
+    void setRemoteAngles(int roll, int pitch);
 
     private:
 

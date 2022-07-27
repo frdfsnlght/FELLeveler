@@ -54,7 +54,10 @@
             <mat-card-content>
                 <p>
                     <strong>Connected:</strong> {{model.remoteConnected ? 'Yes' : 'No'}}<br/>
-                    <span *ngIf="model.remoteConnected"><strong>Connected to: </strong> {{model.remoteName ? (model.remoteName + ' (' + model.remoteAddress + ')') : 'Unknown'}}</span>
+                    <span *ngIf="model.remoteConnected">
+                        <strong>Connected to: </strong> {{model.remoteName ? model.remoteName : 'Unknown'
+                            <span *ngIf="model.remoteAddress"> (<a target="_blank" href="http://{{model.remoteAddress}}/">{{model.remoteAddress}}</a>)</span>
+                    </span>
                 </p>
             </mat-card-content>
         </mat-card>
