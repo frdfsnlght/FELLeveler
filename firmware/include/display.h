@@ -7,6 +7,7 @@
 #include <Fonts/FreeSans12pt7b.h>
 #include <Fonts/FreeSans24pt7b.h>
 #include <SPI.h>
+#include <SPIFFS_ImageReader.h>
 
 #define SPI_PORT 3
 
@@ -50,6 +51,8 @@ class Display : public Adafruit_SSD1351 {
 
     void drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t width, uint16_t color, bool rounded = false);
     
+    void drawImage(SPIFFS_Image& image, int16_t x, int16_t y);
+
     private:
 
     static const GFXfont* Fonts[];

@@ -102,10 +102,14 @@ void Network::loop() {
             ipAddress = (uint32_t)0;
             setState(Connect);
         } else {
-            int newRSSI = WiFi.RSSI();
-            if (newRSSI != rssi) {
-                rssi = newRSSI;
-                wifiRSSIListeners.call();
+            static unsigned long lastSampleTime = 0;
+            if ((millis() - lastSampleTime) > ReportRSSIInterval) {
+                lastSampleTime = millis();
+                int newRSSI = WiFi.RSSI();
+                if (newRSSI != rssi) {
+                    rssi = newRSSI;
+                    wifiRSSIListeners.call();
+                }
             }
         }
     } else if (state == Reboot) {
@@ -249,7 +253,7 @@ void Network::setupOTA() {
         Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
     });
     ArduinoOTA.onError([](ota_error_t error) {
-        Serial.printf("Error[%u]: ", error);
+        Serial.printf("OTA Error[%u]: ", error);
         if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
         else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
         else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
@@ -301,6 +305,9 @@ void Network::setupWebSockIO() {
     Config* config = Config::getInstance();
     Leveler* leveler = Leveler::getInstance();
 
+    wifiRSSIListeners.add([](void) {
+        instance->emitWebWifiRSSI(NULL);
+    });
     config->dirtyListeners.add([](void) {
         instance->emitWebConfigDirty(NULL);
     });
@@ -442,9 +449,9 @@ void Network::apiWebSaveConfig(SockIOServerClient& client, JsonArray& args, Json
 
 void Network::apiWebReboot(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
     DEBUG("API reboot");
+    deactivateServices();
     setState(Reboot);
     rebootTimer = millis();
-    ret.add(true);
 }
 
 void Network::emitWeb(SockIOServerClient *c, const String& event, JsonArray& array  ) {
@@ -486,9 +493,6 @@ void Network::emitWebConfigCalibrated(SockIOServerClient *c) {
 }
 
 void Network::emitWebWifiRSSI(SockIOServerClient *c) {
-    static unsigned long lastEmitTime = 0;
-    if ((millis() - lastEmitTime) < ReportRSSIInterval) return;
-    lastEmitTime = millis();
     StaticJsonDocument<64> doc;
     JsonArray array = doc.to<JsonArray>();
     array.add(rssi);

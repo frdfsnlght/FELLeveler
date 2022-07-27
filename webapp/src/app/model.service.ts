@@ -14,7 +14,8 @@ export class ModelService {
   //private wsUrl = 'ws://10.10.10.122/ws';
   //private url = 'ws://localhost:8080/';
   
-  io = new SockIOClient('ws://localhost:8080/');
+  //io = new SockIOClient('ws://localhost:8080/');
+  io = new SockIOClient('ws://10.10.10.122:81/');
 
   connected: boolean = false;
   

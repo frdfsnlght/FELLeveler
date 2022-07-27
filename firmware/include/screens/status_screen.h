@@ -1,8 +1,6 @@
 #ifndef STATUS_SCREEN_H
 #define STATUS_SCREEN_H
 
-#include <SPIFFS_ImageReader.h>
-
 #include "screen.h"
 
 class StatusScreen : public Screen {
@@ -28,10 +26,6 @@ class StatusScreen : public Screen {
         bool remote : 1;
         bool remoteAngles : 1;
     };
-
-    SPIFFS_Image leftImage;
-    SPIFFS_Image rightImage;
-    SPIFFS_Image levelImage;
 
     DirtyFlags dirtyFlags;
 

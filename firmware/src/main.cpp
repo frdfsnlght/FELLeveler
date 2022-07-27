@@ -39,12 +39,12 @@ void setup() {
         Serial.println("No configuration found, using defaults");
     }
 
-//    Display::getInstance()->setup();
+    Display::getInstance()->setup();
     Network::getInstance()->setup();
 //    Accelerometer::getInstance()->setup();
 //    Leveler::getInstance()->setup();
 
-//    UI::getInstance()->setup(BootScreen::getInstance());
+    UI::getInstance()->setup(BootScreen::getInstance());
 
     Serial.println("Ready ----------------------------");
 }
@@ -52,5 +52,5 @@ void setup() {
 void loop() {
     Network::getInstance()->loop();
 //    Accelerometer::getInstance()->loop();
-//    UI::getInstance()->loop();
+    UI::getInstance()->loop();
 }

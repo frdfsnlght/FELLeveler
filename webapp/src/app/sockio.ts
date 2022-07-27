@@ -67,7 +67,6 @@ export class SockIOClient {
             out += id.toString();
             this.requests.set(id, cb);
             this.requestsInFlight = this.requests.size;
-            console.log('inflight', this.requestsInFlight);
         }
         out += '|';
         out += JSON.stringify(args);
@@ -100,6 +99,8 @@ export class SockIOClient {
             this.socket.onerror = null;
             this.socket.onclose = null;
             this.socket = undefined;
+            this.requestsInFlight = 0;
+            this.requests.clear();
         }
         console.log('SockIO starting connection');
         let ws = new WebSocket(this.url);
@@ -181,7 +182,6 @@ export class SockIOClient {
                     this.requests.delete(ackId);
                     requester(...args);
                     this.requestsInFlight = this.requests.size;
-                    console.log('inflight', this.requestsInFlight);
                     break;
                 default:
                     console.log('SockIO received unknown message type', e.data);

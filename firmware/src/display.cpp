@@ -67,3 +67,8 @@ void Display::drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, 
     }
 }
 
+void Display::drawImage(SPIFFS_Image& image, int16_t x, int16_t y) {
+    image.draw(*this, x, y);
+}
+
+

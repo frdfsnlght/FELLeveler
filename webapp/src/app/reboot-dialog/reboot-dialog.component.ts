@@ -16,11 +16,8 @@ export class RebootDialogComponent {
   }
 
   reboot(): void {
-    this.model.io.emit('reboot', (res: any) => {
-      console.log('reboot:', res);
-      if (res)
-        this.dialogRef.close(true);
-    });
+    this.model.io.emit('reboot');
+    this.dialogRef.close(true);
   }
 
   cancel(): void {

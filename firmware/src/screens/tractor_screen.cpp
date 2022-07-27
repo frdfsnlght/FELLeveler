@@ -27,5 +27,5 @@ void TractorScreen::paintContent() {
 
     d->setTextSize(1);
     d->setTextColor(WHITE);
-    d->printLeft("Tractor stuff", 0, 0);
+    d->printLeft("Tractor stuff", 0, 10);
 }

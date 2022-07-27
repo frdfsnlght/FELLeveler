@@ -1,7 +1,5 @@
 #include "screens/status_screen.h"
 
-#include <SPIFFS.h>
-
 #include "ui.h"
 #include "display.h"
 #include "network.h"
@@ -36,17 +34,6 @@ StatusScreen::StatusScreen() : Screen() {
         instance->dirty = instance->dirtyFlags.remoteAngles = true;
     });
 
-    // load images
-    SPIFFS_ImageReader reader;
-    ImageReturnCode ret;
-    
-    ret = reader.loadBMP((char*)"/implLeft.bmp", leftImage);
-    reader.printStatus(ret);
-    ret = reader.loadBMP((char*)"/implRight.bmp", rightImage);
-    reader.printStatus(ret);
-    ret = reader.loadBMP((char*)"/implLevel.bmp", levelImage);
-    reader.printStatus(ret);
-
 }
 
 void StatusScreen::handleButtonRelease(Button* button) {
@@ -55,6 +42,7 @@ void StatusScreen::handleButtonRelease(Button* button) {
 
 void StatusScreen::paintContent() {
     Display* d = Display::getInstance();
+    d->setFont(-1);
     d->setTextColor(WHITE);
     d->setTextSize(1);
 
@@ -92,7 +80,7 @@ void StatusScreen::paintContent() {
         Leveler* leveler = Leveler::getInstance();
         d->printLeft("Remote: ", 0, 30);
         d->fillRight(BLACK);
-        d->print(leveler->remoteConnected ? leveler->remoteName : "Not connected");
+        d->print(leveler->remoteConnected ? leveler->remoteName : "None");
         dirtyFlags.remote = false;
     }
 

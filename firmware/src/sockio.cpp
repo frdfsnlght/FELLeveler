@@ -121,6 +121,7 @@ void SockIOServer::on(String event, void (*cb)(SockIOServerClient&)) {
 }
 
 void SockIOServer::emit(String message) {
+Serial.println("SockIOServer::emit1");
     StaticJsonDocument<128> doc;
     JsonArray array = doc.as<JsonArray>();
     array.add(message);
@@ -129,9 +130,10 @@ void SockIOServer::emit(String message) {
 
 void SockIOServer::emit(String message, JsonArray& args) {
     StaticJsonDocument<1024> doc;
-    JsonArray array = doc.as<JsonArray>();
+    JsonArray array = doc.to<JsonArray>();
     array.add(message);
-    array.add(args);
+    for (JsonVariant value : args)
+        array.add(value);
     send(-1, SockIO::Message, 0, array);
 }
 
@@ -180,9 +182,10 @@ void SockIOServerClient::emit(String message, void(*cb)(JsonArray&)) {
 
 void SockIOServerClient::emit(String message, JsonArray& args, void(*cb)(JsonArray&)) {
     StaticJsonDocument<1024> doc;
-    JsonArray array = doc.as<JsonArray>();
+    JsonArray array = doc.to<JsonArray>();
     array.add(message);
-    array.add(args);
+    for (JsonVariant value : args)
+        array.add(value);
     unsigned int ackId = 0;
     if (cb) {
         ackId = nextRequestId++;

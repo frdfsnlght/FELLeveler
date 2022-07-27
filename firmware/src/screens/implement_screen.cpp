@@ -1,5 +1,7 @@
 #include "screens/implement_screen.h"
 
+#include <SPIFFS.h>
+
 #include "ui.h"
 #include "display.h"
 #include "leveler.h"
@@ -23,6 +25,18 @@ ImplementScreen::ImplementScreen() : Screen() {
     leveler->anglesListeners.add([](void) { instance->dirty = true; });
     alwaysPaintBackground = true;
     mode = Tractor;
+
+    // load images
+    SPIFFS_ImageReader reader;
+    ImageReturnCode ret;
+    
+    ret = reader.loadBMP((char*)"/implLeft.bmp", leftImage);
+    Serial.print("Load /implLeft.bmp: "); reader.printStatus(ret);
+    ret = reader.loadBMP((char*)"/implRight.bmp", rightImage);
+    Serial.print("Load /implRight.bmp: "); reader.printStatus(ret);
+    ret = reader.loadBMP((char*)"/implLevel.bmp", levelImage);
+    Serial.print("Load /implLevel.bmp: "); reader.printStatus(ret);
+
 }
 
 void ImplementScreen::handleButtonRelease(Button* button) {
