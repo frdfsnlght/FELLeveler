@@ -26,7 +26,8 @@
 			"regex": "cpp",
 			"sstream": "cpp",
 			"xhash": "cpp",
-			"*.tcc": "cpp"
+			"*.tcc": "cpp",
+			"new": "cpp"
 		}
 	}
 }

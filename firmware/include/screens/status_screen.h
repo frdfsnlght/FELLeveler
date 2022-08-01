@@ -10,6 +10,7 @@ class StatusScreen : public Screen {
     static StatusScreen* getInstance();
 
     String getName() { return "Status"; }
+    void loop();
 
     protected:
 
@@ -25,6 +26,7 @@ class StatusScreen : public Screen {
         bool angles : 1;
         bool remote : 1;
         bool remoteAngles : 1;
+        bool memory : 1;
     };
 
     DirtyFlags dirtyFlags;

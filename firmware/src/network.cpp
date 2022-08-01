@@ -6,24 +6,15 @@
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
 
-#include "debug.h"
 #include "secrets.h"
 #include "leveler.h"
-
-#ifdef DEBUG_NETWORK
-#define DEBUG(...) Serial.printf(__VA_ARGS__)
-#else
-#define DEBUG(...)
-#endif
 
 Network* Network::instance = nullptr;
 const int Network::OTAPort = 3232;
 const char* Network::Hostname = "felleveler";
 const int Network::MaxConnectionAttempts = 6;
 const int Network::ConnectionAttemptInterval = 10000;
-const int Network::RebootDelay = 1000;
 const int Network::ReportRSSIInterval = 1000;
-//const IPAddress Network::APAddress(8, 8, 8, 8);
 const IPAddress Network::APNetmask(255, 255, 255, 0);
 
 const char* Network::StateStrings[] = {
@@ -34,8 +25,7 @@ const char* Network::StateStrings[] = {
     "Connect",
     "Connecting",
     "Waiting",
-    "Connected",
-    "Reboot"
+    "Connected"
 };
 
 Network* Network::getInstance() {
@@ -49,9 +39,11 @@ void Network::setup() {
     Config* config = Config::getInstance();
     state = Idle;
     setupWifi();
+/* TODO remove
     config->settingsListeners.add([](void) {
         instance->handleSettingsChanged();
     });
+*/
 
     setupDNSServer();
     setupOTA();
@@ -82,7 +74,7 @@ void Network::loop() {
             Serial.println("Network connection failed");
             if (connectionAttempts >= MaxConnectionAttempts) {
                 Serial.println("Network station failure, setup default AP");
-                setupAP(DEFAULT_AP_SSID, DEFAULT_AP_PASSWORD);
+                setupAP(DEFAULT_TRACTOR_SSID, DEFAULT_TRACTOR_PASSWORD);
             } else {
                 Serial.println("Network waiting for next connection attempt");
                 lastConnectionAttemptTime = millis();
@@ -112,19 +104,16 @@ void Network::loop() {
                 }
             }
         }
-    } else if (state == Reboot) {
-        if ((millis() - rebootTimer) > RebootDelay) {
-            ESP.restart();
-        }
     }
 
     if (available()) {
         if (state == AP)
             dnsServer.processNextRequest();
         ArduinoOTA.handle();
+        webServer.handleClient();
         webSock.loop();
-        if (mode == Config::Tractor)
-            implSock->loop();
+        if (implSock) implSock->loop();
+        if (implClient) implClient->loop();
     }
 }
 
@@ -132,11 +121,13 @@ bool Network::available() {
     return (state == AP) || (state == Connected);
 }
 
+/*
 void Network::handleSettingsChanged() {
     Config* config = Config::getInstance();
     if ((config->mode != mode) || (config->wifiMode != wifiMode))
         setupWifi();
 }
+*/
 
 void Network::setState(State newState) {
     if (newState == state) return;
@@ -148,6 +139,7 @@ void Network::setState(State newState) {
 void Network::setupWifi() {
     Config* config = Config::getInstance();
 
+/*
     if (state == Connected) {
         deactivateServices();
         setState(Disconnect);
@@ -159,39 +151,40 @@ void Network::setupWifi() {
         WiFi.softAPdisconnect();
         setState(Idle);
     }
+*/
 
-    mode = config->mode;
-    wifiMode = config->wifiMode;
+    mode = config->running.mode;
+    wifiMode = config->running.wifiMode;
 
     if (mode == Config::Tractor)  {
         if (wifiMode == Config::TractorWifi) {
             Serial.println("Network setup for tractor AP");
-            setupAP(config->tractorSSID, config->tractorPassword);
+            setupAP(config->running.tractorSSID, config->running.tractorPassword);
         } else if (wifiMode == Config::HouseWifi) {
-            if (strlen(config->houseSSID) == 0) {
+            if (strlen(config->running.houseSSID) == 0) {
                 Serial.println("Network setup for default AP");
-                setupAP(DEFAULT_AP_SSID, DEFAULT_AP_PASSWORD);
+                setupAP(DEFAULT_TRACTOR_SSID, DEFAULT_TRACTOR_PASSWORD);
             } else {
                 Serial.println("Network setup for house station");
-                setupStation(config->houseSSID, config->housePassword);
+                setupStation(config->running.houseSSID, config->running.housePassword);
             }
         }
     } else if (mode == Config::Implement) {
         if (wifiMode == Config::TractorWifi) {
-            if (strlen(config->tractorSSID) == 0) {
+            if (strlen(config->running.tractorSSID) == 0) {
                 Serial.println("Network setup for default AP");
-                setupAP(DEFAULT_AP_SSID, DEFAULT_AP_PASSWORD);
+                setupAP(DEFAULT_TRACTOR_SSID, DEFAULT_TRACTOR_PASSWORD);
             } else {
                 Serial.println("Network setup for tractor station");
-                setupStation(config->tractorSSID, config->tractorPassword);
+                setupStation(config->running.tractorSSID, config->running.tractorPassword);
             }
         } else if (wifiMode == Config::HouseWifi) {
-            if (strlen(config->houseSSID) == 0) {
+            if (strlen(config->running.houseSSID) == 0) {
                 Serial.println("Network setup for default AP");
-                setupAP(DEFAULT_AP_SSID, DEFAULT_AP_PASSWORD);
+                setupAP(DEFAULT_TRACTOR_SSID, DEFAULT_TRACTOR_PASSWORD);
             } else {
                 Serial.println("Network setup for house station");
-                setupStation(config->houseSSID, config->housePassword);
+                setupStation(config->running.houseSSID, config->running.housePassword);
             }
         }
     } else {
@@ -205,7 +198,7 @@ void Network::setupAP(const char* apSSID, const char* apPassword) {
     Serial.printf("Network starting AP with SSID \"%s\" and password \"%s\"\n", apSSID, apPassword);
     strcpy(ssid, apSSID);
     strcpy(password, apPassword);
-    IPAddress address = Config::getInstance()->tractorAddress;
+    IPAddress address = Config::getInstance()->running.tractorAddress;
     WiFi.softAPConfig(address, address, APNetmask);
     WiFi.softAP(apSSID, apPassword);
     Serial.print("Network IP Address: ");
@@ -263,6 +256,10 @@ void Network::setupOTA() {
 }
 
 void Network::setupWebServer() {
+    webServer.on("/test", []() {
+        instance->webServer.send(200, "text/plain", "test worked!");
+        return true;
+    });
     webServer.serveStatic("/", SPIFFS, "/w/");
 }
 
@@ -289,7 +286,8 @@ void Network::setupWebSockIO() {
         });
 
         instance->emitWebConfigDirty(&client);
-        instance->emitWebConfigSettings(&client);
+        instance->emitWebConfigSettings(&client, true);
+        instance->emitWebConfigSettings(&client, false);
         instance->emitWebConfigCalibrated(&client);
         if (instance->state == Connected)
             instance->emitWebWifiRSSI(&client);
@@ -312,7 +310,7 @@ void Network::setupWebSockIO() {
         instance->emitWebConfigDirty(NULL);
     });
     config->settingsListeners.add([](void) {
-        instance->emitWebConfigSettings(NULL);
+        instance->emitWebConfigSettings(NULL, false);
         instance->emitImplRemoteInfo(NULL);
     });
     config->calibratedListeners.add([](void) {
@@ -338,29 +336,46 @@ void Network::setupImplSockIO() {
     if (mode == Config::Tractor) {
         implSock = new SockIOServer(82, "/");
         implSock->on("connected", [](SockIOServerClient& client) {
-            Serial.println("Network implSocket server connected");
             client.on("connected", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+                Serial.println("Network implSocket server connected");
                 instance->led.turnOn();
                 Leveler* leveler = Leveler::getInstance();
                 leveler->setRemoteConnected(true);
+                instance->emitImplRemoteInfo(&client);
             });
             client.on("disconnected", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+                Serial.println("Network implSocket server disconnected");
                 instance->led.blink();
                 Leveler* leveler = Leveler::getInstance();
                 leveler->setRemoteConnected(false);
             });
             client.on("remoteInfo", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-                instance->apiImplRemoteInfo(client, args, ret);
+                instance->apiImplRemoteInfo(args, ret);
             });
             client.on("remoteAngles", [](SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-                instance->apiImplRemoteAngles(client, args, ret);
+                instance->apiImplRemoteAngles(args, ret);
             });
-            instance->emitImplRemoteInfo(&client);
         });
         implSock->begin();
 
     } else if (mode == Config::Implement) {
-        implClient = new SockIOClient(Config::getInstance()->tractorAddress.toString(), 82, "/");
+        implClient = new SockIOClient(Config::getInstance()->running.tractorAddress.toString(), 82, "/");
+        implClient->on("connected", [](JsonArray& args, JsonArray& ret) {
+            Serial.println("Network implClient connected");
+            instance->led.turnOn();
+            Leveler* leveler = Leveler::getInstance();
+            leveler->setRemoteConnected(true);
+            instance->emitImplRemoteInfo(NULL);
+        });
+        implClient->on("disconnected", [](JsonArray& args, JsonArray& ret) {
+            Serial.println("Network implClient disconnected");
+            instance->led.blink();
+            Leveler* leveler = Leveler::getInstance();
+            leveler->setRemoteConnected(false);
+        });
+        implClient->on("remoteInfo", [](JsonArray& args, JsonArray& ret) {
+            instance->apiImplRemoteInfo(args, ret);
+        });
         implClient->begin();
     }
 }
@@ -379,8 +394,9 @@ void Network::teardownImplSockIO() {
 }
 
 void Network::activateServices() {
+    Serial.println("Network services activating");
     if (state == AP)
-        dnsServer.start(53, "*", Config::getInstance()->tractorAddress);
+        dnsServer.start(53, "*", Config::getInstance()->running.tractorAddress);
     ArduinoOTA.begin();
     webServer.begin();
     webSock.begin();
@@ -388,12 +404,19 @@ void Network::activateServices() {
 }
 
 void Network::deactivateServices() {
+    Serial.println("Network services deactivating");
     teardownImplSockIO();
+    log_d("tore down implSockIO");
     webSock.end();
+    log_d("webSock ended");
     webServer.stop();
+    log_d("webServer stopped");
     ArduinoOTA.end();
-    if (state == AP)
+    log_d("OTA ended");
+    if (state == AP) {
         dnsServer.stop();
+        log_d("dnsServer stopped");
+    }
 }
 
 // ======================================================
@@ -407,7 +430,7 @@ void Network::apiWebTest(SockIOServerClient& client, JsonArray& args, JsonArray&
 }
 
 void Network::apiWebConfigure(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-    DEBUG("API configure");
+    log_d("API configure");
     if ((args.size() != 1) || (! args[0].is<JsonObject>())) {
         ret.add(false);
         ret.add("expected object");
@@ -423,35 +446,34 @@ void Network::apiWebConfigure(SockIOServerClient& client, JsonArray& args, JsonA
         obj["housePassword"],
         obj["tractorSSID"],
         obj["tractorPassword"],
-        obj["tractorAddress"]);
+        obj["tractorAddress"],
+        obj["enableDisplay"]);
     ret.add(true);
 }
 
 void Network::apiWebCalibrateLevel(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-    DEBUG("API calibrateLevel");
+    log_d("API calibrateLevel");
     Leveler* leveler = Leveler::getInstance();
     leveler->calibrateLevel();
     ret.add(true);
 }
 
 void Network::apiWebCalibrateTipped(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-    DEBUG("API calibrateTipped");
+    log_d("API calibrateTipped");
     Leveler* leveler = Leveler::getInstance();
     leveler->calibrateTipped();
     ret.add(true);
 }
 
 void Network::apiWebSaveConfig(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-    DEBUG("API saveConfig");
+    log_d("API saveConfig");
     Config::getInstance()->write();
     ret.add(true);
 }
 
 void Network::apiWebReboot(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
-    DEBUG("API reboot");
-    deactivateServices();
-    setState(Reboot);
-    rebootTimer = millis();
+    log_d("API reboot");
+    ESP.restart();
 }
 
 void Network::emitWeb(SockIOServerClient *c, const String& event, JsonArray& array  ) {
@@ -469,20 +491,34 @@ void Network::emitWebConfigDirty(SockIOServerClient *c) {
     emitWeb(c, "configDirty", array);
 }
 
-void Network::emitWebConfigSettings(SockIOServerClient *c) {
-    StaticJsonDocument<256> doc;
+void Network::emitWebConfigSettings(SockIOServerClient *c, bool running) {
+    StaticJsonDocument<384> doc;
     JsonArray array = doc.to<JsonArray>();
     JsonObject obj = array.createNestedObject();
     Config* config = Config::getInstance();
-    obj["mode"] = Config::ModeStrings[config->mode];
-    obj["wifiMode"] = Config::WifiModeStrings[config->wifiMode];
-    obj["name"] = config->name;
-    obj["houseSSID"] = config->houseSSID;
-    obj["housePassword"] = config->housePassword;
-    obj["tractorSSID"] = config->tractorSSID;
-    obj["tractorPassword"] = config->tractorPassword;
-    obj["tractorAddress"] = config->tractorAddress.toString();
-    emitWeb(c, "settings", array);
+    if (running) {
+        obj["mode"] = Config::ModeStrings[config->running.mode];
+        obj["wifiMode"] = Config::WifiModeStrings[config->running.wifiMode];
+        obj["name"] = config->running.name;
+        obj["houseSSID"] = config->running.houseSSID;
+        obj["housePassword"] = config->running.housePassword;
+        obj["tractorSSID"] = config->running.tractorSSID;
+        obj["tractorPassword"] = config->running.tractorPassword;
+        obj["tractorAddress"] = config->running.tractorAddress.toString();
+        obj["enableDisplay"] = config->running.enableDisplay;
+        emitWeb(c, "runningSettings", array);
+    } else {
+        obj["mode"] = Config::ModeStrings[config->save.mode];
+        obj["wifiMode"] = Config::WifiModeStrings[config->save.wifiMode];
+        obj["name"] = config->save.name;
+        obj["houseSSID"] = config->save.houseSSID;
+        obj["housePassword"] = config->save.housePassword;
+        obj["tractorSSID"] = config->save.tractorSSID;
+        obj["tractorPassword"] = config->save.tractorPassword;
+        obj["tractorAddress"] = config->save.tractorAddress.toString();
+        obj["enableDisplay"] = config->save.enableDisplay;
+        emitWeb(c, "saveSettings", array);
+    }
 }
 
 void Network::emitWebConfigCalibrated(SockIOServerClient *c) {
@@ -542,13 +578,13 @@ void Network::emitWebRemoteAngles(SockIOServerClient *c) {
 // ======================================================
 // SockIO Implement API
 
-void Network::apiImplRemoteInfo(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+void Network::apiImplRemoteInfo(JsonArray& args, JsonArray& ret) {
     if (args.size() != 2) return;
     Leveler* leveler = Leveler::getInstance();
     leveler->setRemoteInfo(args[0], args[1]);
 }
 
-void Network::apiImplRemoteAngles(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
+void Network::apiImplRemoteAngles(JsonArray& args, JsonArray& ret) {
     if (mode != Config::Tractor) return;
     if (args.size() != 2) return;
     Leveler* leveler = Leveler::getInstance();
@@ -561,13 +597,15 @@ void Network::emitImpl(SockIOServerClient *c, const String& event, JsonArray& ar
         c->emit(event, array);
     else if (implSock)
         implSock->emit(event, array);
+    else if (implClient)
+        implClient->emit(event, array);
 }
 
 void Network::emitImplRemoteInfo(SockIOServerClient *c) {
     StaticJsonDocument<64> doc;
     JsonArray array = doc.to<JsonArray>();
     Config* config = Config::getInstance();
-    array.add(config->name);
+    array.add(config->running.name);
     array.add(ipAddress.toString());
     emitImpl(c, "remoteInfo", array);
 }

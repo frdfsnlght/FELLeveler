@@ -26,8 +26,7 @@ class Network {
         Connect,
         Connecting,
         Waiting,
-        Connected,
-        Reboot
+        Connected
     };
 
     CallbackList stateListeners = CallbackList();
@@ -56,14 +55,12 @@ class Network {
     static const int OTAPort;
     static const int MaxConnectionAttempts;
     static const int ConnectionAttemptInterval;
-    static const int RebootDelay;
     static const int ReportRSSIInterval;
 
     DNSServer dnsServer;
     int connectionAttempts;
     unsigned long lastConnectionAttemptTime;
     int otaUpdateType;
-    unsigned long rebootTimer;
 
     WebServer webServer;
     SockIOServer webSock;
@@ -80,7 +77,7 @@ class Network {
         led(2)
         {}
 
-    void handleSettingsChanged();
+//    void handleSettingsChanged();
 
     void setState(State newState);
 
@@ -112,7 +109,7 @@ class Network {
 
     void emitWeb(SockIOServerClient *c, const String& event, JsonArray& array);
     void emitWebConfigDirty(SockIOServerClient *c);
-    void emitWebConfigSettings(SockIOServerClient *c);
+    void emitWebConfigSettings(SockIOServerClient *c, bool running);
     void emitWebConfigCalibrated(SockIOServerClient *c);
     void emitWebWifiRSSI(SockIOServerClient *c);
     void emitWebAngles(SockIOServerClient *c);
@@ -123,8 +120,8 @@ class Network {
     // ====================================
     // SockIO Implement API
 
-    void apiImplRemoteInfo(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
-    void apiImplRemoteAngles(SockIOServerClient& client, JsonArray& args, JsonArray& ret);
+    void apiImplRemoteInfo(JsonArray& args, JsonArray& ret);
+    void apiImplRemoteAngles(JsonArray& args, JsonArray& ret);
 
     void emitImpl(SockIOServerClient *c, const String& event, JsonArray& array);
     void emitImplRemoteInfo(SockIOServerClient *c);

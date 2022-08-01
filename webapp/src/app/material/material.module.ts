@@ -12,6 +12,8 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatListModule } from '@angular/material/list';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+
 
 const material = [
   MatSidenavModule,
@@ -26,7 +28,8 @@ const material = [
   MatSelectModule,
   MatListModule,
   MatProgressSpinnerModule,
-  MatCardModule
+  MatCardModule,
+  MatCheckboxModule
 ];
 
 @NgModule({

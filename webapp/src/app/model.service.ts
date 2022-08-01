@@ -2,31 +2,32 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable, ReplaySubject, Subject } from 'rxjs';
 import { SockIOClient } from './sockio';
 
+class Settings {
+  mode: string = 'Tractor';  // Tractor or Implement
+  wifiMode: string = 'TractorWifi';  // HouseWifi or TractorWifi
+  name: string = 'Tractor';
+  houseSSID: string = '';
+  housePassword: string = '';
+  tractorSSID: string = 'Tractor';
+  tractorPassword: string = '12345678';
+  tractorAddress: string = '8.8.8.8';
+  enableDisplay: boolean = true;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class ModelService {
 
   // TODO: set this for production
-  //private apiUrl = '/api/';
-  //private apiUrl = 'http://10.10.10.122/api/';
-  //private wsUrl = '/ws';
-  //private wsUrl = 'ws://10.10.10.122/ws';
-  //private url = 'ws://localhost:8080/';
-  
+  io = new SockIOClient('ws://' + window.location.hostname + ':81/')
   //io = new SockIOClient('ws://localhost:8080/');
-  io = new SockIOClient('ws://10.10.10.122:81/');
+  //io = new SockIOClient('ws://10.10.10.122:81/');
 
   connected: boolean = false;
-  
-  mode: string = 'Tractor';  // Tractor or Implement
-  wifiMode: string = 'TractorWifi';  // HouseWifi or TractorWifi
-  name: string = 'Missy';
-  houseSSID: string = '';
-  housePassword: string = '';
-  tractorSSID: string = 'Tractor';
-  tractorPassword: string = '12345678';
-  tractorAddress: string = '8.8.8.8';
+
+  running: Settings = new Settings();
+  save: Settings = new Settings();
   wifiRSSI: number = 0;
   calibrated: boolean = false;
   roll: number = 0;
@@ -53,15 +54,29 @@ export class ModelService {
       this.connectedSubject.next(false);
     });
 
-    this.io.on('settings', o => {
-      this.mode = o.mode;
-      this.wifiMode = o.wifiMode;
-      this.name = o.name;
-      this.houseSSID = o.houseSSID;
-      this.housePassword = o.housePassword;
-      this.tractorSSID = o.tractorSSID;
-      this.tractorPassword = o.tractorPassword;
-      this.tractorAddress = o.tractorAddress;
+    this.io.on('runningSettings', o => {
+      this.running.mode = o.mode;
+      this.running.wifiMode = o.wifiMode;
+      this.running.name = o.name;
+      this.running.houseSSID = o.houseSSID;
+      this.running.housePassword = o.housePassword;
+      this.running.tractorSSID = o.tractorSSID;
+      this.running.tractorPassword = o.tractorPassword;
+      this.running.tractorAddress = o.tractorAddress;
+      this.running.enableDisplay = o.enableDisplay;
+      this.configUpdatedSubject.next();
+    });
+
+    this.io.on('saveSettings', o => {
+      this.save.mode = o.mode;
+      this.save.wifiMode = o.wifiMode;
+      this.save.name = o.name;
+      this.save.houseSSID = o.houseSSID;
+      this.save.housePassword = o.housePassword;
+      this.save.tractorSSID = o.tractorSSID;
+      this.save.tractorPassword = o.tractorPassword;
+      this.save.tractorAddress = o.tractorAddress;
+      this.save.enableDisplay = o.enableDisplay;
       this.configUpdatedSubject.next();
     });
 
@@ -89,7 +104,7 @@ export class ModelService {
 
     this.io.on('remoteAngles', (roll, pitch) => {
       this.remoteRoll = roll;
-      this.remoteRoll = pitch;
+      this.remotePitch = pitch;
     });
 
     this.io.on('configDirty', b => {

@@ -28,17 +28,24 @@ class Config {
         TractorWifi
     };
 
+    struct Settings {
+        Mode mode;
+        WifiMode wifiMode;
+        char name[MaxNameLength];
+        char houseSSID[MaxSSIDLength];
+        char housePassword[MaxPasswordLength];
+        char tractorSSID[MaxSSIDLength];
+        char tractorPassword[MaxPasswordLength];
+        IPAddress tractorAddress;
+        bool enableDisplay;
+        Settings();
+        Settings(Settings& src);
+    };
+
     bool dirty;
 
-    Mode mode;
-    WifiMode wifiMode;
-    char name[MaxNameLength];
-    char houseSSID[MaxSSIDLength];
-    char housePassword[MaxPasswordLength];
-    char tractorSSID[MaxSSIDLength];
-    char tractorPassword[MaxPasswordLength];
-    IPAddress tractorAddress;
-
+    Settings running;
+    Settings save;
     bool calibrated;
     Vector3 downLevel;
     Vector3 downTipped;
@@ -56,7 +63,6 @@ class Config {
     bool read();
     bool write();
 
-    void setDirty(bool d);
     void setSettings(
         const char* modeStr,
         const char* wifiModeStr,
@@ -65,7 +71,8 @@ class Config {
         const char* housePassword,
         const char* tractorSSID,
         const char* tractorPassword,
-        const char* tractorAddress);
+        const char* tractorAddress,
+        bool enableDisplay);
     void setCalibrated(bool cal);
     void setDownLevel(Vector3 &v);
     void setDownTipped(Vector3 &v);
@@ -74,11 +81,13 @@ class Config {
 
     private:
 
-    static const int ConfigSize = 2048;
+    static const int ConfigSize = 768;
 
     static Config* instance;
 
     Config();
+
+    void setDirty(bool d);
 
 };
 

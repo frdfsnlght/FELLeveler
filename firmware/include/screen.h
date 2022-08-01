@@ -17,8 +17,12 @@ class Screen {
 
     void show();
     void hide();
-
+    bool isActiveScreen();
+    
     virtual String getName();
+    virtual String saveState() { return ""; }
+    virtual void restoreState(String& state) {};
+    virtual bool canShow() { return true; }
     virtual void onShow() {}
     virtual void onHide() {}
     virtual void handleButtonPress(Button* button) {}

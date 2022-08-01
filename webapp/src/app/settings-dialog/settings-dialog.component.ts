@@ -18,7 +18,8 @@ export class SettingsDialogComponent {
     housePassword: new FormControl(''),
     tractorSSID: new FormControl(''),
     tractorPassword: new FormControl(''),
-    tractorAddress: new FormControl('')
+    tractorAddress: new FormControl(''),
+    enableDisplay: new FormControl(true)
   });
 
   showHousePassword = false;
@@ -30,14 +31,15 @@ export class SettingsDialogComponent {
     ) {
       dialogRef.disableClose = true;
       this.form.setValue({
-        mode: model.mode,
-        wifiMode: model.wifiMode,
-        name: model.name,
-        houseSSID: model.houseSSID,
-        housePassword: model.housePassword,
-        tractorSSID: model.tractorSSID,
-        tractorPassword: model.tractorPassword,
-        tractorAddress: model.tractorAddress
+        mode: model.save.mode,
+        wifiMode: model.save.wifiMode,
+        name: model.save.name,
+        houseSSID: model.save.houseSSID,
+        housePassword: model.save.housePassword,
+        tractorSSID: model.save.tractorSSID,
+        tractorPassword: model.save.tractorPassword,
+        tractorAddress: model.save.tractorAddress,
+        enableDisplay: model.save.enableDisplay
     });
   }
 

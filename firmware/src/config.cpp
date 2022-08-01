@@ -6,6 +6,31 @@
 
 #include "secrets.h"
 
+Config::Settings::Settings():
+    // TODO: reset defaults
+    mode(Tractor),
+    //wifiMode(HouseWifi),
+    wifiMode(TractorWifi),
+    name("Unknown"),
+    houseSSID(DEFAULT_HOUSE_SSID),
+    housePassword(DEFAULT_HOUSE_PASSWORD),
+    tractorSSID(DEFAULT_TRACTOR_SSID),
+    tractorPassword(DEFAULT_TRACTOR_PASSWORD),
+    tractorAddress(10, 0, 0, 1),
+    enableDisplay(true)
+    {}
+
+Config::Settings::Settings(Settings& src) {
+    mode = src.mode;
+    wifiMode = src.wifiMode;
+    strcpy(name, src.name);
+    strcpy(housePassword, src.housePassword);
+    strcpy(tractorSSID, src.tractorSSID);
+    strcpy(tractorPassword, src.tractorPassword);
+    tractorAddress = src.tractorAddress;
+    enableDisplay = src.enableDisplay;
+}
+
 Config* Config::instance = nullptr;
 const char* Config::ModeStrings[] = {"Tractor", "Implement"};
 const char* Config::WifiModeStrings[] = {"HouseWifi", "TractorWifi"};
@@ -17,17 +42,7 @@ Config* Config::getInstance() {
 
 Config::Config() {
     dirty = false;
-    // TODO: reset defaults
-//    mode = Tractor;
-//    wifiMode = TractorWifi;
-    mode = Tractor;
-    wifiMode = HouseWifi;
-    strcpy(name, "Unknown");
-    strcpy(houseSSID, DEFAULT_HOUSE_SSID);
-    strcpy(housePassword, DEFAULT_HOUSE_PASSWORD);
-    strcpy(tractorSSID, DEFAULT_TRACTOR_SSID);
-    strcpy(tractorPassword, DEFAULT_TRACTOR_PASSWORD);
-    tractorAddress.fromString("8.8.8.8");
+    running = save;
     calibrated = false;
     downLevel.set(0, 0, 0);
     downTipped.set(0, 0, 0);
@@ -50,20 +65,23 @@ bool Config::read() {
         return false;
     }
     if (strcmp(doc["mode"], ModeStrings[Tractor]) == 0)
-        mode = Tractor;
+        save.mode = Tractor;
     else if (strcmp(doc["mode"], ModeStrings[Implement]) == 0)
-        mode = Implement;
+        save.mode = Implement;
     if (strcmp(doc["wifiMode"], WifiModeStrings[HouseWifi]) == 0)
-        wifiMode = HouseWifi;
+        save.wifiMode = HouseWifi;
     else if (strcmp(doc["wifiMode"], WifiModeStrings[TractorWifi]) == 0)
-        wifiMode = TractorWifi;
+        save.wifiMode = TractorWifi;
 
-    strcpy(name, doc["name"]);
-    strcpy(houseSSID, doc["houseSSID"]);
-    strcpy(housePassword, doc["housePassword"]);
-    strcpy(tractorSSID, doc["tractorSSID"]);
-    strcpy(tractorPassword, doc["tractorPassword"]);
-    tractorAddress.fromString((const char*)doc["tractorAddress"]);
+    strcpy(save.name, doc["name"]);
+    strcpy(save.houseSSID, doc["houseSSID"]);
+    strcpy(save.housePassword, doc["housePassword"]);
+    strcpy(save.tractorSSID, doc["tractorSSID"]);
+    strcpy(save.tractorPassword, doc["tractorPassword"]);
+    save.tractorAddress.fromString((const char*)doc["tractorAddress"]);
+    save.enableDisplay = doc["enableDisplay"];
+
+    running = save;
     calibrated = doc["calibrated"];
     downLevel.x = doc["downLevel"]["x"];
     downLevel.y = doc["downLevel"]["y"];
@@ -77,7 +95,7 @@ bool Config::read() {
     pitchPlane.x = doc["pitchPlane"]["x"];
     pitchPlane.y = doc["pitchPlane"]["y"];
     pitchPlane.z = doc["pitchPlane"]["z"];
-
+    
     serializeJsonPretty(doc, Serial);
     Serial.println();
     Serial.println("Configuration read");
@@ -93,14 +111,15 @@ bool Config::write() {
     }
     StaticJsonDocument<ConfigSize> doc;
 
-    doc["mode"] = ModeStrings[mode];
-    doc["wifiMode"] = WifiModeStrings[wifiMode];
-    doc["name"] = name;
-    doc["houseSSID"] = houseSSID;
-    doc["housePassword"] = housePassword;
-    doc["tractorSSID"] = tractorSSID;
-    doc["tractorPassword"] = tractorPassword;
-    doc["tractorAddress"] = tractorAddress.toString();
+    doc["mode"] = ModeStrings[save.mode];
+    doc["wifiMode"] = WifiModeStrings[save.wifiMode];
+    doc["name"] = save.name;
+    doc["houseSSID"] = save.houseSSID;
+    doc["housePassword"] = save.housePassword;
+    doc["tractorSSID"] = save.tractorSSID;
+    doc["tractorPassword"] = save.tractorPassword;
+    doc["tractorAddress"] = save.tractorAddress.toString();
+    doc["enableDisplay"] = save.enableDisplay;
     doc["calibrated"] = calibrated;
     JsonObject v = doc.createNestedObject("downLevel");
     v["x"] = downLevel.x;
@@ -146,21 +165,23 @@ void Config::setSettings(
     const char* hPassword,
     const char* tSSID,
     const char* tPassword,
-    const char* tAddress) {
+    const char* tAddress,
+    bool enableDisplay) {
     if (strcmp(modeStr, ModeStrings[Tractor]) == 0)
-        mode = Tractor;
+        save.mode = Tractor;
     else if (strcmp(modeStr, ModeStrings[Implement]) == 0)
-        mode = Implement;
+        save.mode = Implement;
     if (strcmp(wifiModeStr, WifiModeStrings[HouseWifi]) == 0)
-        wifiMode = HouseWifi;
+        save.wifiMode = HouseWifi;
     else if (strcmp(wifiModeStr, WifiModeStrings[TractorWifi]) == 0)
-        wifiMode = TractorWifi;
-    strcpy(name, newName);
-    strcpy(houseSSID, hSSID);
-    strcpy(housePassword, hPassword);
-    strcpy(tractorSSID, tSSID);
-    strcpy(tractorPassword, tPassword);
-    tractorAddress.fromString(tAddress);
+        save.wifiMode = TractorWifi;
+    strcpy(save.name, newName);
+    strcpy(save.houseSSID, hSSID);
+    strcpy(save.housePassword, hPassword);
+    strcpy(save.tractorSSID, tSSID);
+    strcpy(save.tractorPassword, tPassword);
+    save.tractorAddress.fromString(tAddress);
+    save.enableDisplay = enableDisplay;
     settingsListeners.call();
     setDirty(true);
 }

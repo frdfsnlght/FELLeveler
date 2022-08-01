@@ -72,7 +72,7 @@ void Vector3::normalize() {
 }
 
 const String Vector3::toString() {
-    String s = "";
-    s += '<' + x + ',' + y + ',' + z + '>';
-    return s;
+    char buffer[40];
+    sprintf(buffer, "<%.3f,%.3f,%.3f>", x, y, z);
+    return String(buffer);
 }

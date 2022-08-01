@@ -1,5 +1,7 @@
 #include "ui.h"
 
+#include <SPIFFS.h>
+
 #include "config.h"
 
 #include "screens/boot_screen.h"
@@ -9,28 +11,15 @@
 #include "screens/status_screen.h"
 
 UI* UI::instance = nullptr;
+const int UI::SaveStateDelay = 10000;
+const char UI::StateFile[] = "/ui.state";
 
 UI* UI::getInstance() {
     if (! instance) instance = new UI();
     return instance;
 }
 
-void UI::showScreen(Screen* newScreen) {
-    if (newScreen == screen) return;
-    if (screen != nullptr) {
-        Serial.print("Hide screen: ");
-        Serial.println(screen->getName());
-        screen->hide();
-    }
-    screen = newScreen;
-    if (screen != nullptr) {
-        Serial.print("Show screen: ");
-        Serial.println(screen->getName());
-        screen->show(); 
-    }
-}
-
-void UI::setup(Screen* startScreen) {
+void UI::setup() {
     button.setup();
     button.onPressListeners.add([](void) {
         UI::getInstance()->handleButtonPress(&UI::getInstance()->button);
@@ -46,26 +35,46 @@ void UI::setup(Screen* startScreen) {
     });
 
     // Setup all screens
-    BootScreen::getInstance()->setup();
-    TractorScreen::getInstance()->setup();
-    ImplementScreen::getInstance()->setup();
-    LevelerScreen::getInstance()->setup();
-    StatusScreen::getInstance()->setup();
+    setupScreen(BootScreen::getInstance());
+    setupScreen(TractorScreen::getInstance());
+    setupScreen(ImplementScreen::getInstance());
+    setupScreen(LevelerScreen::getInstance());
+    setupScreen(StatusScreen::getInstance());
 
-    if (startScreen)
-        showScreen(startScreen);
     Serial.println("UI setup complete");
 }
 
 void UI::loop() {
     button.loop();
+
     if (screen == nullptr) return;
     screen->loop();
     screen->paint();
+
+    if ((! saved) && ((millis() - lastSaveCheck) > SaveStateDelay) && (screen != BootScreen::getInstance())) {
+        lastSaveCheck = millis();
+        saveState();
+    }
+}
+
+void UI::showScreen(Screen* newScreen) {
+    if (newScreen == screen) return;
+    if (screen != nullptr) {
+        Serial.print("Hide screen: ");
+        Serial.println(screen->getName());
+        screen->hide();
+    }
+    screen = newScreen;
+    if (screen != nullptr) {
+        Serial.print("Show screen: ");
+        Serial.println(screen->getName());
+        screen->show();
+        resetSave();
+    }
 }
 
 void UI::nextScreen() {
-    Config::Mode mode = Config::getInstance()->mode;
+    Config::Mode mode = Config::getInstance()->running.mode;
 
     if (screen == NULL) {
         showScreen(BootScreen::getInstance());
@@ -73,10 +82,12 @@ void UI::nextScreen() {
     }
 
     if (screen == BootScreen::getInstance()) {
-        if (mode == Config::Tractor)
-            showScreen(TractorScreen::getInstance());
-        else if (mode == Config::Implement)
-            showScreen(ImplementScreen::getInstance());
+        if (! restoreState()) {
+            if (mode == Config::Tractor)
+                showScreen(TractorScreen::getInstance());
+            else if (mode == Config::Implement)
+                showScreen(ImplementScreen::getInstance());
+        }
 
     } else if (screen == TractorScreen::getInstance()) {
         if (mode == Config::Tractor)
@@ -100,6 +111,55 @@ void UI::nextScreen() {
             showScreen(ImplementScreen::getInstance());
     }
 
+}
+
+void UI::setupScreen(Screen* screen) {
+    screen->setup();
+    screens.push_back(screen);
+}
+
+bool UI::restoreState() {
+    File file = SPIFFS.open(StateFile, FILE_READ);
+    if (! file) {
+        log_d("Unable to read state file %s", StateFile);
+        return false;
+    }
+    String screenName = file.readStringUntil('\n');
+    String screenState = file.readStringUntil('\n');
+    file.close();
+    screenName.trim();
+    screenState.trim();
+    for (Screen* screen : screens) {
+        if (screenName.equals(screen->getName())) {
+            if (! screen->canShow()) break;
+            showScreen(screen);
+            screen->restoreState(screenState);
+            saved = true;
+            Serial.printf("Restored screen\n");
+            return true;
+        }
+    }
+    Serial.printf("Unable to restore screen %s\n", screenName.c_str());
+    return false;
+}
+
+void UI::saveState() {
+    saved = true;
+    if (screen == NULL) return;
+    File file = SPIFFS.open(StateFile, FILE_WRITE);
+    if (! file) {
+        log_e("Unable to write state file %s", StateFile);
+        return;
+    }
+    file.println(screen->getName());
+    file.println(screen->saveState());
+    file.close();
+    Serial.printf("Saved state to %s\n", StateFile);
+}
+
+void UI::resetSave() {
+    saved = false;
+    lastSaveCheck = millis();
 }
 
 void UI::handleButtonPress(Button* button) {

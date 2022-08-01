@@ -1,6 +1,7 @@
 #include "screen.h"
 
 #include "display.h"
+#include "ui.h"
 
 void Screen::show() {
     hidden = false;
@@ -12,6 +13,10 @@ void Screen::show() {
 void Screen::hide() {
     hidden = true;
     onHide();
+}
+
+bool Screen::isActiveScreen() {
+    return UI::getInstance()->screen == this;
 }
 
 void Screen::paint() {

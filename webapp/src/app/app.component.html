@@ -6,17 +6,17 @@
             <span>{{title}}</span>
         </mat-toolbar>
         <mat-action-list>
-            <button mat-list-item (click)="settings()">
+            <button mat-list-item (click)="sidenav.close();settings()">
                 <mat-icon>settings</mat-icon> Settings
             </button>
-            <button mat-list-item (click)="calibrate()" *ngIf="model.mode">
+            <button mat-list-item (click)="sidenav.close();calibrate()" *ngIf="model.running.mode">
                 <mat-icon>perm_data_setting</mat-icon> Calibrate
             </button>
-            <button mat-list-item (click)="saveConfig()">
+            <button mat-list-item (click)="sidenav.close();saveConfig()">
                 <mat-icon>save</mat-icon> Save
             </button>
             <mat-divider></mat-divider>
-            <button mat-list-item (click)="reboot()">
+            <button mat-list-item (click)="sidenav.close();reboot()">
                 <mat-icon>restart_alt</mat-icon> Reboot
             </button>
         </mat-action-list>
@@ -42,20 +42,20 @@
             <mat-card-title><mat-icon>wifi</mat-icon> WiFi</mat-card-title>
             <mat-card-content>
                 <p>
-                    <strong>Mode:</strong> {{model.wifiMode}}<br/>
+                    <strong>Mode:</strong> {{model.running.wifiMode}}<br/>
                     <strong>RSSI:</strong> {{model.wifiRSSI}} dbm
                 </p>
             </mat-card-content>
         </mat-card>
 
         <mat-card>
-            <mat-card-title *ngIf="model.mode == 'Tractor'"><mat-icon>build</mat-icon> Implement</mat-card-title>
-            <mat-card-title *ngIf="model.mode == 'Implement'"><mat-icon>agriculture</mat-icon> Tractor</mat-card-title>
+            <mat-card-title *ngIf="model.running.mode == 'Tractor'"><mat-icon>build</mat-icon> Implement</mat-card-title>
+            <mat-card-title *ngIf="model.running.mode == 'Implement'"><mat-icon>agriculture</mat-icon> Tractor</mat-card-title>
             <mat-card-content>
                 <p>
                     <strong>Connected:</strong> {{model.remoteConnected ? 'Yes' : 'No'}}<br/>
                     <span *ngIf="model.remoteConnected">
-                        <strong>Connected to: </strong> {{model.remoteName ? model.remoteName : 'Unknown'
+                        <strong>Connected to: </strong> {{model.remoteName ? model.remoteName : 'Unknown'}}
                             <span *ngIf="model.remoteAddress"> (<a target="_blank" href="http://{{model.remoteAddress}}/">{{model.remoteAddress}}</a>)</span>
                     </span>
                 </p>
@@ -69,15 +69,11 @@
                     <strong>Calibrated:</strong> {{model.calibrated ? 'Yes' : 'No'}}<br/>
                     <span *ngIf="model.calibrated"><strong>Roll angle:</strong> {{(model.roll / 10)|number}} &deg;<br/></span>
                     <span *ngIf="model.calibrated"><strong>Pitch angle:</strong> {{(model.pitch / 10)|number}} &deg;<br/></span>
-                    <span *ngIf="model.calibrated && model.mode=='Tractor'"><strong>Implement roll:</strong> {{(model.remoteRoll / 10)|number}} &deg;<br/></span>
-                    <span *ngIf="model.calibrated && model.mode=='Tractor'"><strong>Implement pitch:</strong> {{(model.remotePitch / 10)|number}} &deg;</span>
+                    <span *ngIf="model.calibrated && model.running.mode=='Tractor'"><strong>Implement roll:</strong> {{(model.remoteRoll / 10)|number}} &deg;<br/></span>
+                    <span *ngIf="model.calibrated && model.running.mode=='Tractor'"><strong>Implement pitch:</strong> {{(model.remotePitch / 10)|number}} &deg;</span>
                 </p>
             </mat-card-content>
         </mat-card>
-
-        <button mat-raised-button (click)="test()">
-            <span>Test</span>
-        </button>
 
     </mat-sidenav-content>
 </mat-sidenav-container>

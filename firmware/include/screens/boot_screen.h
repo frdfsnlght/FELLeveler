@@ -1,8 +1,6 @@
 #ifndef BOOT_SCREEN_H
 #define BOOT_SCREEN_H
 
-#include <SPIFFS_ImageReader.h>
-
 #include "screen.h"
 
 class BootScreen : public Screen {
@@ -11,7 +9,6 @@ class BootScreen : public Screen {
 
     static BootScreen* getInstance();
 
-    void setup();
     String getName() { return "Boot"; }
     void onShow();
     void loop();
@@ -23,8 +20,6 @@ class BootScreen : public Screen {
 
     const unsigned long ShowTime = 5000;
     unsigned long time = 0;
-
-    SPIFFS_Image bootImage;
 
     BootScreen() {}
 

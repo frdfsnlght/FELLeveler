@@ -3,13 +3,6 @@
 #include "accelerometer.h"
 #include "config.h"
 #include "vector3.h"
-#include "debug.h"
-
-#ifdef DEBUG_LEVELER
-#define DEBUG(...) Serial.printf(__VA_ARGS__)
-#else
-#define DEBUG(...)
-#endif
 
 Leveler* Leveler::instance = nullptr;
 
@@ -47,10 +40,10 @@ void Leveler::calibrateTipped() {
     config->setPitchPlane(pitchPlane);
     config->setCalibrated(true);
 
-    DEBUG("Down level: %s\n", config->downLevel.toString().c_str());
-    DEBUG("Down tipped: %s\n", config->downTipped.toString().c_str());
-    DEBUG("Roll plane: %s\n", config->rollPlane.toString().c_str());
-    DEBUG("Pitch plane: %s\n", config->pitchPlane.toString().c_str());
+    log_d("Down level: %s", config->downLevel.toString().c_str());
+    log_d("Down tipped: %s", config->downTipped.toString().c_str());
+    log_d("Roll plane: %s", config->rollPlane.toString().c_str());
+    log_d("Pitch plane: %s", config->pitchPlane.toString().c_str());
 }
 
 void Leveler::update() {

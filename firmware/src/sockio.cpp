@@ -1,19 +1,13 @@
 #include "sockio.h"
 
-#include "debug.h"
-
-#ifdef DEBUG_SOCKIO
-#define DEBUG(...) Serial.printf(__VA_ARGS__)
-#else
-#define DEBUG(...)
-#endif
+#include <Arduino.h>
 
 bool SockIO::serializeMessage(MessageStruct& msg, String& buffer) {
     int len = 1;
     if (msg.ackId) len += 8;
     len += measureJson(*msg.array);
     if (! buffer.reserve(len)) {
-        Serial.printf("SockIO unable to reserve buffer of size %d!\n", len);
+        log_w("SockIO unable to reserve buffer of size %d!", len);
         return false;
     }
     buffer.clear();
@@ -36,11 +30,11 @@ bool SockIO::deserializeMessage(const String& buffer, MessageStruct& msg) {
         json = buffer.substring(1);
     DeserializationError err = deserializeJson(*msg.doc, json);
     if (err) {
-        Serial.printf("SockIO JSON deserialization error: %s\n", err.c_str());
+        log_w("SockIO JSON deserialization error: %s", err.c_str());
         return false;
     }
     if (! msg.doc->is<JsonArray>()) {
-        Serial.printf("SockIO JSON is not an array: %s\n", buffer.c_str());
+        log_w("SockIO JSON is not an array: %s", buffer.c_str());
     }
     return true;
 }
@@ -58,14 +52,14 @@ SockIOServer::SockIOServer(
         SockIOServerClient* client = self->clients[clientNum];
         switch (type) {
             case WStype_CONNECTED:
-                DEBUG("SockIO client %d connected\n", clientNum);
+                log_d("SockIO client %d connected", clientNum);
                 client = new SockIOServerClient(*self, clientNum);
                 self->clients[clientNum] = client;
                 self->triggerEvent("connected", *client);
                 client->triggerEvent("connected");
                 break;
             case WStype_DISCONNECTED:
-                DEBUG("SockIO client %d disconnected\n", clientNum);
+                log_d("SockIO client %d disconnected", clientNum);
                 if (client) {
                     client->triggerEvent("disconnected");
                     self->clients.erase(clientNum);
@@ -84,7 +78,7 @@ SockIOServer::SockIOServer(
 	    	case WStype_FRAGMENT_BIN_START:
     		case WStype_FRAGMENT:
 	    	case WStype_FRAGMENT_FIN:
-                DEBUG("SockIO received invalid frame from client %d\n", clientNum);
+                log_w("SockIO received invalid frame from client %d", clientNum);
                 break;
         }
     });
@@ -121,9 +115,8 @@ void SockIOServer::on(String event, void (*cb)(SockIOServerClient&)) {
 }
 
 void SockIOServer::emit(String message) {
-Serial.println("SockIOServer::emit1");
     StaticJsonDocument<128> doc;
-    JsonArray array = doc.as<JsonArray>();
+    JsonArray array = doc.to<JsonArray>();
     array.add(message);
     send(-1, SockIO::Message, 0, array);
 }
@@ -142,10 +135,10 @@ void SockIOServer::send(int clientNum, SockIO::MessageType msgType, unsigned int
     String buffer;
     if (! SockIO::serializeMessage(msg, buffer)) return;
     if (clientNum != -1) {
-        DEBUG("SockIO >%d %s\n", clientNum, buffer.c_str());
+        log_d("SockIO >%d %s", clientNum, buffer.c_str());
         socket->sendTXT(clientNum, buffer);
     } else {
-        DEBUG("SockIO >* %s\n", buffer.c_str());
+        log_d("SockIO >* %s", buffer.c_str());
         socket->broadcastTXT(buffer);
     }
 }
@@ -170,7 +163,7 @@ void SockIOServerClient::on(String event, void (*cb)(SockIOServerClient& client,
 
 void SockIOServerClient::emit(String message, void(*cb)(JsonArray&)) {
     StaticJsonDocument<128> doc;
-    JsonArray array = doc.as<JsonArray>();
+    JsonArray array = doc.to<JsonArray>();
     array.add(message);
     unsigned int ackId = 0;
     if (cb) {
@@ -201,7 +194,7 @@ void SockIOServerClient::triggerEvent(const String& event) {
 }
 
 void SockIOServerClient::processData(const String& data) {
-    DEBUG("SockIO <%d %s\n", client, data.c_str());
+    log_d("SockIO <%d %s", client, data.c_str());
     void (*handler)(SockIOServerClient&,JsonArray&,JsonArray&);
     void(*requester)(JsonArray&);
     String event;
@@ -221,7 +214,7 @@ void SockIOServerClient::processData(const String& data) {
             return;
         case SockIO::Message:
             if (inArray.size() == 0) {
-                Serial.printf("SockIO too few arguments for message type message %s\n", data.c_str());
+                log_e("SockIO too few arguments for message type message %s", data.c_str());
                 return;
             }
             event = inArray[0].as<String>();
@@ -233,25 +226,25 @@ void SockIOServerClient::processData(const String& data) {
                     server.send(client, SockIO::Ack, msg.ackId, outArray);
                 }
             } else if (msg.ackId) {
-                Serial.printf("SockIO no handler found for \"%s\", sending empty ACK", event.c_str());
+                log_w("SockIO no handler found for \"%s\", sending empty ACK", event.c_str());
                 server.send(client, SockIO::Ack, msg.ackId, outArray);
             }
             break;
         case SockIO::Ack:
             if (! msg.ackId) {
-                Serial.printf("SockIO expected ACK id but did not find one %s\n", data.c_str());
+                log_w("SockIO expected ACK id but did not find one %s", data.c_str());
                 return;
             }
             requester = requests[msg.ackId];
             if (! requester) {
-                Serial.printf("SockIO no requestor for ACK id %s\n", data.c_str());
+                log_w("SockIO no requestor for ACK id %s", data.c_str());
                 return;
             }
             requests.erase(msg.ackId);
             requester(inArray);
             break;
         default:
-            Serial.printf("SockIO received unknown message type %d\n", msg.type);
+            log_w("SockIO received unknown message type %d", msg.type);
             return;
     }
 
@@ -269,11 +262,11 @@ SockIOClient::SockIOClient(
     socket->onEvent([self](WStype_t type, uint8_t* payload, size_t length) {
         switch (type) {
             case WStype_CONNECTED:
-                DEBUG("SockIO client connected\n");
+                log_d("SockIO client connected");
                 self->triggerEvent("connected");
                 break;
             case WStype_DISCONNECTED:
-                DEBUG("SockIO client disconnected\n");
+                log_d("SockIO client disconnected");
                 self->triggerEvent("disconnected");
                 break;
             case WStype_TEXT: {
@@ -286,7 +279,7 @@ SockIOClient::SockIOClient(
 	    	case WStype_FRAGMENT_BIN_START:
     		case WStype_FRAGMENT:
 	    	case WStype_FRAGMENT_FIN:
-                DEBUG("SockIO received invalid frame from server\n");
+                log_w("SockIO received unsupported frame from server");
                 break;
         }
     });
@@ -315,7 +308,7 @@ void SockIOClient::on(String event, void (*cb)(JsonArray& args,JsonArray& ret)) 
 
 void SockIOClient::emit(String message, void(*cb)(JsonArray&)) {
     StaticJsonDocument<128> doc;
-    JsonArray array = doc.as<JsonArray>();
+    JsonArray array = doc.to<JsonArray>();
     array.add(message);
     unsigned int ackId = 0;
     if (cb) {
@@ -327,9 +320,10 @@ void SockIOClient::emit(String message, void(*cb)(JsonArray&)) {
 
 void SockIOClient::emit(String message, JsonArray& args, void(*cb)(JsonArray&)) {
     StaticJsonDocument<1024> doc;
-    JsonArray array = doc.as<JsonArray>();
+    JsonArray array = doc.to<JsonArray>();
     array.add(message);
-    array.add(args);
+    for (JsonVariant value : args)
+        array.add(value);
     unsigned int ackId = 0;
     if (cb) {
         ackId = nextRequestId++;
@@ -342,7 +336,7 @@ void SockIOClient::send(SockIO::MessageType msgType, unsigned int ackId, JsonArr
     SockIO::MessageStruct msg(msgType, ackId, &array);
     String buffer;
     if (! SockIO::serializeMessage(msg, buffer)) return;
-    DEBUG("SockIO > %s\n", buffer.c_str());
+    log_d("SockIO > %s", buffer.c_str());
     socket->sendTXT(buffer);
 }
 
@@ -353,7 +347,7 @@ void SockIOClient::triggerEvent(const String& event) {
 }
 
 void SockIOClient::processData(const String& data) {
-    DEBUG("SockIO < %s\n", data.c_str());
+    log_d("SockIO < %s", data.c_str());
     void (*handler)(JsonArray&,JsonArray&);
     void(*requester)(JsonArray&);
     String event;
@@ -373,7 +367,7 @@ void SockIOClient::processData(const String& data) {
             return;
         case SockIO::Message:
             if (inArray.size() == 0) {
-                Serial.printf("SockIO too few arguments for message type message %s\n", data.c_str());
+                log_e("SockIO too few arguments for message type message %s", data.c_str());
                 return;
             }
             event = inArray[0].as<String>();
@@ -385,25 +379,25 @@ void SockIOClient::processData(const String& data) {
                     send(SockIO::Ack, msg.ackId, outArray);
                 }
             } else if (msg.ackId) {
-                Serial.printf("SockIO no handler found for \"%s\", sending empty ACK", event.c_str());
+                log_w("SockIO no handler found for \"%s\", sending empty ACK", event.c_str());
                 send(SockIO::Ack, msg.ackId, outArray);
             }
             break;
         case SockIO::Ack:
             if (! msg.ackId) {
-                Serial.printf("SockIO expected ACK id but did not find one %s\n", data.c_str());
+                log_w("SockIO expected ACK id but did not find one %s", data.c_str());
                 return;
             }
             requester = requests[msg.ackId];
             if (! requester) {
-                Serial.printf("SockIO no requestor for ACK id %s\n", data.c_str());
+                log_w("SockIO no requestor for ACK id %s", data.c_str());
                 return;
             }
             requests.erase(msg.ackId);
             requester(inArray);
             break;
         default:
-            Serial.printf("SockIO received unknown message type %d\n", msg.type);
+            log_w("SockIO received unknown message type %d", msg.type);
             return;
     }
 }

@@ -30,14 +30,22 @@ StatusScreen::StatusScreen() : Screen() {
         instance->dirty = instance->dirtyFlags.remote = true;
     });
     Leveler::getInstance()->remoteAnglesListeners.add([](void) {
-        if (Config::getInstance()->mode != Config::Tractor) return;
+        if (Config::getInstance()->running.mode != Config::Tractor) return;
         instance->dirty = instance->dirtyFlags.remoteAngles = true;
     });
 
 }
 
+void StatusScreen::loop() {
+    static unsigned long lastMemoryCheck = 0;
+    if ((millis() - lastMemoryCheck) > 1000) {
+        lastMemoryCheck = millis();
+        dirty = dirtyFlags.memory = true;
+    }
+}
+
 void StatusScreen::handleButtonRelease(Button* button) {
-    UI::getInstance()->showScreen(ImplementScreen::getInstance());
+    UI::getInstance()->nextScreen();
 }
 
 void StatusScreen::paintContent() {
@@ -63,13 +71,21 @@ void StatusScreen::paintContent() {
         dirtyFlags.network = false;
     }
 
+    if (firstPaint || dirtyFlags.memory) {
+        uint32_t free = ESP.getMaxAllocHeap();
+        d->printLeft("Mem: ", 0, 10);
+        d->fillRight(BLACK);
+        d->print(free);
+        dirtyFlags.memory = false;
+    }
+
     if (firstPaint || dirtyFlags.angles) {
         Leveler* leveler = Leveler::getInstance();
-        d->printLeft("Roll: ", 0, 10);
+        d->printLeft("Roll: ", 0, 20);
         d->fillRight(BLACK);
         d->printf("%.1f ", (float)leveler->roll / 10.0);
         d->print((char)247);
-        d->printLeft("Pitch: ", 0, 20);
+        d->printLeft("Pitch: ", 0, 30);
         d->fillRight(BLACK);
         d->printf("%.1f ", (float)leveler->pitch / 10.0);
         d->print((char)247);
@@ -78,21 +94,21 @@ void StatusScreen::paintContent() {
 
     if (firstPaint || dirtyFlags.remote) {
         Leveler* leveler = Leveler::getInstance();
-        d->printLeft("Remote: ", 0, 30);
+        d->printLeft("Remote: ", 0, 40);
         d->fillRight(BLACK);
         d->print(leveler->remoteConnected ? leveler->remoteName : "None");
         dirtyFlags.remote = false;
     }
 
-    if (Config::getInstance()->mode != Config::Tractor) return;
+    if (Config::getInstance()->running.mode != Config::Tractor) return;
 
     if (firstPaint || dirtyFlags.remoteAngles) {
         Leveler* leveler = Leveler::getInstance();
-        d->printLeft("Impl Roll: ", 0, 40);
+        d->printLeft("Impl Roll: ", 0, 50);
         d->fillRight(BLACK);
         d->printf("%.1f ", (float)leveler->remoteRoll / 10.0);
         d->print((char)247);
-        d->printLeft("Impl Pitch: ", 0, 50);
+        d->printLeft("Impl Pitch: ", 0, 60);
         d->fillRight(BLACK);
         d->printf("%.1f ", (float)leveler->remotePitch / 10.0);
         d->print((char)247);

@@ -39,8 +39,8 @@ export class AppComponent {
   }
 
   setTitle(): void {
-    this.title = this.model.mode;
-    if (this.model.name) this.title += ': ' + this.model.name;
+    this.title = this.model.running.mode;
+    if (this.model.running.name) this.title += ': ' + this.model.running.name;
     this.titleService.setTitle(this.title);
   }
 

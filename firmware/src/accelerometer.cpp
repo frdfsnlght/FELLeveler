@@ -7,7 +7,6 @@
 #include "filter_ewma.h"
 #include "vector3.h"
 #include "callback_list.h"
-#include "debug.h"
 
 Accelerometer* Accelerometer::instance = nullptr;
 
@@ -75,6 +74,8 @@ void Accelerometer::setup() {
 }
 
 void Accelerometer::loop() {
+    if (! setupComplete) return;
+    
     if ((millis() - lastUpdate) < UpdateInterval) return;
     lastUpdate = millis();
 
@@ -101,20 +102,11 @@ void Accelerometer::loop() {
         changed = true;
     }
 
-    if (changed) {
+    if (changed)
         listeners.call();
 
-#ifdef DEBUG_ACCELEROMETER
-        Serial.print("ACCEL: ");
-        Serial.print(raw.x); Serial.print(',');
-        Serial.print(raw.y); Serial.print(',');
-        Serial.print(raw.z); Serial.print(',');
-        Serial.print(filtered.x); Serial.print(',');
-        Serial.print(filtered.y); Serial.print(',');
-        Serial.println(filtered.z);
-#endif
-
-    }
+    log_v("ACCEL: %.3f, %.3f, %.3f, %.3f, %.3f, %.3f", raw.x, raw.y, raw.z, filtered.x, filtered.y, filtered.z);
+    
 }
 
 
