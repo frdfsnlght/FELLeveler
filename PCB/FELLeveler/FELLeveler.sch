@@ -1,0 +1,915 @@
+EESchema Schematic File Version 4
+EELAYER 30 0
+EELAYER END
+$Descr A4 11693 8268
+encoding utf-8
+Sheet 1 1
+Title "FELLeveler"
+Date "2021-10-15"
+Rev "2.0"
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+$Comp
+L Device:C C1
+U 1 1 60949F7F
+P 2700 1600
+F 0 "C1" H 2815 1646 50  0000 L CNN
+F 1 "100uF" H 2815 1555 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1206_3216Metric" H 2738 1450 50  0001 C CNN
+F 3 "~" H 2700 1600 50  0001 C CNN
+	1    2700 1600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small_US R1
+U 1 1 6094A7A3
+P 4350 1350
+F 0 "R1" H 4418 1396 50  0000 L CNN
+F 1 "10K" H 4418 1305 50  0000 L CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 4350 1350 50  0001 C CNN
+F 3 "~" H 4350 1350 50  0001 C CNN
+	1    4350 1350
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:PWR_FLAG #FLG01
+U 1 1 6094B4E6
+P 1300 1350
+F 0 "#FLG01" H 1300 1425 50  0001 C CNN
+F 1 "PWR_FLAG" H 1300 1523 50  0000 C CNN
+F 2 "" H 1300 1350 50  0001 C CNN
+F 3 "~" H 1300 1350 50  0001 C CNN
+	1    1300 1350
+	1    0    0    1   
+$EndComp
+$Comp
+L Device:C C2
+U 1 1 60953EBE
+P 3200 1600
+F 0 "C2" H 3315 1646 50  0000 L CNN
+F 1 "100nF" H 3315 1555 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 3238 1450 50  0001 C CNN
+F 3 "~" H 3200 1600 50  0001 C CNN
+	1    3200 1600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:C C3
+U 1 1 6095428B
+P 4350 1800
+F 0 "C3" H 4465 1846 50  0000 L CNN
+F 1 "1uF" H 4465 1755 50  0000 L CNN
+F 2 "Capacitor_SMD:C_0805_2012Metric" H 4388 1650 50  0001 C CNN
+F 3 "~" H 4350 1800 50  0001 C CNN
+	1    4350 1800
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR08
+U 1 1 609573CA
+P 2950 1950
+F 0 "#PWR08" H 2950 1700 50  0001 C CNN
+F 1 "GND" H 2955 1777 50  0000 C CNN
+F 2 "" H 2950 1950 50  0001 C CNN
+F 3 "" H 2950 1950 50  0001 C CNN
+	1    2950 1950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	2700 1450 2700 1400
+Wire Wire Line
+	2700 1400 2950 1400
+Wire Wire Line
+	3200 1400 3200 1450
+Wire Wire Line
+	2700 1750 2700 1800
+Wire Wire Line
+	2700 1800 2950 1800
+Wire Wire Line
+	3200 1800 3200 1750
+Wire Wire Line
+	2950 1800 2950 1950
+Connection ~ 2950 1800
+Wire Wire Line
+	2950 1800 3200 1800
+Wire Wire Line
+	2950 1400 2950 1250
+Connection ~ 2950 1400
+Wire Wire Line
+	2950 1400 3200 1400
+Wire Wire Line
+	4350 1450 4350 1550
+$Comp
+L power:GND #PWR09
+U 1 1 6095BF6F
+P 4350 2050
+F 0 "#PWR09" H 4350 1800 50  0001 C CNN
+F 1 "GND" H 4355 1877 50  0000 C CNN
+F 2 "" H 4350 2050 50  0001 C CNN
+F 3 "" H 4350 2050 50  0001 C CNN
+	1    4350 2050
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4350 1950 4350 2050
+Wire Wire Line
+	4350 1150 4350 1250
+Wire Wire Line
+	4350 1550 4650 1550
+Connection ~ 4350 1550
+Wire Wire Line
+	4350 1550 4350 1650
+Text Label 4650 1550 0    50   ~ 0
+EN
+Text Label 1400 3100 2    50   ~ 0
+EN
+Text Label 2000 2900 0    50   ~ 0
+VDD
+Text Label 2000 5700 0    50   ~ 0
+GND
+$Comp
+L power:PWR_FLAG #FLG03
+U 1 1 60961833
+P 1300 1850
+F 0 "#FLG03" H 1300 1925 50  0001 C CNN
+F 1 "PWR_FLAG" H 1300 2023 50  0000 C CNN
+F 2 "" H 1300 1850 50  0001 C CNN
+F 3 "~" H 1300 1850 50  0001 C CNN
+	1    1300 1850
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR07
+U 1 1 60961C5F
+P 1300 1950
+F 0 "#PWR07" H 1300 1700 50  0001 C CNN
+F 1 "GND" H 1305 1777 50  0000 C CNN
+F 2 "" H 1300 1950 50  0001 C CNN
+F 3 "" H 1300 1950 50  0001 C CNN
+	1    1300 1950
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	1300 1850 1300 1950
+Wire Wire Line
+	1300 1250 1300 1350
+Text Label 2600 3100 0    50   ~ 0
+IO0
+Text Label 2600 3200 0    50   ~ 0
+TXD0
+NoConn ~ 1400 4300
+NoConn ~ 1400 4400
+NoConn ~ 1400 4500
+NoConn ~ 1400 4600
+NoConn ~ 1400 4700
+NoConn ~ 1400 4800
+$Comp
+L Connector:Screw_Terminal_01x02 T1
+U 1 1 609F5501
+P 5200 1450
+F 0 "T1" H 5118 1667 50  0000 C CNN
+F 1 "VCC IN" H 5118 1576 50  0000 C CNN
+F 2 "my-terminals:Screw_Terminal_2_P3.5_Horizontal" H 5200 1450 50  0001 C CNN
+F 3 "~" H 5200 1450 50  0001 C CNN
+	1    5200 1450
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x04_Female H1
+U 1 1 609FD6FE
+P 6400 1600
+F 0 "H1" H 6400 1900 50  0000 C CNN
+F 1 "PS" H 6400 1800 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical" H 6400 1600 50  0001 C CNN
+F 3 "~" H 6400 1600 50  0001 C CNN
+	1    6400 1600
+	-1   0    0    -1  
+$EndComp
+Text Label 6600 1700 0    50   ~ 0
+VCC
+Text Label 6600 1600 0    50   ~ 0
+GND
+Text Label 6600 1500 0    50   ~ 0
+VDD
+NoConn ~ 6600 1800
+Text Label 2600 3400 0    50   ~ 0
+RXD0
+NoConn ~ 2600 4700
+Text Label 7200 1700 0    50   ~ 0
+VDD
+Text Label 7900 1500 0    50   ~ 0
+EN
+Text Label 7200 1500 0    50   ~ 0
+TXD0
+Text Label 7200 1600 0    50   ~ 0
+RXD0
+Text Label 7900 1600 0    50   ~ 0
+IO0
+Text Label 7200 1800 0    50   ~ 0
+GND
+$Comp
+L Transistor_Array:ULN2003A U6
+U 1 1 60C5FFDC
+P 8250 4450
+F 0 "U6" H 8250 5117 50  0000 C CNN
+F 1 "ULN2003A" H 8250 5026 50  0000 C CNN
+F 2 "Package_SO:SOIC-16_3.9x9.9mm_P1.27mm" H 8300 3900 50  0001 L CNN
+F 3 "http://www.ti.com/lit/ds/symlink/uln2003a.pdf" H 8350 4250 50  0001 C CNN
+	1    8250 4450
+	1    0    0    -1  
+$EndComp
+Text Label 8650 4050 0    50   ~ 0
+VCC
+Text Label 8250 5050 0    50   ~ 0
+GND
+$Comp
+L Connector:Screw_Terminal_01x03 T2
+U 1 1 60C7ACFA
+P 3850 3000
+F 0 "T2" H 3930 3042 50  0000 L CNN
+F 1 "DOOR SENS" H 3930 2951 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_3_P3.5_Horizontal" H 3850 3000 50  0001 C CNN
+F 3 "~" H 3850 3000 50  0001 C CNN
+	1    3850 3000
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x03 T6
+U 1 1 60C7C4AC
+P 9750 2900
+F 0 "T6" H 9830 2942 50  0000 L CNN
+F 1 "DOOR SERVO" H 9830 2851 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_3_P3.5_Horizontal" H 9750 2900 50  0001 C CNN
+F 3 "~" H 9750 2900 50  0001 C CNN
+	1    9750 2900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x03 T7
+U 1 1 60C7C954
+P 9750 3350
+F 0 "T7" H 9830 3392 50  0000 L CNN
+F 1 "VALVE SERVO" H 9830 3301 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_3_P3.5_Horizontal" H 9750 3350 50  0001 C CNN
+F 3 "~" H 9750 3350 50  0001 C CNN
+	1    9750 3350
+	1    0    0    -1  
+$EndComp
+$Comp
+L Isolator:LTV-356T U2
+U 1 1 61622718
+P 5350 3000
+F 0 "U2" H 5350 3325 50  0000 C CNN
+F 1 "EL357N" H 5350 3234 50  0000 C CNN
+F 2 "Package_SO:SO-4_4.4x3.6mm_P2.54mm" H 5150 2800 50  0001 L CIN
+F 3 "http://optoelectronics.liteon.com/upload/download/DS70-2001-010/S_110_LTV-356T%2020140520.pdf" H 5350 3000 50  0001 L CNN
+	1    5350 3000
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VCC #PWR0101
+U 1 1 61625940
+P 1300 1250
+F 0 "#PWR0101" H 1300 1100 50  0001 C CNN
+F 1 "VCC" H 1315 1423 50  0000 C CNN
+F 2 "" H 1300 1250 50  0001 C CNN
+F 3 "" H 1300 1250 50  0001 C CNN
+	1    1300 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:VCC #PWR0102
+U 1 1 61626479
+P 5600 1300
+F 0 "#PWR0102" H 5600 1150 50  0001 C CNN
+F 1 "VCC" H 5615 1473 50  0000 C CNN
+F 2 "" H 5600 1300 50  0001 C CNN
+F 3 "" H 5600 1300 50  0001 C CNN
+	1    5600 1300
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:Conn_01x03_Female H3
+U 1 1 6163F621
+P 7700 1600
+F 0 "H3" H 7700 1900 50  0000 C CNN
+F 1 "PRG1" H 7700 1800 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x03_P2.54mm_Vertical" H 7700 1600 50  0001 C CNN
+F 3 "~" H 7700 1600 50  0001 C CNN
+	1    7700 1600
+	-1   0    0    -1  
+$EndComp
+Text Label 7900 1700 0    50   ~ 0
+GND
+$Comp
+L Connector:Screw_Terminal_01x03 T3
+U 1 1 616589D6
+P 3850 3600
+F 0 "T3" H 3930 3642 50  0000 L CNN
+F 1 "DOCK SENS" H 3930 3551 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_3_P3.5_Horizontal" H 3850 3600 50  0001 C CNN
+F 3 "~" H 3850 3600 50  0001 C CNN
+	1    3850 3600
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Connector:Screw_Terminal_01x03 T4
+U 1 1 616591AC
+P 3850 4200
+F 0 "T4" H 3930 4242 50  0000 L CNN
+F 1 "DOCK VAC" H 3930 4151 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_3_P3.5_Horizontal" H 3850 4200 50  0001 C CNN
+F 3 "~" H 3850 4200 50  0001 C CNN
+	1    3850 4200
+	-1   0    0    -1  
+$EndComp
+Text Label 4050 3100 0    50   ~ 0
+GND
+Text Label 5650 3100 0    50   ~ 0
+GND
+$Comp
+L Isolator:LTV-356T U3
+U 1 1 6166A7C0
+P 5350 3600
+F 0 "U3" H 5350 3925 50  0000 C CNN
+F 1 "EL357N" H 5350 3834 50  0000 C CNN
+F 2 "Package_SO:SO-4_4.4x3.6mm_P2.54mm" H 5150 3400 50  0001 L CIN
+F 3 "http://optoelectronics.liteon.com/upload/download/DS70-2001-010/S_110_LTV-356T%2020140520.pdf" H 5350 3600 50  0001 L CNN
+	1    5350 3600
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small_US R3
+U 1 1 6166AC65
+P 4850 3500
+F 0 "R3" V 4950 3450 50  0000 L CNN
+F 1 "390" V 4750 3500 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 4850 3500 50  0001 C CNN
+F 3 "~" H 4850 3500 50  0001 C CNN
+	1    4850 3500
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4950 3500 5050 3500
+Text Label 5650 3700 0    50   ~ 0
+GND
+$Comp
+L Isolator:LTV-356T U4
+U 1 1 6166EEF0
+P 5350 4200
+F 0 "U4" H 5350 4525 50  0000 C CNN
+F 1 "EL357N" H 5350 4434 50  0000 C CNN
+F 2 "Package_SO:SO-4_4.4x3.6mm_P2.54mm" H 5150 4000 50  0001 L CIN
+F 3 "http://optoelectronics.liteon.com/upload/download/DS70-2001-010/S_110_LTV-356T%2020140520.pdf" H 5350 4200 50  0001 L CNN
+	1    5350 4200
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small_US R4
+U 1 1 6166F3D7
+P 4850 4100
+F 0 "R4" V 4950 4050 50  0000 L CNN
+F 1 "390" V 4750 4100 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 4850 4100 50  0001 C CNN
+F 3 "~" H 4850 4100 50  0001 C CNN
+	1    4850 4100
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	4950 4100 5050 4100
+Text Label 5650 4300 0    50   ~ 0
+GND
+Text Label 4050 3600 0    50   ~ 0
+VCC
+Text Label 4050 4200 0    50   ~ 0
+VCC
+Text Label 4050 3700 0    50   ~ 0
+GND
+Text Label 4050 4300 0    50   ~ 0
+GND
+$Comp
+L Connector:Screw_Terminal_01x02 T5
+U 1 1 6167B173
+P 3850 4800
+F 0 "T5" H 3950 4800 50  0000 L CNN
+F 1 "VAC TRIG" H 3950 4700 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_2_P3.5_Horizontal" H 3850 4800 50  0001 C CNN
+F 3 "~" H 3850 4800 50  0001 C CNN
+	1    3850 4800
+	-1   0    0    -1  
+$EndComp
+$Comp
+L Isolator:LTV-356T U5
+U 1 1 6167CF44
+P 5350 4850
+F 0 "U5" H 5350 5175 50  0000 C CNN
+F 1 "EL357N" H 5350 5084 50  0000 C CNN
+F 2 "Package_SO:SO-4_4.4x3.6mm_P2.54mm" H 5150 4650 50  0001 L CIN
+F 3 "http://optoelectronics.liteon.com/upload/download/DS70-2001-010/S_110_LTV-356T%2020140520.pdf" H 5350 4850 50  0001 L CNN
+	1    5350 4850
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small_US R5
+U 1 1 6167E29E
+P 4300 4600
+F 0 "R5" V 4400 4550 50  0000 L CNN
+F 1 "3K3" V 4200 4600 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 4300 4600 50  0001 C CNN
+F 3 "~" H 4300 4600 50  0001 C CNN
+	1    4300 4600
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:R_Small_US R6
+U 1 1 6167ECA5
+P 4300 5100
+F 0 "R6" V 4400 5050 50  0000 L CNN
+F 1 "3K3" V 4200 5100 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 4300 5100 50  0001 C CNN
+F 3 "~" H 4300 5100 50  0001 C CNN
+	1    4300 5100
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:D_Small D1
+U 1 1 616806B1
+P 4600 4850
+F 0 "D1" V 4554 4920 50  0000 L CNN
+F 1 "1N4148" V 4645 4920 50  0000 L CNN
+F 2 "Diode_SMD:D_SOD-123" V 4600 4850 50  0001 C CNN
+F 3 "~" V 4600 4850 50  0001 C CNN
+	1    4600 4850
+	0    1    1    0   
+$EndComp
+Wire Wire Line
+	4400 4600 4600 4600
+Wire Wire Line
+	4600 4600 4600 4750
+Wire Wire Line
+	4400 5100 4600 5100
+Wire Wire Line
+	4600 5100 4600 4950
+Wire Wire Line
+	4600 4600 4950 4600
+Wire Wire Line
+	4950 4600 4950 4750
+Wire Wire Line
+	4950 4750 5050 4750
+Connection ~ 4600 4600
+Wire Wire Line
+	4600 5100 4950 5100
+Wire Wire Line
+	4950 5100 4950 4950
+Wire Wire Line
+	4950 4950 5050 4950
+Connection ~ 4600 5100
+Wire Wire Line
+	4200 4600 4050 4600
+Wire Wire Line
+	4050 4600 4050 4800
+Wire Wire Line
+	4050 4900 4050 5100
+Wire Wire Line
+	4050 5100 4200 5100
+Text Label 6100 2900 0    50   ~ 0
+~DOOR_SENS
+Text Label 6100 3500 0    50   ~ 0
+~DOCK_SENS
+Wire Wire Line
+	4400 3100 5050 3100
+$Comp
+L power:VCC #PWR0104
+U 1 1 616A8C11
+P 4550 2600
+F 0 "#PWR0104" H 4550 2450 50  0001 C CNN
+F 1 "VCC" H 4565 2773 50  0000 C CNN
+F 2 "" H 4550 2600 50  0001 C CNN
+F 3 "" H 4550 2600 50  0001 C CNN
+	1    4550 2600
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4950 2900 5050 2900
+Wire Wire Line
+	4550 2600 4550 2900
+Wire Wire Line
+	4550 2900 4750 2900
+Wire Wire Line
+	4050 3500 4400 3500
+Wire Wire Line
+	4400 3500 4400 3700
+Wire Wire Line
+	4400 3700 5050 3700
+Wire Wire Line
+	4050 4100 4400 4100
+Wire Wire Line
+	4400 4100 4400 4300
+Wire Wire Line
+	4400 4300 5050 4300
+Wire Wire Line
+	4550 2900 4550 3500
+Wire Wire Line
+	4550 3500 4750 3500
+Connection ~ 4550 2900
+Wire Wire Line
+	4550 3500 4550 4100
+Wire Wire Line
+	4550 4100 4750 4100
+Connection ~ 4550 3500
+Text Label 6100 4100 0    50   ~ 0
+~DOCK_VAC
+$Comp
+L Device:R_Small_US R2
+U 1 1 616D34E1
+P 4850 2900
+F 0 "R2" V 4950 2850 50  0000 L CNN
+F 1 "390" V 4750 2900 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 4850 2900 50  0001 C CNN
+F 3 "~" H 4850 2900 50  0001 C CNN
+	1    4850 2900
+	0    -1   -1   0   
+$EndComp
+Text Label 5650 4950 0    50   ~ 0
+GND
+Text Label 6050 4700 0    50   ~ 0
+~VAC_TRIG
+$Comp
+L Device:C C4
+U 1 1 616D43FA
+P 6050 4850
+F 0 "C4" H 6165 4896 50  0000 L CNN
+F 1 "1uF" H 6165 4805 50  0000 L CNN
+F 2 "Capacitor_SMD:C_1206_3216Metric" H 6088 4700 50  0001 C CNN
+F 3 "~" H 6050 4850 50  0001 C CNN
+	1    6050 4850
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5650 4750 5850 4750
+Wire Wire Line
+	5850 4750 5850 4700
+Wire Wire Line
+	5850 4700 6050 4700
+Wire Wire Line
+	5650 4950 5850 4950
+Wire Wire Line
+	5850 4950 5850 5000
+Wire Wire Line
+	5850 5000 6050 5000
+$Comp
+L Connector:Screw_Terminal_01x02 T8
+U 1 1 616F19EF
+P 9800 5350
+F 0 "T8" H 9900 5350 50  0000 L CNN
+F 1 "VAC RELAY" H 9900 5250 50  0000 L CNN
+F 2 "my-terminals:Screw_Terminal_2_P3.5_Horizontal" H 9800 5350 50  0001 C CNN
+F 3 "~" H 9800 5350 50  0001 C CNN
+	1    9800 5350
+	1    0    0    -1  
+$EndComp
+Text Label 9550 2800 2    50   ~ 0
+GND
+Text Label 9550 2900 2    50   ~ 0
+VCC
+Text Label 9550 3250 2    50   ~ 0
+GND
+Text Label 9550 3350 2    50   ~ 0
+VCC
+Text Label 9550 3000 2    50   ~ 0
+DOOR_SERVO
+Text Label 9550 3450 2    50   ~ 0
+VALVE_SERVO
+Text Label 9600 5350 2    50   ~ 0
+VCC
+Wire Wire Line
+	9300 5450 9600 5450
+Text Label 7850 4550 2    50   ~ 0
+VAC_RELAY
+$Comp
+L Device:LED L2
+U 1 1 6170456C
+P 9800 4550
+F 0 "L2" H 9793 4767 50  0000 C CNN
+F 1 "DOOR LED (Green)" H 9793 4676 50  0000 C CNN
+F 2 "LED_SMD:LED_0805_2012Metric" H 9800 4550 50  0001 C CNN
+F 3 "~" H 9800 4550 50  0001 C CNN
+	1    9800 4550
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small_US R8
+U 1 1 617057D0
+P 9550 4550
+F 0 "R8" V 9650 4500 50  0000 L CNN
+F 1 "390" V 9450 4550 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 9550 4550 50  0001 C CNN
+F 3 "~" H 9550 4550 50  0001 C CNN
+	1    9550 4550
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:LED L3
+U 1 1 61706157
+P 9800 4950
+F 0 "L3" H 9793 5167 50  0000 C CNN
+F 1 "VALVE LED (Green)" H 9793 5076 50  0000 C CNN
+F 2 "LED_SMD:LED_0805_2012Metric" H 9800 4950 50  0001 C CNN
+F 3 "~" H 9800 4950 50  0001 C CNN
+	1    9800 4950
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:LED L4
+U 1 1 6170666B
+P 9850 5800
+F 0 "L4" H 9843 6017 50  0000 C CNN
+F 1 "VAC LED (Red)" H 9843 5926 50  0000 C CNN
+F 2 "LED_SMD:LED_0805_2012Metric" H 9850 5800 50  0001 C CNN
+F 3 "~" H 9850 5800 50  0001 C CNN
+	1    9850 5800
+	1    0    0    -1  
+$EndComp
+$Comp
+L Device:R_Small_US R9
+U 1 1 61706C9B
+P 9550 4950
+F 0 "R9" V 9650 4900 50  0000 L CNN
+F 1 "390" V 9450 4950 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 9550 4950 50  0001 C CNN
+F 3 "~" H 9550 4950 50  0001 C CNN
+	1    9550 4950
+	0    -1   -1   0   
+$EndComp
+$Comp
+L Device:R_Small_US R10
+U 1 1 6170703F
+P 9600 5800
+F 0 "R10" V 9700 5750 50  0000 L CNN
+F 1 "220" V 9500 5800 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 9600 5800 50  0001 C CNN
+F 3 "~" H 9600 5800 50  0001 C CNN
+	1    9600 5800
+	0    -1   -1   0   
+$EndComp
+Text Label 9950 4550 0    50   ~ 0
+VCC
+Text Label 9950 4950 0    50   ~ 0
+VCC
+Text Label 10000 5800 0    50   ~ 0
+VCC
+NoConn ~ 8650 4650
+NoConn ~ 8650 4750
+NoConn ~ 8650 4850
+NoConn ~ 7850 4650
+NoConn ~ 7850 4750
+NoConn ~ 7850 4850
+Text Label 7850 4350 2    50   ~ 0
+DOOR_LED
+Text Label 7850 4450 2    50   ~ 0
+VALVE_LED
+$Comp
+L Connector:TestPoint TP1
+U 1 1 6172CA7F
+P 5850 2900
+F 0 "TP1" H 5850 3200 50  0000 C CNN
+F 1 "DOOR_SENS" H 5850 3100 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.5mm" H 6050 2900 50  0001 C CNN
+F 3 "~" H 6050 2900 50  0001 C CNN
+	1    5850 2900
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint TP2
+U 1 1 6172D7FD
+P 5850 3500
+F 0 "TP2" H 5850 3800 50  0000 C CNN
+F 1 "DOCK_SENS" H 5850 3700 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.5mm" H 6050 3500 50  0001 C CNN
+F 3 "~" H 6050 3500 50  0001 C CNN
+	1    5850 3500
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint TP3
+U 1 1 6172E009
+P 5850 4100
+F 0 "TP3" H 5850 4400 50  0000 C CNN
+F 1 "DOCK_VAC" H 5850 4300 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.5mm" H 6050 4100 50  0001 C CNN
+F 3 "~" H 6050 4100 50  0001 C CNN
+	1    5850 4100
+	1    0    0    -1  
+$EndComp
+$Comp
+L Connector:TestPoint TP4
+U 1 1 6172E5B1
+P 5850 4700
+F 0 "TP4" H 5850 5000 50  0000 C CNN
+F 1 "VAC_TRIG" H 5850 4900 50  0000 C CNN
+F 2 "TestPoint:TestPoint_Pad_D1.5mm" H 6050 4700 50  0001 C CNN
+F 3 "~" H 6050 4700 50  0001 C CNN
+	1    5850 4700
+	1    0    0    -1  
+$EndComp
+Connection ~ 5850 4700
+Wire Wire Line
+	5650 2900 5850 2900
+Wire Wire Line
+	5850 2900 6100 2900
+Connection ~ 5850 2900
+Wire Wire Line
+	5650 3500 5850 3500
+Wire Wire Line
+	5850 3500 6100 3500
+Connection ~ 5850 3500
+Wire Wire Line
+	5650 4100 5850 4100
+Wire Wire Line
+	5850 4100 6100 4100
+Connection ~ 5850 4100
+$Comp
+L power:VDD #PWR0105
+U 1 1 61740D6C
+P 1650 1250
+F 0 "#PWR0105" H 1650 1100 50  0001 C CNN
+F 1 "VDD" H 1665 1423 50  0000 C CNN
+F 2 "" H 1650 1250 50  0001 C CNN
+F 3 "" H 1650 1250 50  0001 C CNN
+	1    1650 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:PWR_FLAG #FLG0101
+U 1 1 61741493
+P 1650 1350
+F 0 "#FLG0101" H 1650 1425 50  0001 C CNN
+F 1 "PWR_FLAG" H 1650 1523 50  0000 C CNN
+F 2 "" H 1650 1350 50  0001 C CNN
+F 3 "~" H 1650 1350 50  0001 C CNN
+	1    1650 1350
+	1    0    0    1   
+$EndComp
+Wire Wire Line
+	1650 1250 1650 1350
+NoConn ~ 1400 3300
+NoConn ~ 1400 3400
+Text Label 2600 5200 0    50   ~ 0
+~DOOR_SENS
+Text Label 2600 4800 0    50   ~ 0
+~DOCK_SENS
+Text Label 2600 4900 0    50   ~ 0
+~DOCK_VAC
+Text Label 2600 5000 0    50   ~ 0
+~VAC_TRIG
+Text Label 2600 4400 0    50   ~ 0
+DOOR_SERVO
+Text Label 2600 4300 0    50   ~ 0
+VALVE_SERVO
+NoConn ~ 2600 4500
+$Comp
+L power:VDD #PWR0103
+U 1 1 616CE022
+P 4350 1150
+F 0 "#PWR0103" H 4350 1000 50  0001 C CNN
+F 1 "VDD" H 4365 1323 50  0000 C CNN
+F 2 "" H 4350 1150 50  0001 C CNN
+F 3 "" H 4350 1150 50  0001 C CNN
+	1    4350 1150
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	4400 2900 4400 3100
+Wire Wire Line
+	4050 2900 4400 2900
+Text Label 4050 3000 0    50   ~ 0
+VCC
+Wire Wire Line
+	9300 5800 9500 5800
+Wire Wire Line
+	9150 4950 9450 4950
+Wire Wire Line
+	9300 5450 9300 5800
+Wire Wire Line
+	9050 5450 9300 5450
+Connection ~ 9300 5450
+$Comp
+L Device:LED L1
+U 1 1 617682CA
+P 9800 4150
+F 0 "L1" H 9793 4367 50  0000 C CNN
+F 1 "STATUS LED (Blue)" H 9793 4276 50  0000 C CNN
+F 2 "LED_SMD:LED_0805_2012Metric" H 9800 4150 50  0001 C CNN
+F 3 "~" H 9800 4150 50  0001 C CNN
+	1    9800 4150
+	1    0    0    -1  
+$EndComp
+Text Label 9950 4150 0    50   ~ 0
+VCC
+$Comp
+L Device:R_Small_US R7
+U 1 1 61768879
+P 9550 4150
+F 0 "R7" V 9650 4100 50  0000 L CNN
+F 1 "330" V 9450 4150 50  0000 C CNN
+F 2 "Resistor_SMD:R_0805_2012Metric" H 9550 4150 50  0001 C CNN
+F 3 "~" H 9550 4150 50  0001 C CNN
+	1    9550 4150
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	8650 4250 9250 4250
+Wire Wire Line
+	9250 4250 9250 4150
+Wire Wire Line
+	9250 4150 9450 4150
+Wire Wire Line
+	8650 4350 9250 4350
+Wire Wire Line
+	9250 4350 9250 4550
+Wire Wire Line
+	9250 4550 9450 4550
+Wire Wire Line
+	8650 4450 9150 4450
+Wire Wire Line
+	9150 4450 9150 4950
+Wire Wire Line
+	8650 4550 9050 4550
+Wire Wire Line
+	9050 4550 9050 5450
+Text Label 7850 4250 2    50   ~ 0
+STATUS_LED
+Text Label 2600 3300 0    50   ~ 0
+STATUS_LED
+$Comp
+L Connector:Conn_01x04_Female H2
+U 1 1 617773D4
+P 7000 1600
+F 0 "H2" H 7000 1900 50  0000 C CNN
+F 1 "PRG0" H 7000 1800 50  0000 C CNN
+F 2 "Connector_PinHeader_2.54mm:PinHeader_1x04_P2.54mm_Vertical" H 7000 1600 50  0001 C CNN
+F 3 "~" H 7000 1600 50  0001 C CNN
+	1    7000 1600
+	-1   0    0    -1  
+$EndComp
+Text Label 2600 4200 0    50   ~ 0
+DOOR_LED
+Text Label 2600 4100 0    50   ~ 0
+VALVE_LED
+Text Label 2600 3500 0    50   ~ 0
+VAC_RELAY
+NoConn ~ 2600 4600
+$Comp
+L RF_Module:ESP32-WROOM-32 U1
+U 1 1 609485A1
+P 2000 4300
+F 0 "U1" H 2000 5881 50  0000 C CNN
+F 1 "ESP32-WROOM-32" H 2000 5790 50  0000 C CNN
+F 2 "RF_Module:ESP32-WROOM-32" H 2000 2800 50  0001 C CNN
+F 3 "https://www.espressif.com/sites/default/files/documentation/esp32-wroom-32_datasheet_en.pdf" H 1700 4350 50  0001 C CNN
+	1    2000 4300
+	1    0    0    -1  
+$EndComp
+NoConn ~ 2600 3600
+$Comp
+L power:VDD #PWR0106
+U 1 1 61709359
+P 2950 1250
+F 0 "#PWR0106" H 2950 1100 50  0001 C CNN
+F 1 "VDD" H 2965 1423 50  0000 C CNN
+F 2 "" H 2950 1250 50  0001 C CNN
+F 3 "" H 2950 1250 50  0001 C CNN
+	1    2950 1250
+	1    0    0    -1  
+$EndComp
+$Comp
+L power:GND #PWR0107
+U 1 1 6170E5B5
+P 5600 1700
+F 0 "#PWR0107" H 5600 1450 50  0001 C CNN
+F 1 "GND" H 5605 1527 50  0000 C CNN
+F 2 "" H 5600 1700 50  0001 C CNN
+F 3 "" H 5600 1700 50  0001 C CNN
+	1    5600 1700
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	5400 1450 5600 1450
+Wire Wire Line
+	5600 1450 5600 1300
+Wire Wire Line
+	5400 1550 5600 1550
+Wire Wire Line
+	5600 1550 5600 1700
+NoConn ~ 2600 5100
+NoConn ~ 2600 5300
+NoConn ~ 2600 5400
+NoConn ~ 2600 3700
+NoConn ~ 2600 3800
+NoConn ~ 2600 3900
+NoConn ~ 2600 4000
+$EndSCHEMATC
