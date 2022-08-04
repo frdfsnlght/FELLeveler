@@ -41,8 +41,16 @@ Config* Config::getInstance() {
 }
 
 Config::Config() {
+    pinMode(BootPin, INPUT_PULLUP);
     dirty = false;
     running = save;
+    if (digitalRead(BootPin) == HIGH) {
+        running.mode = save.mode = Tractor;
+        running.enableDisplay = save.enableDisplay = true;
+    } else {
+        running.mode = save.mode = Implement;
+        running.enableDisplay = save.enableDisplay = false;
+    }
     calibrated = false;
     downLevel.set(0, 0, 0);
     downTipped.set(0, 0, 0);

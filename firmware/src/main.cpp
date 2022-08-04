@@ -47,14 +47,12 @@ void setup() {
         Serial.println("No configuration found, using defaults");
     }
 
-    if (config->running.enableDisplay)
-        Display::getInstance()->setup();
-
     Network::getInstance()->setup();
     Accelerometer::getInstance()->setup();
     Leveler::getInstance()->setup();
 
     if (config->running.enableDisplay) {
+        Display::getInstance()->setup();
         UI::getInstance()->setup();
         UI::getInstance()->nextScreen();
     }

@@ -82,7 +82,8 @@ class Config {
     private:
 
     static const int ConfigSize = 768;
-
+    static const int BootPin = 14;
+    
     static Config* instance;
 
     Config();

@@ -421,6 +421,7 @@
         "microvia_drill": 0.254,
         "name": "Signal",
         "nets": [
+          "/BOOT",
           "/CLK",
           "/CS",
           "/DC",
