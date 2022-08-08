@@ -27,7 +27,7 @@ class Leveler {
     void setup();
     
     void calibrateLevel();
-    void calibrateTipped();
+    void calibrateTipped(bool invertPitchAxis = false);
     void setRemoteConnected(bool b);
     void setRemoteInfo(const String& name, const String& address);
     void setRemoteAngles(int roll, int pitch);

@@ -24,7 +24,7 @@ void Leveler::calibrateLevel() {
     Config::getInstance()->setCalibrated(false);
 }
 
-void Leveler::calibrateTipped() {
+void Leveler::calibrateTipped(bool invertPitchAxis) {
     Config* config = Config::getInstance();
 
     Vector3 down = Accelerometer::getInstance()->filtered;
@@ -32,6 +32,8 @@ void Leveler::calibrateTipped() {
     Vector3 rollPlane, pitchPlane;
     Vector3::cross(down, config->downLevel, pitchPlane);
     pitchPlane.normalize();
+    if (invertPitchAxis)
+        pitchPlane.invert();
     Vector3::cross(config->downLevel, pitchPlane, rollPlane);
     rollPlane.normalize();
 

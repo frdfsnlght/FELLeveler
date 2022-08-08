@@ -4,7 +4,12 @@
         <p>Make sure the device is in it's "level" position.</p>
     </div>
     <div *ngIf="calibrateTipped">
-        <p>Make sure the device is in a "tipped forward" position.</p>
+        <form [formGroup]="form" (ngSubmit)="calibrate()">
+            <p>Make sure the device is in a "tipped forward" position.</p>
+            <mat-checkbox
+            matInput
+            formControlName="invertPitchAxis">Invert pitch axis</mat-checkbox>
+        </form>
     </div>
 </mat-dialog-content>
 <mat-dialog-actions align="end">

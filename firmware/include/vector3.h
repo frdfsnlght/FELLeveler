@@ -28,6 +28,7 @@ class Vector3 {
     float magnitude();
     float squareMagnitude();
     void normalize();
+    void invert();
 
     const String toString();
 

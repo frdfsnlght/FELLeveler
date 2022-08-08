@@ -17,7 +17,7 @@ Display* Display::getInstance() {
 void Display::setup() {
     begin();
     // Rotate the display: 0=none, 1=90 CW, 2=180, 3=270 CW
-    //setRotation(1);
+    setRotation(2);
     Serial.println("Display setup complete");
     setFont(-1);
 }

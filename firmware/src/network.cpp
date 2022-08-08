@@ -447,7 +447,8 @@ void Network::apiWebConfigure(SockIOServerClient& client, JsonArray& args, JsonA
         obj["tractorSSID"],
         obj["tractorPassword"],
         obj["tractorAddress"],
-        obj["enableDisplay"]);
+        obj["enableDisplay"]
+    );
     ret.add(true);
 }
 
@@ -460,8 +461,16 @@ void Network::apiWebCalibrateLevel(SockIOServerClient& client, JsonArray& args, 
 
 void Network::apiWebCalibrateTipped(SockIOServerClient& client, JsonArray& args, JsonArray& ret) {
     log_d("API calibrateTipped");
+    if ((args.size() != 1) || (! args[0].is<JsonObject>())) {
+        ret.add(false);
+        ret.add("expected object");
+        return;
+    }
+    JsonObject obj = args[0].as<JsonObject>();
     Leveler* leveler = Leveler::getInstance();
-    leveler->calibrateTipped();
+    leveler->calibrateTipped(
+        obj["invertPitchAxis"]
+    );
     ret.add(true);
 }
 

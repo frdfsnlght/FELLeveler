@@ -71,6 +71,12 @@ void Vector3::normalize() {
         x = y = z = 0;
 }
 
+void Vector3::invert() {
+    x = -x;
+    y = -y;
+    z = -z;
+}
+
 const String Vector3::toString() {
     char buffer[40];
     sprintf(buffer, "<%.3f,%.3f,%.3f>", x, y, z);
