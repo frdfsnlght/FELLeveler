@@ -85,11 +85,11 @@ void Display::drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, 
     }
 }
 
-void Display::drawImage(SPIFFS_Image& image, int16_t x, int16_t y) {
+void Display::drawBMP(SPIFFS_Image& image, int16_t x, int16_t y) {
     image.draw(*this, x, y);
 }
 
-void Display::drawImage(const char* file, int16_t x, int16_t y) {
+void Display::drawBMP(const char* file, int16_t x, int16_t y) {
     SPIFFS_ImageReader reader;
     unsigned long time = millis();
     //reader.drawBMP((char*)file, *this, x, y, false);
@@ -97,4 +97,15 @@ void Display::drawImage(const char* file, int16_t x, int16_t y) {
     log_d("drawBMP %s: %d millis", file, millis() - time);
 }
 
+void Display::drawImg(SPIFFS_Img& image, int16_t x, int16_t y, uint16_t color) {
+    image.draw(*this, x, y, color);
+}
+
+void Display::drawImg(const char* file, int16_t x, int16_t y, uint16_t color) {
+    SPIFFS_ImgReader reader;
+    unsigned long time = millis();
+    //reader.drawBMP((char*)file, *this, x, y, false);
+    reader.drawIMG((char*)file, *this, x, y, color);
+    log_d("drawIMG %s: %d millis", file, millis() - time);
+}
 
