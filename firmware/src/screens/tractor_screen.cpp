@@ -9,16 +9,28 @@
 
 TractorScreen* TractorScreen::instance = nullptr;
 const char* TractorScreen::Images[] = {
-    "/tracRollLeft1.bmp",
-    "/tracRollLeft2.bmp",
-    "/tracRollLevel.bmp",
-    "/tracRollRight1.bmp",
-    "/tracRollRight2.bmp",
-    "/tracPitchDown1.bmp",
-    "/tracPitchDown2.bmp",
-    "/tracPitchLevel.bmp",
-    "/tracPitchUp1.bmp",
-    "/tracPitchUp2.bmp"
+    "/tracRollLeft1.img",
+    "/tracRollLeft2.img",
+    "/tracRollLevel.img",
+    "/tracRollRight1.img",
+    "/tracRollRight2.img",
+    "/tracPitchDown1.img",
+    "/tracPitchDown2.img",
+    "/tracPitchLevel.img",
+    "/tracPitchUp1.img",
+    "/tracPitchUp2.img"
+};
+const uint16_t TractorScreen::Colors[] = {
+    YELLOW,
+    RED,
+    GREEN,
+    YELLOW,
+    RED,
+    YELLOW,
+    RED,
+    GREEN,
+    YELLOW,
+    RED
 };
 
 TractorScreen* TractorScreen::getInstance() {
@@ -97,7 +109,8 @@ void TractorScreen::paintContent() {
     d->setFont(0);
 
     if (firstPaint || dirtyFlags.rollImage) {
-        d->drawImage(Images[rollImage], 0, 0);
+        d->drawImg(Images[rollImage], 0, 0, Colors[rollImage]);
+        //d->drawImage(Images[rollImage], 0, 0);
         dirtyFlags.rollImage = false;
     }
     if (firstPaint || dirtyFlags.roll) {
@@ -111,7 +124,8 @@ void TractorScreen::paintContent() {
     }
 
     if (firstPaint || dirtyFlags.pitchImage) {
-        d->drawImage(Images[pitchImage], 0, 64);
+        d->drawImg(Images[pitchImage], 0, 0, Colors[pitchImage]);
+        //d->drawImage(Images[pitchImage], 0, 64);
         dirtyFlags.pitchImage = false;
     }
     if (firstPaint || dirtyFlags.pitch) {

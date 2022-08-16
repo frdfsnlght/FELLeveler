@@ -19,67 +19,82 @@ void SPIFFS_Img::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y, uint16_t color
     if ((x >= tft.width()) || (y >= tft.height())) return;
     if (((x + width) < 0) || ((y + height) < 0)) return;
 
-    int imgX, imgY, imgWidth, imgHeight;
-    int blockX, blockY;
-    nextBlock = data;
+    int rowStart, rowEnd, colStart, colEnd;
+    int winX, winY, winWidth, winHeight;
+    uint8_t* nextBlock = data;
+    uint16_t colorBuffer[MaxColorBuffer];
+    int colorBufferLen = 0;
     RLEBlock block;
     uint16_t pixelColor;
 
-    imgX = 0;
-    imgY = 0;
-    imgWidth = width;
-    imgHeight = height;
+    rowStart = colStart = 0;
+    rowEnd = height - 1;
+    colEnd = width - 1;
+    winX = x;
+    winY = y;
+    winWidth = width;
+    winHeight = height;
 
     // Crop for screen
     if (x < 0) {
-        imgX = -x;
-        imgWidth += x;
-        x = 0;
+        colStart = -x;
+        winX = 0;
+        winWidth += x;
     }
     if (y < 0) {
-        imgY = -y;
-        imgHeight += y;
-        y = 0;
+        rowStart = -y;
+        winY = 0;
+        winHeight += x;
     }
-    if ((x + imgWidth) > tft.width())
-        imgWidth = tft.width() - x;
-    if ((y + imgHeight) > tft.height())
-        imgHeight = tft.height() - y;
-
-    blockX = 0;
-    blockY = 0;
-    getRLEBlock(block);
+    if ((x + width) > tft.width()) {
+        colEnd += tft.width() - (x + width);
+        winWidth = tft.width() - x;
+    }
+    if ((y + height) > tft.height()) {
+        rowEnd += tft.height() - (y + height);
+        winHeight = tft.height() - y;
+    }
+    getRLEBlock(&nextBlock, block);
     pixelColor = getColor(color, block.value);
-    uint16_t buffer[MaxPixelBuffer];
-    int bufferLen = 0;
 
     tft.startWrite();
-    tft.setAddrWindow(x, y, imgWidth, imgHeight);
+    tft.setAddrWindow(winX, winY, winWidth, winHeight);
 
-    for (int row = 0; row < imgHeight; row++) {
-        for (int col = 0; col < imgWidth; col++) {
-            
-
+    for (int row = 0; row < height; row++) {
+        if (row > rowEnd) break;
+        for (int col = 0; col < width; col++) {
+            if (block.count == 0) {
+                if (! getRLEBlock(&nextBlock, block)) {
+                    log_e("Unexpected end of image data!");
+                    tft.endWrite();
+                    return;
+                }
+                pixelColor = getColor(color, block.value);
+            }
+            block.count--;
+            if ((row >= rowStart) && (col >= colStart) && (col <= colEnd)) {
+                colorBuffer[colorBufferLen++] = pixelColor;
+                if (colorBufferLen == MaxColorBuffer) {
+                    tft.writePixels(colorBuffer, colorBufferLen, true, false);
+                    colorBufferLen = 0;
+                    yield();
+                }
+            }
         }
-
-    //while (getRLEBlock(block)) {
-//        yield();
-//        pixelColor = getColor(color, block.value);
-
-      //                  tft->writePixels(dest, destidx, true);
-
     }
-    tft.dmaWait();
+    if (colorBufferLen > 0) {
+        tft.writePixels(colorBuffer, colorBufferLen, true, false);
+    }
     tft.endWrite();
 }
 
-bool SPIFFS_Img::getRLEBlock(RLEBlock& block) {
+bool SPIFFS_Img::getRLEBlock(uint8_t** nextBlock, RLEBlock& block) {
     uint8_t byte;
     block.count = 0;
     while (true) {
-        byte = *nextBlock;
+        byte = **nextBlock;
         if (byte == 0) return false;
-        nextBlock++;
+        *nextBlock++;
         if (byte & 0x80) {
             block.count = (block.count << 7) | (byte & 0x7f);
         } else {

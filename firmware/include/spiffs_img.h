@@ -23,11 +23,12 @@ class SPIFFS_Img {
         uint8_t value;
     };
 
+    static const int MaxColorBuffer = 1024;
+
     uint8_t* data = NULL;
-    uint8_t* nextBlock = NULL;
 
     void dealloc();
-    bool getRLEBlock(RLEBlock& block);
+    bool getRLEBlock(uint8_t** nextBlock, RLEBlock& block);
     inline uint16_t getColor(uint16_t color, uint8_t value);
     
     friend class SPIFFS_ImgReader;

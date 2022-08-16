@@ -105,7 +105,7 @@ void ImplementScreen::paintContent() {
     d->setFont(0);
 
     if (firstPaint || dirtyFlags.rollImage) {
-        d->drawImage(Images[rollImage], 0, 0);
+        d->drawBMP(Images[rollImage], 0, 0);
         dirtyFlags.rollImage = false;
     }
     if (firstPaint || dirtyFlags.roll) {
@@ -117,7 +117,7 @@ void ImplementScreen::paintContent() {
     }
 
     if (firstPaint || dirtyFlags.pitchImage) {
-        d->drawImage(Images[pitchImage], 0, 64);
+        d->drawBMP(Images[pitchImage], 0, 64);
         dirtyFlags.pitchImage = false;
     }
     if (firstPaint || dirtyFlags.pitch) {

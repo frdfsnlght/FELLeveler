@@ -22,6 +22,6 @@ void BootScreen::loop() {
 
 void BootScreen::paintContent() {
     Display* d = Display::getInstance();
-    d->drawImage("/boot.bmp", 0,  36);
+    d->drawBMP("/boot.bmp", 0,  36);
 }
 

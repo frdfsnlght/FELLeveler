@@ -26,6 +26,7 @@ class TractorScreen : public Screen {
 
     static TractorScreen* instance;
     static const char* Images[];
+    static const uint16_t Colors[];
 
     int roll;
     int pitch;
