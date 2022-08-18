@@ -199,7 +199,7 @@ void Network::setupAP(const char* apSSID, const char* apPassword) {
     Serial.printf("Network starting AP with SSID \"%s\" and password \"%s\"\n", apSSID, apPassword);
     strcpy(ssid, apSSID);
     strcpy(password, apPassword);
-    IPAddress address = Config::getInstance()->running.tractorAddress;
+    ipAddress = Config::getInstance()->running.tractorAddress;
 
     WiFi.mode(WIFI_AP);
     WiFi.softAP(apSSID, apPassword);
@@ -216,7 +216,7 @@ void Network::setupAP(const char* apSSID, const char* apPassword) {
     delay(500);
     // Android 10 workaround ==================
 
-    WiFi.softAPConfig(address, address, APNetmask);
+    WiFi.softAPConfig(ipAddress, ipAddress, APNetmask);
     Serial.printf("Network IP Address: %s\n", WiFi.softAPIP().toString().c_str());
     setState(AP);
     activateServices();
@@ -274,6 +274,7 @@ void Network::setupWebServer() {
     webServer.serveStatic("/", SPIFFS, "/w/");
     webServer.onNotFound([]() {
         Network* network = Network::getInstance();
+        Serial.printf("serving index.htm for unknown uri %s", network->webServer.uri().c_str());
         File file;
         if (! (file = SPIFFS.open("/w/index.htm", FILE_READ))) {
             network->webServer.send(500, "text/plain", "error opening index.htm\r\n");
