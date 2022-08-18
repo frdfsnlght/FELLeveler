@@ -1,48 +1,8 @@
 #!/usr/bin/python3
 
-import os, glob, math
+import sys, os, math
 import png
 
-# Raw, 8 bit
-def method1(src, outFile):
-    width = src[0]
-    height = src[1]
-    size = (width * height) + 2
-    return size
-
-# Indexed, 4 bit
-def method2(src, outFile):
-    width = src[0]
-    height = src[1]
-    colors = {}
-    for row in src[2]:
-        for i, v in enumerate(row):
-            if i % 4 == 0:
-                p = max(row[i:i+3]) >> 4
-                if p > 0:
-                    colors[p] = 1
-    bits = int(math.log2(len(colors)) + 1)
-    size = 2 + int(width * height * bits / 8)
-    return size
-
-# Indexed rows, 8 bit
-def method3(src, outFile):
-    width = src[0]
-    height = src[1]
-    size = 2
-    for row in src[2]:
-        colors = {}
-        for i, v in enumerate(row):
-            if i % 4 == 0:
-                p = max(row[i:i+3])
-                if p > 0:
-                    colors[p] = 1
-        if len(colors) > 0:
-            bits = int(math.log2(len(colors)) + 1)
-            size += 1 + len(colors) + int(width * bits / 8)
-        else:
-            size += 1
-    return size
 
 # Indexed, RLE rows, 8 bit
 def method4(src, outFile):
@@ -89,6 +49,12 @@ def method4(src, outFile):
     
 # RLE, 5 bit
 def method5(src, outFile):
+    
+    return len(data)
+    
+def convert(inFile, outFile):
+    src = list(png.Reader(inFile).read())
+    src[2] = list(src[2])
     width = src[0]
     height = src[1]
     color = -1
@@ -105,6 +71,14 @@ def method5(src, outFile):
                         rle.append((count, color))
                     color = p
                     count = 1
+                if p == 0:
+                    print(' ', end='')
+                elif p < 16:
+                    print(hex(p)[2:], end='')
+                else:
+                    print(hex(p-16)[2:].upper(), end='')
+        print()
+        
     if count > 0:
         rle.append((count, color))
         
@@ -127,23 +101,16 @@ def method5(src, outFile):
     file = open(outFile, 'wb')
     file.write(bytes(data))
     file.close()
-    
+    print('{} ({})-> {} ({})'.format(inFile, os.path.getsize(inFile), outFile, os.path.getsize(outFile)))
     return len(data)
-    
-def convert(inFile, outFile):
-    src = list(png.Reader(inFile).read())
-    src[2] = list(src[2])
-    
-    size = method5(src, outFile)
-    print('{} {}'.format(outFile, os.path.getsize(outFile)))
-    return size
     
 
 if __name__ == '__main__':
     totalSize = 0
-    for inFile in sorted(list(glob.glob('*.png'))):
-        #if inFile == 'boot.png':
-            #continue
+    for inFile in sys.argv[1:]:
+        if inFile[-4:] != '.png':
+            print('skipped {}'.format(inFile))
+            continue
         outFile = inFile[:-3] + 'img'
         totalSize += convert(inFile, outFile)
     print('Total size: {}'.format(totalSize))
