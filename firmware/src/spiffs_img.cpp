@@ -15,6 +15,7 @@ void SPIFFS_Img::dealloc() {
 }
 
 void SPIFFS_Img::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y, uint16_t color) {
+    if (data == NULL) return;
     if ((width == 0) || (height == 0)) return;
     if ((x >= tft.width()) || (y >= tft.height())) return;
     if (((x + width) < 0) || ((y + height) < 0)) return;
@@ -54,15 +55,21 @@ void SPIFFS_Img::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y, uint16_t color
         rowEnd += tft.height() - (y + height);
         winHeight = tft.height() - y;
     }
+
+    //log_d("colStart=%d, colEnd=%d, rowStart=%d, rowEnd=%d, winX=%d, winY=%d, winWidth=%d, winHeight=%d",
+    //            colStart, colEnd, rowStart, rowEnd, winX, winY, winWidth, winHeight);
+
     getRLEBlock(&nextBlock, block);
+    //log_d("first block: count=%d, value=%d", block.count, block.value);
+
     pixelColor = getColor(color, block.value);
+    //log_d("first color: %#04x", pixelColor);
 
     tft.startWrite();
     tft.setAddrWindow(winX, winY, winWidth, winHeight);
 
-    for (int row = 0; row < height; row++) {
-        if (row > rowEnd) break;
-        for (int col = 0; col < width; col++) {
+    for (y = 0; y <= rowEnd; y++) {
+        for (x = 0; x < width; x++) {
             if (block.count == 0) {
                 if (! getRLEBlock(&nextBlock, block)) {
                     log_e("Unexpected end of image data!");
@@ -72,9 +79,10 @@ void SPIFFS_Img::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y, uint16_t color
                 pixelColor = getColor(color, block.value);
             }
             block.count--;
-            if ((row >= rowStart) && (col >= colStart) && (col <= colEnd)) {
+            if ((y >= rowStart) && (x >= colStart) && (x <= colEnd)) {
                 colorBuffer[colorBufferLen++] = pixelColor;
                 if (colorBufferLen == MaxColorBuffer) {
+                    //log_d("writing colorBuffer");
                     tft.writePixels(colorBuffer, colorBufferLen, true, false);
                     colorBufferLen = 0;
                     yield();
@@ -83,6 +91,7 @@ void SPIFFS_Img::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y, uint16_t color
         }
     }
     if (colorBufferLen > 0) {
+        //log_d("writing remaining colorBuffer (%d)", colorBufferLen);
         tft.writePixels(colorBuffer, colorBufferLen, true, false);
     }
     tft.endWrite();
@@ -91,17 +100,24 @@ void SPIFFS_Img::draw(Adafruit_SPITFT &tft, int16_t x, int16_t y, uint16_t color
 bool SPIFFS_Img::getRLEBlock(uint8_t** nextBlock, RLEBlock& block) {
     uint8_t byte;
     block.count = 0;
+    byte = **nextBlock;
+    if (byte == 0) return false;
+    //log_d("*nextBlock=%x, byte=%02x", *nextBlock, byte);
+    (*nextBlock)++;
+
     while (true) {
-        byte = **nextBlock;
-        if (byte == 0) return false;
-        *nextBlock++;
         if (byte & 0x80) {
             block.count = (block.count << 7) | (byte & 0x7f);
+            //log_d("count=%d, getting next byte", block.count);
         } else {
             block.count = (block.count << 2) | ((byte & 0x60) >> 5);
             block.value = byte & 0x1f;
+            //log_d("count=%d, value=%d", block.count, block.value);
             return true;
         }
+        byte = **nextBlock;
+        //log_d("byte=%02x", byte);
+        (*nextBlock)++;
     }
 }
 
@@ -117,6 +133,13 @@ uint16_t SPIFFS_Img::getColor(uint16_t color, uint8_t value) {
         ((uint16_t)((float)green * percent) << 5) |
         (uint16_t)((float)blue * percent);
 }
+
+const char* SPIFFS_ImgReader::LoadResultStrings[] = {
+    "Success",
+    "FileNotFound",
+    "BadFormat",
+    "OutOfMemory"
+};
 
 SPIFFS_ImgReader::SPIFFS_ImgReader() {}
 
@@ -134,6 +157,7 @@ SPIFFS_ImgReader::LoadResult SPIFFS_ImgReader::drawIMG(const char *filename, Ada
 
 SPIFFS_ImgReader::LoadResult SPIFFS_ImgReader::loadIMG(const char *filename, SPIFFS_Img& img) {
     img.dealloc();
+    unsigned long time = millis();
     File file;
     if (! (file = SPIFFS.open(filename, FILE_READ)))
         return FileNotFound;
@@ -150,6 +174,7 @@ SPIFFS_ImgReader::LoadResult SPIFFS_ImgReader::loadIMG(const char *filename, SPI
     file.close();
     if (read != dataSize)
         return BadFormat;
+    //log_d("%s: %d millis, %d data bytes", filename, millis() - time, dataSize);
     return Success;
 }
 

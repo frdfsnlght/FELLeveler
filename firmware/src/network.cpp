@@ -5,6 +5,7 @@
 #include <DNSServer.h>
 #include <ArduinoOTA.h>
 #include <SPIFFS.h>
+#include <esp_wifi.h>
 
 #include "secrets.h"
 #include "leveler.h"
@@ -199,10 +200,24 @@ void Network::setupAP(const char* apSSID, const char* apPassword) {
     strcpy(ssid, apSSID);
     strcpy(password, apPassword);
     IPAddress address = Config::getInstance()->running.tractorAddress;
-    WiFi.softAPConfig(address, address, APNetmask);
+
+    WiFi.mode(WIFI_AP);
     WiFi.softAP(apSSID, apPassword);
-    Serial.print("Network IP Address: ");
-    Serial.println(WiFi.softAPIP());
+    delay(500); // important!
+
+    // Android 10 workaround ==================
+    WiFi.disconnect();
+    esp_wifi_stop();
+    esp_wifi_deinit();
+    wifi_init_config_t wConfig = WIFI_INIT_CONFIG_DEFAULT();
+    wConfig.ampdu_rx_enable = 0;
+    esp_wifi_init(&wConfig);
+    esp_wifi_start();
+    delay(500);
+    // Android 10 workaround ==================
+
+    WiFi.softAPConfig(address, address, APNetmask);
+    Serial.printf("Network IP Address: %s\n", WiFi.softAPIP().toString().c_str());
     setState(AP);
     activateServices();
 }
@@ -256,11 +271,17 @@ void Network::setupOTA() {
 }
 
 void Network::setupWebServer() {
-    webServer.on("/test", []() {
-        instance->webServer.send(200, "text/plain", "test worked!");
-        return true;
-    });
     webServer.serveStatic("/", SPIFFS, "/w/");
+    webServer.onNotFound([]() {
+        Network* network = Network::getInstance();
+        File file;
+        if (! (file = SPIFFS.open("/w/index.htm", FILE_READ))) {
+            network->webServer.send(500, "text/plain", "error opening index.htm\r\n");
+            return;
+        }
+        network->webServer.streamFile(file, "text/html");
+        file.close();
+    });
 }
 
 void Network::setupWebSockIO() {

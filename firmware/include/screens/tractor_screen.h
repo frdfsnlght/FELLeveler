@@ -2,6 +2,7 @@
 #define TRACTOR_SCREEN_H
 
 #include "screen.h"
+#include "spiffs_img.h"
 
 class TractorScreen : public Screen {
 
@@ -25,7 +26,9 @@ class TractorScreen : public Screen {
     };
 
     static TractorScreen* instance;
-    static const char* Images[];
+    static const int MaxImages = 10;
+    static const char* ImageFiles[];
+    static SPIFFS_Img Images[MaxImages];
     static const uint16_t Colors[];
 
     int roll;

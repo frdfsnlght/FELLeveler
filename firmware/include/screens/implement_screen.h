@@ -2,6 +2,7 @@
 #define IMPLEMENT_SCREEN_H
 
 #include "screen.h"
+#include "spiffs_img.h"
 
 class ImplementScreen : public Screen {
 
@@ -24,7 +25,10 @@ class ImplementScreen : public Screen {
     };
 
     static ImplementScreen* instance;
-    static const char* Images[];
+    static const int MaxImages = 10;
+    static const char* ImageFiles[];
+    static SPIFFS_Img Images[MaxImages];
+    static const uint16_t Colors[];
 
     int roll;
     int pitch;

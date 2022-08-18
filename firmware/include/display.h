@@ -4,7 +4,6 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1351.h>
 #include <SPI.h>
-#include <SPIFFS_ImageReader.h>
 #include "spiffs_img.h"
 
 #define SPI_PORT 3
@@ -41,8 +40,6 @@ class Display : public Adafruit_SSD1351 {
 
     void setup();
 
-    bool loadImage(const char* path, SPIFFS_Image& img);
-
     void setFont(int num);
     void printLeft(const char* str, int x, int y);
     void printCentered(const char* str, int x, int y);
@@ -51,11 +48,9 @@ class Display : public Adafruit_SSD1351 {
 
     void drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, uint8_t width, uint16_t color, bool rounded = false);
     
-    void drawBMP(SPIFFS_Image& image, int16_t x, int16_t y);
-    void drawBMP(const char* file, int16_t x, int16_t y);
-
     void drawImg(SPIFFS_Img& image, int16_t x, int16_t y, uint16_t color);
-    void drawImg(const char* file, int16_t x, int16_t y, uint16_t color);
+    bool drawImg(const char* file, int16_t x, int16_t y, uint16_t color);
+    bool loadImg(const char* file, SPIFFS_Img& img);
 
     private:
 

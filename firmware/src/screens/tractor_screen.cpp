@@ -8,7 +8,7 @@
 #include "screens/leveler_screen.h"
 
 TractorScreen* TractorScreen::instance = nullptr;
-const char* TractorScreen::Images[] = {
+const char* TractorScreen::ImageFiles[] = {
     "/tracRollLeft1.img",
     "/tracRollLeft2.img",
     "/tracRollLevel.img",
@@ -20,6 +20,7 @@ const char* TractorScreen::Images[] = {
     "/tracPitchUp1.img",
     "/tracPitchUp2.img"
 };
+SPIFFS_Img TractorScreen::Images[MaxImages];
 const uint16_t TractorScreen::Colors[] = {
     YELLOW,
     RED,
@@ -49,6 +50,9 @@ void TractorScreen::setup() {
     leveler->anglesListeners.add([](void) { instance->update(); });
     roll = pitch = INT_MAX;
     rollImage = pitchImage = -1;
+
+    for (int i = 0; i < MaxImages; i++)
+        Display::getInstance()->loadImg(ImageFiles[i], Images[i]);
 }
 
 bool TractorScreen::canShow() {
@@ -110,7 +114,6 @@ void TractorScreen::paintContent() {
 
     if (firstPaint || dirtyFlags.rollImage) {
         d->drawImg(Images[rollImage], 0, 0, Colors[rollImage]);
-        //d->drawImage(Images[rollImage], 0, 0);
         dirtyFlags.rollImage = false;
     }
     if (firstPaint || dirtyFlags.roll) {
@@ -124,8 +127,7 @@ void TractorScreen::paintContent() {
     }
 
     if (firstPaint || dirtyFlags.pitchImage) {
-        d->drawImg(Images[pitchImage], 0, 0, Colors[pitchImage]);
-        //d->drawImage(Images[pitchImage], 0, 64);
+        d->drawImg(Images[pitchImage], 0, 64, Colors[pitchImage]);
         dirtyFlags.pitchImage = false;
     }
     if (firstPaint || dirtyFlags.pitch) {

@@ -22,17 +22,6 @@ void Display::setup() {
     setFont(-1);
 }
 
-bool Display::loadImage(const char* path, SPIFFS_Image& img) {
-    SPIFFS_ImageReader reader;
-    ImageReturnCode ret;
-    ret = reader.loadBMP((char*)path, img);
-    Serial.print("Load ");
-    Serial.print(path);
-    Serial.print(": ");
-    reader.printStatus(ret);
-    return ret == IMAGE_SUCCESS;
-}
-
 void Display::setFont(int num) {
     if (num < 0)
         Adafruit_SSD1351::setFont();
@@ -85,27 +74,30 @@ void Display::drawThickLine(uint16_t x0, uint16_t y0, uint16_t x1, uint16_t y1, 
     }
 }
 
-void Display::drawBMP(SPIFFS_Image& image, int16_t x, int16_t y) {
-    image.draw(*this, x, y);
-}
-
-void Display::drawBMP(const char* file, int16_t x, int16_t y) {
-    SPIFFS_ImageReader reader;
-    unsigned long time = millis();
-    //reader.drawBMP((char*)file, *this, x, y, false);
-    reader.drawBMP((char*)file, *this, x, y);
-    log_d("drawBMP %s: %d millis", file, millis() - time);
-}
-
 void Display::drawImg(SPIFFS_Img& image, int16_t x, int16_t y, uint16_t color) {
+    unsigned long time = millis();
     image.draw(*this, x, y, color);
+    log_d("%d millis", millis() - time);
 }
 
-void Display::drawImg(const char* file, int16_t x, int16_t y, uint16_t color) {
+bool Display::drawImg(const char* file, int16_t x, int16_t y, uint16_t color) {
     SPIFFS_ImgReader reader;
     unsigned long time = millis();
-    //reader.drawBMP((char*)file, *this, x, y, false);
-    reader.drawIMG((char*)file, *this, x, y, color);
-    log_d("drawIMG %s: %d millis", file, millis() - time);
+    SPIFFS_ImgReader::LoadResult res = reader.drawIMG((char*)file, *this, x, y, color);
+    if (res != SPIFFS_ImgReader::Success)
+        log_e("%s: %s", file, SPIFFS_ImgReader::LoadResultStrings[res]);
+    else
+        log_d("%s: %d millis", file, millis() - time);
+    return res == SPIFFS_ImgReader::Success;
 }
 
+bool Display::loadImg(const char* file, SPIFFS_Img& img) {
+    SPIFFS_ImgReader reader;
+    unsigned long time = millis();
+    SPIFFS_ImgReader::LoadResult res = reader.loadIMG((char*)file, img);
+    if (res != SPIFFS_ImgReader::Success)
+        log_e("%s: %s", file, SPIFFS_ImgReader::LoadResultStrings[res]);
+    else
+        log_d("%s: %d millis", file, millis() - time);
+    return res == SPIFFS_ImgReader::Success;
+}

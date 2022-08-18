@@ -8,17 +8,30 @@
 #include "screens/tractor_screen.h"
 
 ImplementScreen* ImplementScreen::instance = nullptr;
-const char* ImplementScreen::Images[] = {
-    "/implRollLeft1.bmp",
-    "/implRollLeft2.bmp",
-    "/implRollLevel.bmp",
-    "/implRollRight1.bmp",
-    "/implRollRight2.bmp",
-    "/implPitchDown1.bmp",
-    "/implPitchDown2.bmp",
-    "/implPitchLevel.bmp",
-    "/implPitchUp1.bmp",
-    "/implPitchUp2.bmp"
+const char* ImplementScreen::ImageFiles[] = {
+    "/implRollLeft1.img",
+    "/implRollLeft2.img",
+    "/implRollLevel.img",
+    "/implRollRight1.img",
+    "/implRollRight2.img",
+    "/implPitchDown1.img",
+    "/implPitchDown2.img",
+    "/implPitchLevel.img",
+    "/implPitchUp1.img",
+    "/implPitchUp2.img"
+};
+SPIFFS_Img ImplementScreen::Images[MaxImages];
+const uint16_t ImplementScreen::Colors[] = {
+    YELLOW,
+    RED,
+    GREEN,
+    YELLOW,
+    RED,
+    YELLOW,
+    RED,
+    GREEN,
+    YELLOW,
+    RED
 };
 
 ImplementScreen* ImplementScreen::getInstance() {
@@ -38,7 +51,11 @@ void ImplementScreen::setup() {
     leveler->remoteAnglesListeners.add([](void) { instance->update(); });
     roll = pitch = INT_MAX;
     rollImage = pitchImage = -1;
+    
+    for (int i = 0; i < MaxImages; i++)
+        Display::getInstance()->loadImg(ImageFiles[i], Images[i]);
 }
+
 
 void ImplementScreen::handleButtonRelease(Button* button) {
     UI::getInstance()->nextScreen();
@@ -105,7 +122,7 @@ void ImplementScreen::paintContent() {
     d->setFont(0);
 
     if (firstPaint || dirtyFlags.rollImage) {
-        d->drawBMP(Images[rollImage], 0, 0);
+        d->drawImg(Images[rollImage], 0, 0, Colors[rollImage]);
         dirtyFlags.rollImage = false;
     }
     if (firstPaint || dirtyFlags.roll) {
@@ -117,7 +134,7 @@ void ImplementScreen::paintContent() {
     }
 
     if (firstPaint || dirtyFlags.pitchImage) {
-        d->drawBMP(Images[pitchImage], 0, 64);
+        d->drawImg(Images[pitchImage], 0, 64, Colors[pitchImage]);
         dirtyFlags.pitchImage = false;
     }
     if (firstPaint || dirtyFlags.pitch) {

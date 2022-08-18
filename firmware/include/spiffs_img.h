@@ -1,3 +1,5 @@
+// Library for loading and drawing tinted, 5 bit greyscale images.
+
 #ifndef SPIFFS_IMG_H
 #define SPIFFS_IMG_H
 
@@ -45,6 +47,8 @@ class SPIFFS_ImgReader {
         OutOfMemory
     };
 
+    static const char* LoadResultStrings[];
+    
     SPIFFS_ImgReader();
     ~SPIFFS_ImgReader();
 
