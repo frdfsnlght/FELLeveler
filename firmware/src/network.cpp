@@ -60,27 +60,37 @@ void Network::loop() {
         connectionAttempts++;
         Serial.printf("Connecting to \"%s\", attempt %d of %d\n", ssid, connectionAttempts, MaxConnectionAttempts);
         WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
+        WiFi.setAutoReconnect(false);
         WiFi.setHostname(Hostname);
         WiFi.begin(ssid, password);
         setState(Connecting);
     } else if (state == Connecting) {
-        if (WiFi.status() == WL_CONNECTED) {
-            ipAddress = WiFi.localIP();
-            Serial.println("Network connected");
-            Serial.printf("Network IP Address: %s\n", ipAddress.toString());
-            Serial.println("Network OTA started");
-            setState(Connected);
-            activateServices();
-        } else if (WiFi.status() == WL_CONNECT_FAILED) {
-            Serial.println("Network connection failed");
-            if (connectionAttempts >= MaxConnectionAttempts) {
-                Serial.println("Network station failure, setup default AP");
-                setupAP(DEFAULT_TRACTOR_SSID, DEFAULT_TRACTOR_PASSWORD);
-            } else {
-                Serial.println("Network waiting for next connection attempt");
-                lastConnectionAttemptTime = millis();
-                setState(Waiting);
-            }
+        switch (WiFi.status()) {
+            case WL_DISCONNECTED:
+            case WL_IDLE_STATUS:
+                break;
+            case WL_CONNECTED:
+                ipAddress = WiFi.localIP();
+                Serial.println("Network connected");
+                Serial.printf("Network IP Address: %s\n", ipAddress.toString());
+                Serial.println("Network OTA started");
+                setState(Connected);
+                activateServices();
+                break;
+            case WL_CONNECT_FAILED:
+            case WL_NO_SSID_AVAIL:
+                Serial.println("Network connection failed");
+                if (connectionAttempts >= MaxConnectionAttempts) {
+                    Serial.println("Network station failure, setup default AP");
+                    setupAP(DEFAULT_TRACTOR_SSID, DEFAULT_TRACTOR_PASSWORD);
+                } else {
+                    Serial.println("Network waiting for next connection attempt");
+                    lastConnectionAttemptTime = millis();
+                    setState(Waiting);
+                }
+                break;
+            //default:
+            //    Serial.printf("Unknown WiFi.status(): %d\n", WiFi.status());
         }
     } else if (state == Waiting) {
         if ((millis() - lastConnectionAttemptTime) > ConnectionAttemptInterval) {
